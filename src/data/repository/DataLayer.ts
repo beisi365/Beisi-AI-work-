@@ -6,6 +6,7 @@ import type {
   AbilityLevel,
   ClassSession,
 } from '../types';
+import type { ChangeActor } from '../../lib/submissionStatusGuards';
 
 // ============================================================
 // 通用仓储接口
@@ -34,8 +35,8 @@ export interface Repository<T extends { id: string }> {
   get(id: string): Promise<T | null>;
   /** 新增：自动维护时间戳与 created_by，并落操作日志 */
   insert(row: NewRow<T>): Promise<T>;
-  /** 局部更新：刷新 updated_at，写操作日志 */
-  update(id: string, patch: Partial<T>): Promise<T>;
+  /** 局部更新：刷新 updated_at，写操作日志；actor 明确操作者，submissions 状态变更会被守卫校验 */
+  update(id: string, patch: Partial<T>, actor?: ChangeActor): Promise<T>;
   /** 删除（按表删除策略校验 cascade/restrict/setnull） */
   remove(id: string): Promise<void>;
 }

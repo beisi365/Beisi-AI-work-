@@ -24,6 +24,7 @@ import type {
   Todo,
   FileMeta,
   OperationLog,
+  SubmissionStatus,
 } from '../types';
 import type {
   DataLayer,
@@ -33,6 +34,7 @@ import type {
   OverviewStats,
   DifficultyRow,
 } from './DataLayer';
+import { assertSubmissionStatusChange, type ChangeActor } from '../../lib/submissionStatusGuards';
 import { canRead, canWrite, type PermContext } from './permissions';
 import { buildSeed, SEED_TABLE_NAMES, levelToNum } from '../seed';
 
@@ -155,12 +157,23 @@ export class LocalDataLayer implements DataLayer {
         self.emit([name]);
         return clone(full);
       },
-      async update(id: string, patch: Partial<R>): Promise<R> {
+      async update(id: string, patch: Partial<R>, actor?: ChangeActor): Promise<R> {
         const idx = arr().findIndex((r) => r.id === id);
         if (idx < 0) throw new Error(`${name} ${id} not found`);
+        const current = arr()[idx] as Record<string, unknown>;
+        const patchAny = patch as Record<string, unknown>;
+        // 第三层防线：submissions 表的状态变更必须校验操作者角色与合法转换。
+        // 缺 actor 或 actorRole==='system' → 拒绝（普通页面/服务必须显式传 actor）。
+        if (name === 'submissions' && patchAny.status !== undefined && patchAny.status !== current.status) {
+          assertSubmissionStatusChange(
+            current.status as SubmissionStatus,
+            patchAny.status as SubmissionStatus,
+            actor,
+          );
+        }
         const updated = { ...arr()[idx], ...patch, id, updated_at: Date.now() } as R;
         arr()[idx] = updated;
-        self.log('system', 'update', `${name}:${id}`, patch);
+        self.log(actor?.actorId ?? 'system', 'update', `${name}:${id}`, patch);
         self.persist();
         self.emit([name]);
         return clone(updated);
@@ -224,7 +237,7 @@ export class LocalDataLayer implements DataLayer {
   }
 
   async getOperationLogs(where?: Partial<OperationLog>): Promise<OperationLog[]> {
-    return this.operationLogs.list(where as Query<OperationLog>);
+    return this.operationLogs.list({ where } as Query<OperationLog>);
   }
 
   async reset(): Promise<void> {

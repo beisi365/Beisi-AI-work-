@@ -4,6 +4,12 @@ import { db } from '../data/repository';
 import { useAuth } from '../auth/AuthContext';
 import { useRepository } from '../hooks/useRepository';
 import {
+  studentSubmit,
+  teacherReturn,
+  teacherComplete,
+  teacherMarkExcellent,
+} from '../lib/submissionService';
+import {
   Button,
   Card,
   EmptyState,
@@ -29,12 +35,14 @@ import {
   rateText,
   SUBMISSION_LABEL,
   SUBMISSION_TONE,
+  TEACHER_GRADE_ACTIONS,
+  teacherCanGrade,
 } from '../lib/format';
 import type {
   Attendance,
   AttendanceStatus,
   ClassSession,
-  SubmissionStatus,
+  Principal,
   WorkVersion,
   AbilityAssessment,
   AiAnalysis,
@@ -207,6 +215,7 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
         <WorksTab
           sid={sid}
           isTeacher={isTeacher}
+          principal={principal}
           submissions={dash.submissions}
           workVersions={workVersions}
           aiAnalysis={aiAnalysis}
@@ -249,6 +258,7 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
 function WorksTab({
   sid,
   isTeacher,
+  principal,
   submissions,
   workVersions,
   aiAnalysis,
@@ -256,6 +266,7 @@ function WorksTab({
 }: {
   sid: string;
   isTeacher: boolean;
+  principal: Principal | null;
   submissions: NonNullable<Awaited<ReturnType<typeof getStudentDashboard>>['submissions']>;
   workVersions: WorkVersion[];
   aiAnalysis: AiAnalysis[];
@@ -277,7 +288,7 @@ function WorksTab({
         const tr = s.teacher_review_id
           ? teacherReviews.find((x) => x.id === s.teacher_review_id)
           : undefined;
-        const canEdit = isTeacher || sid === s.student_id;
+        const canStudentEdit = sid === s.student_id;
         return (
           <Card
             key={s.id}
@@ -288,27 +299,32 @@ function WorksTab({
             <div className="stack">
               <div className="spread">
                 <span className="muted">状态</span>
-                {canEdit ? (
-                  <select
-                    className="select"
-                    style={{ width: 'auto' }}
-                    value={s.status}
-                    onChange={async (e) => {
-                      await db.submissions.update(s.id, { status: e.target.value as SubmissionStatus });
-                    }}
-                  >
-                    {(['pending', 'to_review', 'need_revise', 'completed', 'excellent'] as SubmissionStatus[]).map(
-                      (st) => (
-                        <option key={st} value={st}>
-                          {SUBMISSION_LABEL[st]}
-                        </option>
-                      ),
-                    )}
-                  </select>
-                ) : (
-                  <Tag tone={SUBMISSION_TONE[s.status]}>{SUBMISSION_LABEL[s.status]}</Tag>
-                )}
+                <Tag tone={SUBMISSION_TONE[s.status]}>{SUBMISSION_LABEL[s.status]}</Tag>
               </div>
+              {isTeacher && (
+                <div className="grade-actions">
+                  <span className="muted" style={{ fontSize: 'var(--fs-secondary)' }}>
+                    教师评定：
+                  </span>
+                  {TEACHER_GRADE_ACTIONS.map((a) => (
+                    <Button
+                      key={a.to}
+                      size="sm"
+                      variant={a.variant}
+                      disabled={!teacherCanGrade(s.status)}
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        const actorId = principal?.teacherId ?? '';
+                        if (a.to === 'need_revise') await teacherReturn(db, s.id, actorId);
+                        else if (a.to === 'completed') await teacherComplete(db, s.id, actorId);
+                        else if (a.to === 'excellent') await teacherMarkExcellent(db, s.id, actorId);
+                      }}
+                    >
+                      {a.label}
+                    </Button>
+                  ))}
+                </div>
+              )}
 
               <div>
                 <div className="muted" style={{ fontSize: 'var(--fs-secondary)', marginBottom: 4 }}>
@@ -353,7 +369,7 @@ function WorksTab({
                 </div>
               )}
 
-              {canEdit && (
+              {canStudentEdit && (
                 <div>
                   {addingFor === s.id ? (
                     <div className="form-row">
@@ -370,19 +386,7 @@ function WorksTab({
                           size="sm"
                           disabled={!content.trim()}
                           onClick={async () => {
-                            const nextNo = vers.length + 1;
-                            const created = await db.workVersions.insert({
-                              submission_id: s.id,
-                              student_id: sid,
-                              version_no: nextNo,
-                              content: content.trim(),
-                              snapshot_file_id: null,
-                              is_final: true,
-                            } as never);
-                            await db.submissions.update(s.id, {
-                              final_version_id: created.id,
-                              status: 'to_review',
-                            });
+                            await studentSubmit(db, s.id, s.student_id, content);
                             setContent('');
                             setAddingFor(null);
                           }}

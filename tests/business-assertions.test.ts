@@ -39,8 +39,12 @@ describe('业务口径断言', () => {
     const subs = await db.submissions.list();
     const target = subs.find((s) => s.status === 'need_revise');
     expect(target, '演示数据应存在 need_revise 提交').toBeTruthy();
-    // 学员修改后重新提交 → 待教师批改
-    await db.submissions.update(target!.id, { status: 'to_review' });
+    // 学员修改后重新提交 → 待教师批改（经明确 actor 的 update，模拟真实业务路径）
+    await db.submissions.update(
+      target!.id,
+      { status: 'to_review' },
+      { actorId: target!.student_id, actorRole: 'student' },
+    );
     const after = await db.submissions.get(target!.id);
     expect(after!.status).toBe('to_review');
   });
@@ -115,7 +119,11 @@ describe('业务口径断言', () => {
       snapshot_file_id: null,
       is_final: true,
     } as never);
-    await db.submissions.update(target!.id, { final_version_id: created.id, status: 'to_review' });
+    await db.submissions.update(
+      target!.id,
+      { final_version_id: created.id, status: 'to_review' },
+      { actorId: target!.student_id, actorRole: 'student' },
+    );
 
     // 重新提交后状态自动进入 to_review（绝非 completed / excellent）
     const after = await db.submissions.get(target!.id);

@@ -2,6 +2,12 @@ import { Fragment, useMemo, useState } from 'react';
 import { db } from '../data/repository';
 import { useAuth } from '../auth/AuthContext';
 import { useRepository } from '../hooks/useRepository';
+import {
+  studentSubmit,
+  teacherReturn,
+  teacherComplete,
+  teacherMarkExcellent,
+} from '../lib/submissionService';
 import { Button, EmptyState, LoadingState, PageHeader, Tag } from '../components/ui';
 import {
   SUBMISSION_LABEL,
@@ -217,7 +223,10 @@ export default function WorksPage() {
                 disabled={!teacherCanGrade(s.status)}
                 onClick={async (e) => {
                   e.stopPropagation();
-                  await db.submissions.update(s.id, { status: a.to });
+                  const actorId = principal?.teacherId ?? '';
+                  if (a.to === 'need_revise') await teacherReturn(db, s.id, actorId);
+                  else if (a.to === 'completed') await teacherComplete(db, s.id, actorId);
+                  else if (a.to === 'excellent') await teacherMarkExcellent(db, s.id, actorId);
                 }}
               >
                 {a.label}
@@ -256,7 +265,7 @@ export default function WorksPage() {
                         } as never);
                         reviewId = created.id;
                       }
-                      if (reviewId) await db.submissions.update(s.id, { teacher_review_id: reviewId });
+                      if (reviewId) await db.submissions.update(s.id, { teacher_review_id: reviewId }, { actorId: principal?.teacherId ?? '', actorRole: 'teacher' });
                       setCommentText('');
                       setCommentFor(null);
                     }}
@@ -299,19 +308,7 @@ export default function WorksPage() {
                     size="sm"
                     disabled={!content.trim()}
                     onClick={async () => {
-                      const nextNo = vers.length + 1;
-                      const created = await db.workVersions.insert({
-                        submission_id: s.id,
-                        student_id: s.student_id,
-                        version_no: nextNo,
-                        content: content.trim(),
-                        snapshot_file_id: null,
-                        is_final: true,
-                      } as never);
-                      await db.submissions.update(s.id, {
-                        final_version_id: created.id,
-                        status: 'to_review',
-                      });
+                      await studentSubmit(db, s.id, s.student_id, content);
                       setContent('');
                       setAddingFor(null);
                     }}
