@@ -16,6 +16,9 @@ import ReviewsPage from './pages/cp2/ReviewsPage';
 import CommunicationsPage from './pages/cp2/CommunicationsPage';
 import AlertsPage from './pages/cp2/AlertsPage';
 import TodosPage from './pages/cp2/TodosPage';
+// CP2.1 内部开发页：仅 import.meta.env.DEV 下注册，不进入正式导航、不向用户开放
+import AssessmentsDevPage from './pages/cp2/AssessmentsDevPage';
+import StudentAssessmentsDevPage from './pages/cp2/StudentAssessmentsDevPage';
 import type { ReactNode } from 'react';
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -72,6 +75,8 @@ export default function App() {
             <Route path="communications" element={<CommunicationsPage />} />
             <Route path="alerts" element={<AlertsPage />} />
             <Route path="todos" element={<TodosPage />} />
+            {/* 仅开发环境：CP2.1 能力评估内部测试路由（featureFlags.assessments 仍为 false，不进正式导航） */}
+            {import.meta.env.DEV && <Route path="dev/assessments" element={<AssessmentsDevPage />} />}
           </Route>
 
           {/* 学员端 */}
@@ -95,6 +100,8 @@ export default function App() {
             <Route path="assessments" element={<AssessmentsPage />} />
             <Route path="reviews" element={<ReviewsPage />} />
             <Route path="communications" element={<CommunicationsPage />} />
+            {/* 仅开发环境：学员只读能力评估内部测试路由 */}
+            {import.meta.env.DEV && <Route path="dev/assessments" element={<StudentAssessmentsDevPage />} />}
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

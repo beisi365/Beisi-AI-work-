@@ -313,7 +313,13 @@ export class LocalDataLayer implements DataLayer {
     const result = {} as Record<AbilityDimension, AbilityLevel | null>;
     for (const d of dims) {
       const snaps = this.cache.ability_assessments
-        .filter((a) => a.student_id === studentId && a.dimension === d)
+        .filter(
+          (a) =>
+            a.student_id === studentId &&
+            a.dimension === d &&
+            // 仅统计已发布或遗留（CP1 无 status 字段）记录；草稿/已确认/作废不计入当前能力
+            (a.status === undefined || a.status === 'published'),
+        )
         .sort((a, b) => a.assessed_at - b.assessed_at);
       const latest = snaps[snaps.length - 1];
       result[d] = latest ? latest.teacher_confirmed_level ?? latest.level : null;
@@ -323,7 +329,13 @@ export class LocalDataLayer implements DataLayer {
 
   async getAbilityHistory(studentId: string, dimension: AbilityDimension) {
     return this.cache.ability_assessments
-      .filter((a) => a.student_id === studentId && a.dimension === dimension)
+      .filter(
+        (a) =>
+          a.student_id === studentId &&
+          a.dimension === dimension &&
+          // 与 getAbilityCurrent 同源：仅已发布或遗留记录进入单维历史（学员不可见草稿/已确认/作废）
+          (a.status === undefined || a.status === 'published'),
+      )
       .sort((a, b) => a.assessed_at - b.assessed_at);
   }
 

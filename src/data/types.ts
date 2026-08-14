@@ -23,6 +23,9 @@ export type AbilityDimension =
   | 'application';
 export type AbilityLevel = 'L1' | 'L2' | 'L3' | 'L4';
 export type AssessmentSource = 'baseline' | 'self' | 'teacher' | 'ai' | 'work';
+// 评估快照生命周期：草稿 → 已确认 → 已发布；已发布不可直接覆盖，修正时整组作废。
+// 遗留 CP1 数据无此字段，读取时按 'published' 兼容（见 LocalDataLayer / queries）。
+export type AssessmentStatus = 'draft' | 'confirmed' | 'published' | 'voided';
 export type ReviewStatus = 'draft' | 'confirmed';
 export type ConcernStatus = 'pending' | 'confirmed' | 'resolved';
 export type DeliveryMode = 'offline' | 'online' | 'hybrid';
@@ -276,6 +279,10 @@ export interface AbilityAssessment {
   evidence_id: string | null; // 关联 submissions
   ai_suggested_level: AbilityLevel | null;
   teacher_confirmed_level: AbilityLevel | null;
+  // CP2.1 新增（经字段提案确认，向后兼容）：
+  status: AssessmentStatus; // 遗留数据迁移为 'published'；新记录默认 'draft'
+  evidence_text: string | null; // 事实证据说明；draft 可空，进入 confirmed 前必填
+  assessment_group_id: string | null; // 一次完整评估/一次修正的六维共用；遗留单项记录为 null
   assessed_at: number;
   created_at: number;
   updated_at: number;
