@@ -204,3 +204,89 @@ describe('P0 业务层 · 教师评定路径', () => {
     expect(changes.status).toBe('completed');
   });
 });
+
+describe('P0 加固 · 未知角色运行时拒绝 (R1)', () => {
+  it('未知角色 admin 强制转换为 completed 被拒绝（ForbiddenError）', () => {
+    expect(() =>
+      assertSubmissionStatusChange('to_review', 'completed', { actorId: 'x', actorRole: 'admin' as any }),
+    ).toThrow(ForbiddenError);
+  });
+  it('未知角色 admin 强制转换为 excellent 被拒绝（ForbiddenError）', () => {
+    expect(() =>
+      assertSubmissionStatusChange('to_review', 'excellent', { actorId: 'x', actorRole: 'admin' as any }),
+    ).toThrow(ForbiddenError);
+  });
+  it('空字符串角色被拒绝（ForbiddenError）', () => {
+    expect(() =>
+      assertSubmissionStatusChange('to_review', 'completed', { actorId: 'x', actorRole: '' as any }),
+    ).toThrow(ForbiddenError);
+  });
+  it('伪造字符串角色（superuser）被拒绝（ForbiddenError）', () => {
+    expect(() =>
+      assertSubmissionStatusChange('to_review', 'completed', { actorId: 'x', actorRole: 'superuser' as any }),
+    ).toThrow(ForbiddenError);
+  });
+});
+
+describe('P0 加固 · 业务层学生提交边界', () => {
+  beforeEach(async () => {
+    await db.reset();
+  });
+
+  it('学员在 to_review 状态再次 submit 被拒（ForbiddenError）', async () => {
+    const sub = await makeSubmission('to_review');
+    await expect(studentSubmit(db, sub.id, sub.student_id, 'x')).rejects.toThrow(ForbiddenError);
+  });
+
+  it('学员在 to_review 状态保存草稿仍可新增版本但不改状态', async () => {
+    const sub = await makeSubmission('to_review');
+    const v = await saveDraft(db, sub.id, sub.student_id, '再改一版');
+    const after = await db.submissions.get(sub.id);
+    expect(after!.status).toBe('to_review'); // 状态不变
+    expect(v.is_final).toBe(false);
+  });
+});
+
+describe('P0 加固 · Repository 真实调用边界', () => {
+  beforeEach(async () => {
+    await db.reset();
+  });
+
+  it('未知角色经 Repository.update 强制转换被拒且状态与版本均不变', async () => {
+    const sub = await makeSubmission('to_review');
+    await db.workVersions.insert({
+      submission_id: sub.id,
+      student_id: sub.student_id,
+      version_no: 1,
+      content: 'v1',
+      snapshot_file_id: null,
+      is_final: true,
+    });
+    await expect(
+      db.submissions.update(sub.id, { status: 'completed' }, { actorId: 'x', actorRole: 'admin' as any }),
+    ).rejects.toThrow(ForbiddenError);
+    const after = await db.submissions.get(sub.id);
+    expect(after!.status).toBe('to_review'); // 拒绝后状态不变
+    const vers = await db.workVersions.list({ where: { submission_id: sub.id } });
+    expect(vers.length).toBe(1); // 拒绝后版本不变
+  });
+
+  it('合法 student/teacher 既有转换不受守卫改动影响', async () => {
+    // 学员 pending→to_review 经 Repository 直写仍成功
+    const s1 = await makeSubmission('pending');
+    const a1 = await db.submissions.update(
+      s1.id,
+      { status: 'to_review' },
+      { actorId: s1.student_id, actorRole: 'student' },
+    );
+    expect(a1.status).toBe('to_review');
+    // 教师 to_review→completed 经 Repository 直写仍成功
+    const s2 = await makeSubmission('to_review');
+    const a2 = await db.submissions.update(
+      s2.id,
+      { status: 'completed' },
+      { actorId: 't01', actorRole: 'teacher' },
+    );
+    expect(a2.status).toBe('completed');
+  });
+});

@@ -56,15 +56,29 @@ const TEACHER_TRANSITIONS: Record<SubmissionStatus, SubmissionStatus[]> = {
  * - 学员设置非白名单状态 → PermissionError。
  * - 教师设置非白名单状态 → IllegalTransitionError。
  */
+/**
+ * 运行时合法角色白名单。
+ * 不依赖 TypeScript 联合类型作为运行时安全保证（编译期约束可被运行期绕过，
+ * 例如直接构造 { actorRole: 'admin' } 调内部 API），未知角色必须在此被默认拒绝。
+ */
+const ALLOWED_ACTOR_ROLES = ['student', 'teacher', 'system'] as const;
+type ActorRole = (typeof ALLOWED_ACTOR_ROLES)[number];
+
 export function assertSubmissionStatusChange(
   from: SubmissionStatus,
   next: SubmissionStatus,
   actor: ChangeActor | undefined,
 ): void {
-  if (!actor || actor.actorRole === 'system') {
+  // 第一道闸门：在任何状态转换判断之前，先运行时校验操作者角色的合法性。
+  // 缺 actor、或角色不在白名单（含 admin / 空字符串 / 伪造字符串）一律默认拒绝。
+  if (!actor || !ALLOWED_ACTOR_ROLES.includes(actor.actorRole as ActorRole)) {
     throw new ForbiddenError(
-      'submission.status 变更必须携带明确的操作者（actorId + actorRole）；system 身份仅允许 seed / 迁移 / 重置',
+      `submission.status 变更必须携带合法操作者角色（student/teacher/system）；收到非法角色: ${String(actor?.actorRole)}`,
     );
+  }
+  // system 仅允许 seed / 迁移 / 重置；普通 update（Repository.update 路径）不得放行。
+  if (actor.actorRole === 'system') {
+    throw new ForbiddenError('system 身份仅允许 seed / 迁移 / 重置，普通页面/服务不得传入');
   }
   if (actor.actorRole === 'student' && !STUDENT_TRANSITIONS[from].includes(next)) {
     throw new PermissionError(`学员不能将作业状态从 ${from} 变更为 ${next}`);
