@@ -3,6 +3,7 @@ import { useAuth } from '../auth/AuthContext';
 import { db } from '../data/repository';
 import { ROLE_LABEL } from '../lib/format';
 import { Avatar } from './ui';
+import { isCp2Enabled, type Cp2Module } from '../lib/featureFlags';
 
 type IconKey =
   | 'overview'
@@ -12,7 +13,12 @@ type IconKey =
   | 'timeline'
   | 'course-map'
   | 'home'
-  | 'profile';
+  | 'profile'
+  | 'assessments'
+  | 'reviews'
+  | 'communications'
+  | 'alerts'
+  | 'todos';
 
 function Icon({ k }: { k: IconKey }) {
   const common = {
@@ -79,6 +85,16 @@ function Icon({ k }: { k: IconKey }) {
         <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" />
       </>
     ),
+    assessments: <path d="M4 19V10M10 19V5M16 19v-7M21 19V9" />,
+    reviews: <path d="M5 7l1.5 1.5L9 6M5 13l1.5 1.5L9 12M12 7h7M12 13h7" />,
+    communications: <path d="M4 5h16v11H9l-5 4z" />,
+    alerts: <path d="M12 4l9 16H3zM12 10v5M12 17.5v.5" />,
+    todos: (
+      <>
+        <rect x="4" y="4" width="16" height="16" rx="2" />
+        <path d="M8 12l3 3 5-6" />
+      </>
+    ),
   };
   return (
     <svg {...common} aria-hidden>
@@ -111,12 +127,35 @@ const STUDENT_NAV: NavItem[] = [
   { to: '/s/profile', label: '我的档案', icon: 'profile' },
 ];
 
+interface Cp2NavItem extends NavItem {
+  flag: Cp2Module;
+}
+
+// CP2 导航项：flag 关闭时不加入正式导航（未在导航显示为可用入口）
+const CP2_TEACHER_NAV: Cp2NavItem[] = [
+  { to: '/t/assessments', label: '能力评估', icon: 'assessments', flag: 'assessments' },
+  { to: '/t/reviews', label: '评审管理', icon: 'reviews', flag: 'reviews' },
+  { to: '/t/communications', label: '教学沟通', icon: 'communications', flag: 'communications' },
+  { to: '/t/alerts', label: '学习预警', icon: 'alerts', flag: 'alerts' },
+  { to: '/t/todos', label: '教师待办', icon: 'todos', flag: 'todos' },
+];
+
+const CP2_STUDENT_NAV: Cp2NavItem[] = [
+  { to: '/s/assessments', label: '我的评估', icon: 'assessments', flag: 'assessments' },
+  { to: '/s/reviews', label: '我的评语', icon: 'reviews', flag: 'reviews' },
+  { to: '/s/communications', label: '沟通记录', icon: 'communications', flag: 'communications' },
+];
+
 export function AppShell() {
   const { principal, logout } = useAuth();
   const navigate = useNavigate();
   if (!principal) return null;
 
-  const nav = principal.role === 'teacher' ? TEACHER_NAV : STUDENT_NAV;
+  const baseNav = principal.role === 'teacher' ? TEACHER_NAV : STUDENT_NAV;
+  const cp2Nav = (principal.role === 'teacher' ? CP2_TEACHER_NAV : CP2_STUDENT_NAV).filter(
+    (it) => isCp2Enabled(it.flag),
+  );
+  const nav = [...baseNav, ...cp2Nav];
   const name = principal.role === 'teacher' ? `教师 ${principal.teacherId}` : `学员 ${principal.studentId}`;
 
   const onReset = () => {

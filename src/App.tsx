@@ -11,6 +11,11 @@ import WorksPage from './pages/WorksPage';
 import TimelinePage from './pages/TimelinePage';
 import CourseMapPage from './pages/CourseMapPage';
 import PracticeRoomPage from './pages/PracticeRoomPage';
+import AssessmentsPage from './pages/cp2/AssessmentsPage';
+import ReviewsPage from './pages/cp2/ReviewsPage';
+import CommunicationsPage from './pages/cp2/CommunicationsPage';
+import AlertsPage from './pages/cp2/AlertsPage';
+import TodosPage from './pages/cp2/TodosPage';
 import type { ReactNode } from 'react';
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -61,6 +66,12 @@ export default function App() {
             <Route path="timeline" element={<TimelinePage />} />
             <Route path="course-map" element={<CourseMapPage />} />
             <Route path="course-map/:lessonId" element={<PracticeRoomPage />} />
+            {/* CP2 模块路由（导航入口由功能开关隐藏，业务待各 CP2.x 阶段实现） */}
+            <Route path="assessments" element={<AssessmentsPage />} />
+            <Route path="reviews" element={<ReviewsPage />} />
+            <Route path="communications" element={<CommunicationsPage />} />
+            <Route path="alerts" element={<AlertsPage />} />
+            <Route path="todos" element={<TodosPage />} />
           </Route>
 
           {/* 学员端 */}
@@ -80,6 +91,10 @@ export default function App() {
             <Route path="works" element={<WorksPage />} />
             <Route path="timeline" element={<TimelinePage />} />
             <Route path="profile" element={<StudentProfilePage />} />
+            {/* CP2 模块路由（学员侧只读入口，导航入口由功能开关隐藏，业务待各 CP2.x 阶段实现） */}
+            <Route path="assessments" element={<AssessmentsPage />} />
+            <Route path="reviews" element={<ReviewsPage />} />
+            <Route path="communications" element={<CommunicationsPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
