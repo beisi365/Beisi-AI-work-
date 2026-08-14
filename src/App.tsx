@@ -16,6 +16,8 @@ import ReviewsPage from './pages/cp2/ReviewsPage';
 import CommunicationsPage from './pages/cp2/CommunicationsPage';
 import AlertsPage from './pages/cp2/AlertsPage';
 import TodosPage from './pages/cp2/TodosPage';
+import StudentAssessmentsPage from './pages/cp2/StudentAssessmentsPage';
+import { isCp2Enabled } from './lib/featureFlags';
 // CP2.1 内部开发页：仅 import.meta.env.DEV 下注册，不进入正式导航、不向用户开放
 import AssessmentsDevPage from './pages/cp2/AssessmentsDevPage';
 import StudentAssessmentsDevPage from './pages/cp2/StudentAssessmentsDevPage';
@@ -71,8 +73,8 @@ export default function App() {
             <Route path="timeline" element={<TimelinePage />} />
             <Route path="course-map" element={<CourseMapPage />} />
             <Route path="course-map/:lessonId" element={<PracticeRoomPage />} />
-            {/* CP2 模块路由（导航入口由功能开关隐藏，业务待各 CP2.x 阶段实现） */}
-            <Route path="assessments" element={<AssessmentsPage />} />
+            {/* CP2 模块路由：导航显示与可访问性均由功能开关控制。assessments 已开放，其余待各 CP2.x 阶段实现 */}
+            {isCp2Enabled('assessments') && <Route path="assessments" element={<AssessmentsPage />} />}
             <Route path="reviews" element={<ReviewsPage />} />
             <Route path="communications" element={<CommunicationsPage />} />
             <Route path="alerts" element={<AlertsPage />} />
@@ -98,8 +100,8 @@ export default function App() {
             <Route path="works" element={<WorksPage />} />
             <Route path="timeline" element={<TimelinePage />} />
             <Route path="profile" element={<StudentProfilePage />} />
-            {/* CP2 模块路由（学员侧只读入口，导航入口由功能开关隐藏，业务待各 CP2.x 阶段实现） */}
-            <Route path="assessments" element={<AssessmentsPage />} />
+            {/* CP2 模块路由：学员侧只读入口，导航显示与可访问性均由功能开关控制。assessments 已开放 */}
+            {isCp2Enabled('assessments') && <Route path="assessments" element={<StudentAssessmentsPage />} />}
             <Route path="reviews" element={<ReviewsPage />} />
             <Route path="communications" element={<CommunicationsPage />} />
             {/* 仅开发环境：学员只读能力评估内部测试路由 */}

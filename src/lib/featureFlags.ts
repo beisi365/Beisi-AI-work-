@@ -14,7 +14,7 @@ export type Cp2Module =
   | 'todos'; // CP2.4 教师待办（与预警同阶段）
 
 export const CP2_FLAGS: Record<Cp2Module, boolean> = {
-  assessments: false,
+  assessments: true,
   reviews: false,
   communications: false,
   alerts: false,
