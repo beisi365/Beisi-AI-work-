@@ -8,11 +8,13 @@ import {
   listAssessmentGroups,
   getLegacyAssessments,
   getStudentAssessmentView,
+  getStudentComparison,
   hasAllDimensions,
   isEvidenceComplete,
   isUuidLike,
   ALL_DIMENSIONS,
 } from '../src/lib/assessments';
+import { roleHome } from '../src/lib/routeHome';
 import type { AbilityAssessment, AbilityLevel } from '../src/data/types';
 
 let db: LocalDataLayer;
@@ -163,26 +165,29 @@ describe('CP2.1 能力评估 — 状态机与整组原子', () => {
     expect(rows.every((r) => r.status === 'published')).toBe(true);
   });
 
-  it('修正：已发布组修正 → 新组草稿 + 旧组整组 voided（原子）', async () => {
+  it('修正：已发布组修正仅建新草稿，旧 published 继续有效且学员仍可见', async () => {
     const g = await createAssessmentGroup(db, { studentId: 's01', teacherId: 'u_t1', dims: sixDims() });
     await confirmAssessmentGroup(db, g);
     await publishAssessmentGroup(db, g);
     const newG = await reviseAssessmentGroup(db, g);
     expect(newG).not.toBe(g);
     expect(isUuidLike(newG)).toBe(true);
+    // 旧组仍 published（继续有效）
     const oldRows = (await db.abilityAssessments.list()).filter(
       (r) => (r as AbilityAssessment).assessment_group_id === g,
     ) as AbilityAssessment[];
-    expect(oldRows.every((r) => r.status === 'voided')).toBe(true);
+    expect(oldRows.every((r) => r.status === 'published')).toBe(true);
+    // 新组草稿
     const newRows = (await db.abilityAssessments.list()).filter(
       (r) => (r as AbilityAssessment).assessment_group_id === newG,
     ) as AbilityAssessment[];
     expect(newRows.length).toBe(6);
     expect(newRows.every((r) => r.status === 'draft')).toBe(true);
     expect(newRows.every((r) => r.student_id === 's01')).toBe(true);
-    // 学生视图：旧组已作废不显示，新组未发布也不显示
+    // 学员仍可见旧 published；新组未发布不显示
     const view = await getStudentAssessmentView(db, 's01');
-    expect(view.publishedGroups.every((x) => x.groupId !== g && x.groupId !== newG)).toBe(true);
+    expect(view.publishedGroups.some((x) => x.groupId === g)).toBe(true);
+    expect(view.publishedGroups.some((x) => x.groupId === newG)).toBe(false);
   });
 
   it('修正仅允许已发布组：对草稿组修正抛错', async () => {
@@ -267,5 +272,97 @@ describe('CP2.1 能力评估 — 工具函数', () => {
     const legacy = await getLegacyAssessments(db, 's01');
     expect(legacy.every((r) => r.assessment_group_id === null)).toBe(true);
     expect(legacy.length).toBeGreaterThan(0);
+  });
+});
+
+describe('CP2.1 正式开放前修正 — 修正状态流 / 等级 / 对比 / 重定向', () => {
+  it('新版发布成功时同一事务原子替换：新版 published、旧版 voided', async () => {
+    const g = await createAssessmentGroup(db, { studentId: 's01', teacherId: 'u_t1', dims: sixDims() });
+    await confirmAssessmentGroup(db, g);
+    await publishAssessmentGroup(db, g);
+    const newG = await reviseAssessmentGroup(db, g);
+    await confirmAssessmentGroup(db, newG);
+    await publishAssessmentGroup(db, newG);
+    const oldRows = (await db.abilityAssessments.list()).filter(
+      (r) => (r as AbilityAssessment).assessment_group_id === g,
+    ) as AbilityAssessment[];
+    expect(oldRows.every((r) => r.status === 'voided')).toBe(true);
+    const newRows = (await db.abilityAssessments.list()).filter(
+      (r) => (r as AbilityAssessment).assessment_group_id === newG,
+    ) as AbilityAssessment[];
+    expect(newRows.every((r) => r.status === 'published')).toBe(true);
+    const view = await getStudentAssessmentView(db, 's01');
+    expect(view.publishedGroups.some((x) => x.groupId === newG)).toBe(true);
+    expect(view.publishedGroups.some((x) => x.groupId === g)).toBe(false);
+  });
+
+  it('发布失败（前置不满足）旧版不受影响，新草稿保持 draft', async () => {
+    const g = await createAssessmentGroup(db, { studentId: 's01', teacherId: 'u_t1', dims: sixDims() });
+    await confirmAssessmentGroup(db, g);
+    await publishAssessmentGroup(db, g);
+    const g2 = await createAssessmentGroup(db, { studentId: 's01', teacherId: 'u_t1', dims: sixDims('L3') });
+    await expect(publishAssessmentGroup(db, g2)).rejects.toThrow(/已确认/);
+    const old = (await db.abilityAssessments.list()).filter(
+      (r) => (r as AbilityAssessment).assessment_group_id === g,
+    ) as AbilityAssessment[];
+    expect(old.every((r) => r.status === 'published')).toBe(true);
+    const new2 = (await db.abilityAssessments.list()).filter(
+      (r) => (r as AbilityAssessment).assessment_group_id === g2,
+    ) as AbilityAssessment[];
+    expect(new2.every((r) => r.status === 'draft')).toBe(true);
+  });
+
+  it('新建草稿 level 可为 null（不默认 L2）', async () => {
+    const g = await createAssessmentGroup(db, {
+      studentId: 's01',
+      teacherId: 'u_t1',
+      dims: ALL_DIMENSIONS.map((d) => ({ dimension: d, level: null, source: 'teacher' as const, evidence_text: '证据' })),
+    });
+    const rows = (await db.abilityAssessments.list()).filter(
+      (r) => (r as AbilityAssessment).assessment_group_id === g,
+    ) as AbilityAssessment[];
+    expect(rows.every((r) => r.level == null)).toBe(true);
+  });
+
+  it('确认前六维须主动选择等级（含 null 不可确认，保持 draft）', async () => {
+    const g = await createAssessmentGroup(db, {
+      studentId: 's01',
+      teacherId: 'u_t1',
+      dims: ALL_DIMENSIONS.map((d) => ({ dimension: d, level: null, source: 'teacher' as const, evidence_text: '证据' })),
+    });
+    await expect(confirmAssessmentGroup(db, g)).rejects.toThrow(/等级/);
+    const rows = (await db.abilityAssessments.list()).filter(
+      (r) => (r as AbilityAssessment).assessment_group_id === g,
+    ) as AbilityAssessment[];
+    expect(rows.every((r) => r.status === 'draft')).toBe(true);
+  });
+
+  it('roleHome：越权重定向按当前角色返回本人首页', () => {
+    expect(roleHome('student')).toBe('/s/home');
+    expect(roleHome('teacher')).toBe('/t/overview');
+  });
+
+  it('学员对比仅取本人最近两次 published（不混入他人/历史）', async () => {
+    const g1 = await createAssessmentGroup(db, { studentId: 's01', teacherId: 'u_t1', dims: sixDims() });
+    await confirmAssessmentGroup(db, g1);
+    await publishAssessmentGroup(db, g1);
+    const g2 = await reviseAssessmentGroup(db, g1);
+    await confirmAssessmentGroup(db, g2);
+    await publishAssessmentGroup(db, g2);
+    // 他人发布不应进入 s01 对比
+    const gx = await createAssessmentGroup(db, { studentId: 's02', teacherId: 'u_t1', dims: sixDims('L3') });
+    await confirmAssessmentGroup(db, gx);
+    await publishAssessmentGroup(db, gx);
+
+    const cmp = await getStudentComparison(db, 's01');
+    expect(cmp.currentGroup?.groupId).toBe(g2);
+    expect(cmp.previousGroup?.groupId).toBe(g1);
+    // 所有卡片当前等级取自 s01 自己的 g2（复制 L2），不是他人 L3
+    expect(cmp.cards.every((c) => c.currentLevel === 'L2')).toBe(true);
+    const basics = cmp.cards.find((c) => c.dimension === 'basics')!;
+    expect(basics.previousLevel).toBe('L2');
+    expect(basics.change).toBe(0);
+    expect(cmp.currentGroup?.groupId).not.toBe(gx);
+    expect(cmp.previousGroup?.groupId).not.toBe(gx);
   });
 });

@@ -20,6 +20,7 @@ import TodosPage from './pages/cp2/TodosPage';
 import AssessmentsDevPage from './pages/cp2/AssessmentsDevPage';
 import StudentAssessmentsDevPage from './pages/cp2/StudentAssessmentsDevPage';
 import type { ReactNode } from 'react';
+import { roleHome } from './lib/routeHome';
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { principal } = useAuth();
@@ -31,7 +32,8 @@ function RoleOnly({ role, children }: { role: 'teacher' | 'student'; children: R
   const { principal } = useAuth();
   if (!principal) return <Navigate to="/login" replace />;
   if (principal.role !== role) {
-    return <Navigate to={role === 'teacher' ? '/t/overview' : '/s/home'} replace />;
+    // 越权访问：按当前 principal.role 返回本人首页（学员→/s/home，教师→/t/overview）
+    return <Navigate to={roleHome(principal.role)} replace />;
   }
   return <>{children}</>;
 }
@@ -39,7 +41,7 @@ function RoleOnly({ role, children }: { role: 'teacher' | 'student'; children: R
 function HomeRedirect() {
   const { principal } = useAuth();
   if (!principal) return <Navigate to="/login" replace />;
-  return <Navigate to={principal.role === 'teacher' ? '/t/overview' : '/s/home'} replace />;
+  return <Navigate to={roleHome(principal.role)} replace />;
 }
 
 export default function App() {

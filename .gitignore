@@ -20,3 +20,8 @@ Thumbs.db
 # env
 .env
 .env.local
+
+# CP2.1 临时验收产物（保留本地，不入版本库）
+docs/cp2-plan/shots/
+docs/cp2-plan/accept/
+docs/cp2-plan/accept_cp21.mjs

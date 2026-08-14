@@ -1,13 +1,16 @@
 // ============================================================
 // CP2.1 完整能力评估与历史对比 — 服务层
 //
-// 设计要点（经字段提案与用户确认）：
+// 设计要点（经字段提案与用户确认；本轮为「正式开放前修正」）：
 // - 一次完整评估的六维共用一个 assessment_group_id（UUID）；同组必须属于同一学员、同一教师、同一次评估，维度不重复。
-// - 生命周期：draft → confirmed → published；已发布不可直接修改，修正时建立新组并将旧组整组 voided。
+// - 生命周期：draft → confirmed → published。
+// - 修正流程（本轮修正）：点击「修正」仅创建新的 draft，旧 published 继续有效；
+//   只有新版本发布成功时，才在同一事务内将新版设为 published、旧版（同 student 的其他 published 组）设为 voided；
+//   新版本确认/发布或事务失败期间，旧版必须继续可见。
 // - 确认/发布/作废/修正均为「整组原子」操作：借助 DataLayer.transaction，任一步失败整体回滚。
 // - 遗留 CP1 数据为单项记录（assessment_group_id = null），按 'published' 兼容，继续参与 CP1 能力摘要与单维历史，
 //   在 CP2 完整历史中标记为「历史单项记录」，绝不用时间戳伪造分组。
-// - 不调用任何外部 AI；无证据不得生成/发布分数（确认前六维须齐全且每维具备具体事实证据）。
+// - 不调用任何外部 AI；无证据不得生成/发布分数（确认前六维须齐全、每维主动选择等级且具备具体事实证据）。
 // ============================================================
 
 import type { DataLayer } from '../data/repository/DataLayer';
@@ -18,6 +21,7 @@ import type {
   AssessmentSource,
   AssessmentStatus,
 } from '../data/types';
+import { levelToNum } from './format';
 
 export const ALL_DIMENSIONS: AbilityDimension[] = [
   'basics',
@@ -30,7 +34,7 @@ export const ALL_DIMENSIONS: AbilityDimension[] = [
 
 export interface AssessmentDimInput {
   dimension: AbilityDimension;
-  level: AbilityLevel;
+  level: AbilityLevel | null; // 新建草稿允许未选择等级（null）
   source: AssessmentSource;
   evidence_id?: string | null;
   evidence_text?: string | null;
@@ -46,7 +50,7 @@ export interface CreateAssessmentGroupInput {
 /** 单个维度在某组内的快照（供 UI 渲染） */
 export interface GroupDimView {
   id: string;
-  level: AbilityLevel;
+  level: AbilityLevel | null;
   source: AssessmentSource;
   evidence_id: string | null;
   evidence_text: string | null;
@@ -73,6 +77,24 @@ export interface ListGroupsOpts {
 export interface StudentAssessmentView {
   publishedGroups: AssessmentGroupSummary[];
   legacy: AbilityAssessment[]; // 历史单项记录（CP1 遗留，未分组）
+}
+
+// 学员端六维能力卡（当前 vs 上一次 published）
+export interface AbilityCardDim {
+  dimension: AbilityDimension;
+  currentLevel: AbilityLevel | null;
+  previousLevel: AbilityLevel | null;
+  change: number | null; // 当前数值 - 上次数值（null 表示无对比基线）
+  evidence: string | null;
+  date: number | null; // 当前评估日期
+  fromLegacy: boolean; // 当前等级取自遗留基线（无分组评估）
+}
+
+export interface StudentComparison {
+  cards: AbilityCardDim[];
+  legacy: AbilityAssessment[]; // 早期单项评估（CP1 遗留）
+  currentGroup: AssessmentGroupSummary | null;
+  previousGroup: AssessmentGroupSummary | null;
 }
 
 // —— 组 ID 生成：UUID；不可用时回退稳定随机 ID ——
@@ -132,7 +154,7 @@ export async function createAssessmentGroup(
       await tx.abilityAssessments.insert({
         student_id: input.studentId,
         dimension: d.dimension,
-        level: d.level,
+        level: (d.level ?? null) as AbilityLevel,
         source: d.source,
         evidence_id: d.evidence_id ?? null,
         ai_suggested_level: d.ai_suggested_level ?? null,
@@ -158,6 +180,9 @@ export async function confirmAssessmentGroup(db: DataLayer, groupId: string): Pr
       throw new Error('仅草稿状态的评估组可确认');
     }
     if (!hasAllDimensions(rows)) throw new Error('确认前六维必须齐全');
+    if (rows.some((r) => r.level == null)) {
+      throw new Error('确认前每个维度须先主动选择等级');
+    }
     if (!rows.every(isEvidenceComplete)) throw new Error('确认前每个维度须具备具体事实证据');
     for (const r of rows) {
       await tx.abilityAssessments.update(r.id, { status: 'confirmed' } as Partial<AbilityAssessment>);
@@ -165,6 +190,10 @@ export async function confirmAssessmentGroup(db: DataLayer, groupId: string): Pr
   });
 }
 
+/**
+ * 发布：仅已确认组可发布。发布成功时在同一事务内将同 student 的「其他已发布组」（旧版）整组设为 voided，
+ * 实现「发布即原子替换」——新版本 published、旧版本 voided；任一步失败整体回滚，旧版不受影响。
+ */
 export async function publishAssessmentGroup(db: DataLayer, groupId: string): Promise<void> {
   await db.transaction(async (tx) => {
     const rows = (await tx.abilityAssessments.list({
@@ -174,6 +203,20 @@ export async function publishAssessmentGroup(db: DataLayer, groupId: string): Pr
     if (!rows.every((r) => r.status === 'confirmed')) {
       throw new Error('仅已确认状态的评估组可发布');
     }
+    const studentId = rows[0].student_id;
+    // 先作废同 student 的其他已发布组（旧版）
+    const all = (await tx.abilityAssessments.list()) as AbilityAssessment[];
+    for (const r of all) {
+      if (
+        r.assessment_group_id &&
+        r.assessment_group_id !== groupId &&
+        r.student_id === studentId &&
+        r.status === 'published'
+      ) {
+        await tx.abilityAssessments.update(r.id, { status: 'voided' } as Partial<AbilityAssessment>);
+      }
+    }
+    // 再发布新版
     for (const r of rows) {
       await tx.abilityAssessments.update(r.id, { status: 'published' } as Partial<AbilityAssessment>);
     }
@@ -192,7 +235,10 @@ export async function voidAssessmentGroup(db: DataLayer, groupId: string): Promi
   });
 }
 
-/** 修正：已发布组不可直接修改，建立新组（草稿）并保留旧组完整 voided。整组原子。 */
+/**
+ * 修正：已发布组不可直接修改。点击「修正」仅创建新的 draft 组（复制当前权威等级与证据），
+ * 旧 published 继续有效。旧组在新版本「发布成功」时才由 publishAssessmentGroup 同事务作废。
+ */
 export async function reviseAssessmentGroup(db: DataLayer, groupId: string): Promise<string> {
   const newGroupId = genGroupId();
   await db.transaction(async (tx) => {
@@ -209,7 +255,7 @@ export async function reviseAssessmentGroup(db: DataLayer, groupId: string): Pro
         student_id: r.student_id,
         dimension: r.dimension,
         // 复制当前已发布权威等级，便于教师在此基础上调整
-        level: r.teacher_confirmed_level ?? r.level,
+        level: (r.teacher_confirmed_level ?? r.level) as AbilityLevel,
         source: 'teacher',
         evidence_id: r.evidence_id,
         ai_suggested_level: r.ai_suggested_level,
@@ -221,9 +267,7 @@ export async function reviseAssessmentGroup(db: DataLayer, groupId: string): Pro
         created_by: r.created_by,
       } as unknown as AbilityAssessment);
     }
-    for (const r of oldRows) {
-      await tx.abilityAssessments.update(r.id, { status: 'voided' } as Partial<AbilityAssessment>);
-    }
+    // 注意：此处不立即作废旧组；旧组在「新版发布成功」时由 publishAssessmentGroup 同事务作废
   });
   return newGroupId;
 }
@@ -304,4 +348,45 @@ export async function getStudentAssessmentView(
     (r) => effStatus(r) === 'published',
   );
   return { publishedGroups, legacy };
+}
+
+/**
+ * 学员端六维能力卡对比：当前等级 vs 上一次 published 评估（含被本次发布替换掉的旧版）。
+ * 仅取本人数据；无分组评估时回退到遗留基线（早期单项评估）。不使用其他学员数据。
+ */
+export async function getStudentComparison(
+  db: DataLayer,
+  studentId: string,
+): Promise<StudentComparison> {
+  const allGroups = await listAssessmentGroups(db, { studentId, includeVoided: true });
+  const byTime = [...allGroups].sort((a, b) => b.createdAt - a.createdAt);
+  const currentGroup = byTime.find((g) => g.status === 'published') ?? null;
+  let previousGroup: AssessmentGroupSummary | null = null;
+  if (currentGroup) {
+    // 上一版 = 时间上早于当前的组（可能是被替换掉的 voided 旧版，或更早的 published）
+    previousGroup =
+      byTime.find(
+        (g) => g.groupId !== currentGroup.groupId && (g.status === 'voided' || g.status === 'published'),
+      ) ?? null;
+  }
+
+  const legacy = (await getLegacyAssessments(db, studentId));
+  // 每维最新遗留等级（遗留按 assessed_at 正序，取最后一条）
+  const legacyByDim: Partial<Record<AbilityDimension, AbilityAssessment>> = {};
+  for (const r of legacy) legacyByDim[r.dimension] = r;
+
+  const cards: AbilityCardDim[] = ALL_DIMENSIONS.map((dim) => {
+    const cur = currentGroup?.dims[dim] ?? null;
+    const prev = previousGroup?.dims[dim] ?? null;
+    const curLevel = cur ? cur.level : (legacyByDim[dim]?.level ?? null);
+    const fromLegacy = !cur && !!legacyByDim[dim];
+    const prevLevel = prev ? prev.level : (legacyByDim[dim]?.level ?? null);
+    const change =
+      curLevel != null && prevLevel != null ? levelToNum(curLevel) - levelToNum(prevLevel) : null;
+    const evidence = cur ? cur.evidence_text : (legacyByDim[dim]?.evidence_text ?? null);
+    const date = cur ? currentGroup!.createdAt : (legacyByDim[dim]?.assessed_at ?? null);
+    return { dimension: dim, currentLevel: curLevel, previousLevel: prevLevel, change, evidence, date, fromLegacy };
+  });
+
+  return { cards, legacy, currentGroup, previousGroup };
 }
