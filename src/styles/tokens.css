@@ -1,0 +1,47 @@
+:root {
+  /* 背景 */
+  --color-bg: #ffffff;
+  --color-surface: #faf9f7;
+  --color-surface-alt: #f4f2ee;
+
+  /* 核心橙（重点点缀） */
+  --color-accent: #f4791f;
+  --color-accent-weak: #fde8d6;
+
+  /* 文字 */
+  --color-text: #2b2b2b;
+  --color-text-secondary: #6b6b6b;
+
+  /* 边框/分隔 */
+  --color-border: #e6e4e0;
+
+  /* 状态 */
+  --color-success: #2ba471;
+  --color-success-weak: #e3f3ec;
+  --color-danger: #e5484d;
+  --color-danger-weak: #fbe7e8;
+  --color-neutral: #9b958c;
+
+  /* 字体 */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "PingFang SC", "Microsoft YaHei", sans-serif;
+
+  /* 字号（层级：标题 > 核心数字 > 卡片标题 > 正文 > 标签） */
+  --fs-title: 24px;
+  --fs-subtitle: 18px;
+  --fs-body: 15px;
+  --fs-secondary: 13px;
+
+  /* 间距 */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+
+  /* 圆角 */
+  --radius-card: 12px;
+  --radius-btn: 8px;
+  --radius-tag: 6px;
+}

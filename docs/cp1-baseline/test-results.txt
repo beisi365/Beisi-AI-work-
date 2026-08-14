@@ -1,0 +1,21 @@
+
+> ai-training-workbench@0.1.0 test
+> vitest run
+
+
+ RUN  v2.1.9 /Users/beisi-peter/Workbuddy/2026-08-13-16-35-17/ai-training-workbench
+
+ ✓ tests/architecture.test.ts (1 test) 2ms
+ ✓ tests/seed.test.ts (3 tests) 11ms
+ ✓ tests/consistency.test.ts (1 test) 7ms
+ ✓ tests/permissions.test.ts (6 tests) 14ms
+ ✓ tests/pages.test.ts (5 tests) 6ms
+ ✓ tests/business-assertions.test.ts (5 tests) 8ms
+ ✓ tests/repository.test.ts (5 tests) 20ms
+ ✓ tests/works.test.ts (18 tests) 15ms
+
+ Test Files  8 passed (8)
+      Tests  44 passed (44)
+   Start at  08:52:06
+   Duration  242ms (transform 136ms, setup 0ms, collect 348ms, tests 83ms, environment 1ms, prepare 314ms)
+
