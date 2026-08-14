@@ -1,7 +1,7 @@
 # 字段变更提案：`ability_assessments.assessment_group_id`
 
-> 类型：**最小字段变更提案（待确认）**。按"提案制"纪律提交，**未经确认不得修改 `types.ts` 或任何数据结构**。
-> 触发原因：CP2.1 已批准启动；经只读核对，`ability_assessments` 六维分多行存储且无统一批次键（见下文"现状核查"），故依用户硬纪律提交本提案并暂停结构改动。
+> 类型：**最小字段变更提案（已确认并实施）**。已与 `status`/`evidence_text` 一并落地于 `ability_assessments`，提交 `cp2-development` 分支（commit `c84f44d`）；遗留数据 `group_id` 置 `null`。
+> 触发原因：CP2.1 已批准启动；经只读核对，`ability_assessments` 六维分多行存储且无统一批次键，故依用户硬纪律先提交本提案并暂停结构改动，确认后一次性实施。
 
 ---
 

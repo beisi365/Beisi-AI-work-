@@ -1,8 +1,8 @@
 # CP2.1 能力评估与历史对比 · 完整规划
 
-> 状态：**规划交付，未编码**。CP2.0 骨架已落地（`cp2-development` 分支，提交 `97f235a`）。
-> 字段策略：**提案制**——默认复用 21 张现有表；确需新增/修改字段时，仅在本文"字段变更提案"小节提交最小提案，经确认方可实施。
-> 约束：`featureFlags.assessments` 在开发与内部测试阶段保持 `false`，不向正式导航开放；验收通过后再单独确认开启。
+> 状态：**已实现（CP2.1 编码完成）**。已提交 `cp2-development` 分支（commit `c84f44d`）；`featureFlags.assessments` 仍为 `false`，未进正式导航；内部验收经隐藏 dev 路由 `/t/dev/assessments`、`/s/dev/assessments`（`import.meta.env.DEV` 守卫）。CP1 全部 44 测试 + 新增 21 测试 = 65 项全过，tsc / build 零回归。
+> 字段策略：**提案制落地**——经 `assessment-group-id-proposal.md` 确认后，与 `status`/`evidence_text` 一次性加入 `ability_assessments`（共 3 字段），遗留数据迁移为 `published` + `group_id=null`。
+> 约束：验收通过后再单独确认开启 `featureFlags.assessments`，恢复正式导航开放。
 
 ---
 
