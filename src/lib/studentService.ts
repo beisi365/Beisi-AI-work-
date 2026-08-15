@@ -6,51 +6,21 @@
 import type { DataLayer } from '../data/repository/DataLayer';
 import type { ChangeActor } from './submissionStatusGuards';
 import type { Student, User, Enrollment } from '../data/types';
+import { ENROLLMENT_STATUS } from './enrollment';
+import { filterTeacherSystemFields } from './studentFieldGuard';
 
 export class StudentPermissionError extends Error {}
 export class StudentForbiddenError extends Error {}
 export class StudentOwnershipError extends Error {}
 
-/** 教师内部字段：绝不对学员返回，也绝不允许学员修改 */
-export const STUDENT_INTERNAL_FIELDS = ['ai_baseline', 'teacher_tags', 'teacher_observation'] as const;
-
-/** 学员本人可维护的字段白名单（不含内部字段、班级、归档状态、教师字段） */
-export const STUDENT_SELF_EDITABLE: readonly (keyof Student)[] = [
-  'nickname',
-  'self_intro',
-  'goal',
-  'weekly_hours',
-  'devices',
-  'os',
-  'office_software',
-  'ai_tools_used',
-  'can_self_service',
-  'uses_paid_ai',
-  'contact',
-];
-
-/** 系统维护字段：教师编辑也不可改（id/时间戳/归属/创建人） */
-const STUDENT_SYSTEM_FIELDS: readonly (keyof Student)[] = [
-  'id',
-  'created_at',
-  'updated_at',
-  'created_by',
-  'user_id',
-];
-
-/** 报名状态（复用 enrollment.status 开放字符串；不新增枚举字段） */
-export const ENROLLMENT_STATUS = {
-  ACTIVE: '在读',
-  TRANSFERRED: '已转班',
-} as const;
-
-function pick<T extends object>(obj: Partial<T>, keys: readonly (keyof T)[]): Partial<T> {
-  const out: Partial<T> = {};
-  for (const k of keys) {
-    if (k in obj) (out as Record<string, unknown>)[k as string] = (obj as Record<string, unknown>)[k as string];
-  }
-  return out;
-}
+// 常量与守卫类型已下沉到 studentFieldGuard / enrollment，这里仅做兼容导出，避免页面层改动
+export {
+  STUDENT_INTERNAL_FIELDS,
+  STUDENT_SELF_EDITABLE,
+  STUDENT_SYSTEM_FIELDS,
+  StudentFieldForbiddenError,
+} from './studentFieldGuard';
+export { ENROLLMENT_STATUS } from './enrollment';
 
 /** 计算下一个学员 id（基于现有 sNN 序号，避免与 seed 数据冲突） */
 async function nextStudentId(db: DataLayer): Promise<string> {
@@ -66,6 +36,11 @@ async function nextStudentId(db: DataLayer): Promise<string> {
 export function toStudentView(s: Student): Omit<Student, 'ai_baseline' | 'teacher_tags' | 'teacher_observation'> {
   const { ai_baseline, teacher_tags, teacher_observation, ...rest } = s;
   return rest;
+}
+
+/** 是否归档（archived_at 非空） */
+export function isStudentArchived(s: Student): boolean {
+  return !!s.archived_at;
 }
 
 export interface CreateStudentInput {
@@ -174,16 +149,14 @@ export async function editStudentAsTeacher(
   }
   const current = await db.students.get(studentId);
   if (!current) throw new StudentPermissionError('学员不存在');
-  const clean = pick(patch, (Object.keys(patch) as (keyof Student)[]).filter(
-    (k) => !STUDENT_SYSTEM_FIELDS.includes(k),
-  ));
+  const clean = filterTeacherSystemFields(patch as Record<string, unknown>) as Partial<Student>;
   if (!Object.keys(clean).length) return current;
   const updated = await db.students.update(studentId, clean as Partial<Student>, actor);
   await db.appendLog(actor.actorId, 'edit_student', `students:${studentId}`, clean);
   return updated;
 }
 
-/** 学员编辑本人资料：仅允许白名单字段，内部/归档/班级字段被静默忽略 */
+/** 学员编辑本人资料：整包提交由 Repository 字段守卫拦截非法字段（禁止静默剥离） */
 export async function editStudentAsSelf(
   db: DataLayer,
   studentId: string,
@@ -198,10 +171,13 @@ export async function editStudentAsSelf(
   }
   const current = await db.students.get(studentId);
   if (!current) throw new StudentPermissionError('学员不存在');
-  const clean = pick(patch, STUDENT_SELF_EDITABLE);
-  if (!Object.keys(clean).length) return current;
-  const updated = await db.students.update(studentId, clean as Partial<Student>, actor);
-  await db.appendLog(actor.actorId, 'edit_student_self', `students:${studentId}`, clean);
+  if (current.archived_at) {
+    throw new StudentForbiddenError('账号已归档，无法编辑资料，请联系老师');
+  }
+  if (!Object.keys(patch).length) return current;
+  // 整包提交给 Repository：字段守卫在写库前校验白名单，混入非法字段 → 整次失败回滚
+  const updated = await db.students.update(studentId, patch as Partial<Student>, actor);
+  await db.appendLog(actor.actorId, 'edit_student_self', `students:${studentId}`, patch);
   return updated;
 }
 

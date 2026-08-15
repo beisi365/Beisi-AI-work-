@@ -16,6 +16,8 @@ import type {
 } from '../data/types';
 import type { StudentCategory } from './format';
 import { ATTENDANCE_LABEL } from './format';
+import { ENROLLMENT_STATUS } from './enrollment';
+import { toStudentView } from './studentService';
 
 // ============================================================
 // 纯查询函数：组合 DataLayer 读取，供页面与测试复用。
@@ -209,7 +211,7 @@ export async function getStudentsWithClass(
     .map((s) => {
       // 优先取在读报名（调班后旧报名为“已转班”，不应驱动当前班级）
       const en =
-        enrollments.find((e) => e.student_id === s.id && e.status === '在读') ??
+        enrollments.find((e) => e.student_id === s.id && e.status === ENROLLMENT_STATUS.ACTIVE) ??
         enrollments.find((e) => e.student_id === s.id);
       const cid = en?.class_id;
     const classRow = classes.find((c) => c.id === cid);
@@ -251,7 +253,11 @@ export interface StudentDashboard {
   concerns: Concern[];
 }
 
-export async function getStudentDashboard(db: DataLayer, studentId: string): Promise<StudentDashboard> {
+export async function getStudentDashboard(
+  db: DataLayer,
+  studentId: string,
+  opts: { viewerRole?: 'student' | 'teacher' } = {},
+): Promise<StudentDashboard> {
   const [student, enrollments, classes, attendance, submissions, assignments, lessons, sessions, learningRecords, concerns, ability] =
     await Promise.all([
       db.students.get(studentId),
@@ -290,7 +296,7 @@ export async function getStudentDashboard(db: DataLayer, studentId: string): Pro
     lesson: lessons.find((l) => l.id === sessions.find((s) => s.id === lr.class_session_id)?.lesson_id),
   }));
   return {
-    student: student as Student,
+    student: opts.viewerRole === 'student' ? (toStudentView(student as Student) as unknown as Student) : (student as Student),
     classRow,
     attendance,
     attendanceRate: attRate,

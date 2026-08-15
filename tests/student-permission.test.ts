@@ -11,6 +11,7 @@ import {
   toStudentView,
   StudentForbiddenError,
   StudentOwnershipError,
+  StudentFieldForbiddenError,
 } from '../src/lib/studentService';
 import { canWrite } from '../src/data/repository/permissions';
 import { getStudentsWithClass } from '../src/lib/queries';
@@ -121,15 +122,17 @@ describe('学员编辑本人资料（字段白名单）', () => {
     expect(logs.some((l) => l.action === 'edit_student_self' && l.user_id === 's01')).toBe(true);
   });
 
-  it('学员试图改内部字段被静默忽略', async () => {
+  it('学员混入内部字段：整次失败且已写字段回滚', async () => {
     const before = (await db.students.get('s01'))!;
-    await editStudentAsSelf(db, 's01', studentActor, {
-      nickname: '新昵称',
-      teacher_observation: 'hack',
-      ai_baseline: 'hack',
-    } as never);
+    await expect(
+      editStudentAsSelf(db, 's01', studentActor, {
+        nickname: '新昵称',
+        teacher_observation: 'hack',
+        ai_baseline: 'hack',
+      } as never),
+    ).rejects.toThrow(StudentFieldForbiddenError);
     const after = (await db.students.get('s01'))!;
-    expect(after.nickname).toBe('新昵称');
+    expect(after.nickname).toBe(before.nickname); // 整次未保存
     expect(after.teacher_observation).toBe(before.teacher_observation);
     expect(after.ai_baseline).toBe(before.ai_baseline);
   });

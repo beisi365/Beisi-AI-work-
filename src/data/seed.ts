@@ -27,6 +27,7 @@ import type {
   AttendanceStatus,
   SubmissionStatus,
 } from './types';
+import { ENROLLMENT_STATUS } from '../lib/enrollment';
 
 // 确定性基准时间，保证演示数据可追溯、可重复
 const BASE = Date.UTC(2026, 0, 5, 9, 0, 0);
@@ -247,7 +248,7 @@ export function buildSeed(): DBShape {
       student_id: sid,
       class_id: cls,
       enroll_date: '2026-01-03',
-      status: '在读',
+      status: ENROLLMENT_STATUS.ACTIVE,
       created_at: BASE,
       updated_at: BASE,
     });
