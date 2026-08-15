@@ -231,6 +231,13 @@ export function buildSeed(): DBShape {
       can_self_service: cat !== 'behind',
       uses_paid_ai: cat === 'strong',
       notes: '',
+      // P1 新增字段默认值（向后兼容）
+      self_intro: '',
+      ai_baseline: null,
+      teacher_tags: [],
+      teacher_observation: null,
+      learning_suggestion: null,
+      archived_at: null,
       created_at: BASE,
       updated_at: BASE,
       created_by: 'u_t1',

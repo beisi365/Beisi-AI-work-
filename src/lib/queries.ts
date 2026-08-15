@@ -190,7 +190,11 @@ export interface StudentWithClass {
   completionRate: number; // 完成率：仅 completed + excellent 占比
 }
 
-export async function getStudentsWithClass(db: DataLayer): Promise<StudentWithClass[]> {
+export async function getStudentsWithClass(
+  db: DataLayer,
+  opts: { includeArchived?: boolean } = {},
+): Promise<StudentWithClass[]> {
+  const includeArchived = opts.includeArchived ?? false;
   const [students, enrollments, classes, attendance, submissions, assignments, sessions] = await Promise.all([
     db.students.list(),
     db.enrollments.list(),
@@ -200,9 +204,14 @@ export async function getStudentsWithClass(db: DataLayer): Promise<StudentWithCl
     db.assignments.list(),
     db.classSessions.list(),
   ]);
-  return students.map((s) => {
-    const en = enrollments.find((e) => e.student_id === s.id);
-    const cid = en?.class_id;
+  return students
+    .filter((s) => includeArchived || !s.archived_at)
+    .map((s) => {
+      // 优先取在读报名（调班后旧报名为“已转班”，不应驱动当前班级）
+      const en =
+        enrollments.find((e) => e.student_id === s.id && e.status === '在读') ??
+        enrollments.find((e) => e.student_id === s.id);
+      const cid = en?.class_id;
     const classRow = classes.find((c) => c.id === cid);
     // 出勤率（基于该学员真实考勤）
     const sAtt = attendance.filter((a) => a.student_id === s.id);

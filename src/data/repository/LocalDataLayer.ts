@@ -59,6 +59,22 @@ function clone<T>(v: T): T {
   return JSON.parse(JSON.stringify(v));
 }
 
+/**
+ * 学员读取归一化：旧数据（seed 的 20 名学员）不含 P1 新增字段时，
+ * 补全默认值，避免页面/服务读取 undefined 报错。
+ */
+function normalizeStudent(s: any): Student {
+  return {
+    ...s,
+    self_intro: s.self_intro ?? '',
+    ai_baseline: s.ai_baseline ?? null,
+    teacher_tags: Array.isArray(s.teacher_tags) ? s.teacher_tags : [],
+    learning_suggestion: s.learning_suggestion ?? null,
+    teacher_observation: s.teacher_observation ?? null,
+    archived_at: s.archived_at ?? null,
+  };
+}
+
 export class LocalDataLayer implements DataLayer {
   // 内部缓存：各表均为数组；用 any[] 隔离泛型索引访问的类型问题
   private cache: Record<TableName, any[]>;
@@ -138,10 +154,12 @@ export class LocalDataLayer implements DataLayer {
           });
         }
         if (q?.limit) rows = rows.slice(0, q.limit);
+        if (name === 'students') rows = rows.map((r) => normalizeStudent(r));
         return rows as R[];
       },
       async get(id: string): Promise<R | null> {
-        return clone(arr().find((r) => r.id === id) ?? null) as R | null;
+        const found = arr().find((r) => r.id === id) ?? null;
+        return (name === 'students' && found ? normalizeStudent(found) : found) as R | null;
       },
       async insert(row: NewRow<R>): Promise<R> {
         const now = Date.now();
@@ -238,6 +256,15 @@ export class LocalDataLayer implements DataLayer {
 
   async getOperationLogs(where?: Partial<OperationLog>): Promise<OperationLog[]> {
     return this.operationLogs.list({ where } as Query<OperationLog>);
+  }
+
+  /** 显式写入一条操作日志（真实操作人，禁止 system 硬编码）；事务内仅入缓存、提交时统一落盘 */
+  appendLog(user_id: string, action: string, target: string, changes: unknown): void {
+    this.log(user_id, action, target, changes);
+    if (!this.inTx) {
+      this.persist();
+      this.emit(['operation_logs']);
+    }
   }
 
   async reset(): Promise<void> {

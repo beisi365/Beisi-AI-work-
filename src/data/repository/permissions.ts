@@ -70,6 +70,10 @@ export function canWrite(
 ): boolean {
   if (p.role === 'teacher') return true;
   if (p.role !== 'student') return false;
+  // 学员可写本人学员档案行（字段级允许范围由 studentService 强制；禁止改班级/归档/内部字段）
+  if (table === 'students') {
+    return row.id === p.studentId;
+  }
   // 学员仅可写自己的作业、作品版本、学习记录
   if (table === 'submissions' || table === 'work_versions' || table === 'learning_records') {
     return row.student_id === p.studentId;

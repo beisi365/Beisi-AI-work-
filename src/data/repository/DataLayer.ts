@@ -119,6 +119,8 @@ export interface DataLayer {
 
   // —— 操作日志 ——
   getOperationLogs(where?: Partial<RowOf<'operation_logs'>>): Promise<RowOf<'operation_logs'>[]>;
+  /** 显式写入一条操作日志，user_id 为真实操作人（禁止 system 硬编码），供业务服务记录高层动作 */
+  appendLog(user_id: string, action: string, target: string, changes: unknown): void;
 
   // —— 重置 / 导入导出 ——
   reset(): Promise<void>;
