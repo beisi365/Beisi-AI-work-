@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { AppShell } from './components/AppShell';
 import LoginPage from './pages/LoginPage';
@@ -17,7 +17,7 @@ import CommunicationsPage from './pages/cp2/CommunicationsPage';
 import AlertsPage from './pages/cp2/AlertsPage';
 import TodosPage from './pages/cp2/TodosPage';
 import StudentAssessmentsPage from './pages/cp2/StudentAssessmentsPage';
-import { isCp2Enabled } from './lib/featureFlags';
+import { isCp2Enabled, isStudentPortalEnabled } from './lib/featureFlags';
 // CP2.1 内部开发页：仅 import.meta.env.DEV 下注册，不进入正式导航、不向用户开放
 import AssessmentsDevPage from './pages/cp2/AssessmentsDevPage';
 import StudentAssessmentsDevPage from './pages/cp2/StudentAssessmentsDevPage';
@@ -44,6 +44,41 @@ function HomeRedirect() {
   const { principal } = useAuth();
   if (!principal) return <Navigate to="/login" replace />;
   return <Navigate to={roleHome(principal.role)} replace />;
+}
+
+/** 学员端关闭时的提示页：显示「学员端暂未开放」并可返回教师登录 */
+function StudentPortalClosed() {
+  const navigate = useNavigate();
+  return (
+    <div className="login-wrap">
+      <div className="login-card">
+        <div className="login-head">
+          <h1>AI 培训学习工作台</h1>
+          <div className="alert-info" style={{ marginTop: 16 }}>
+            学员端暂未开放（当前为教师主导模式）。
+          </div>
+          <button
+            type="button"
+            className="btn btn--primary"
+            style={{ marginTop: 16 }}
+            onClick={() => navigate('/login')}
+          >
+            返回教师登录
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 学员端可达性守卫：置于 /s 路由最外层。
+ * 无论是否登录，关闭学员端时直接访问 /s/* 均展示关闭提示，而非静默跳登录或越权重定向。
+ * 学员端路由定义保留（页面/数据/权限守卫/测试不删除），仅通过开关控制可达性。
+ */
+function StudentPortalGuard({ children }: { children: ReactNode }) {
+  if (!isStudentPortalEnabled()) return <StudentPortalClosed />;
+  return <>{children}</>;
 }
 
 export default function App() {
@@ -83,15 +118,19 @@ export default function App() {
             {import.meta.env.DEV && <Route path="dev/assessments" element={<AssessmentsDevPage />} />}
           </Route>
 
-          {/* 学员端 */}
+          {/* 学员端：教师主导模式下默认关闭。StudentPortalGuard 置于路由最外层，
+              无论是否登录，直接访问 /s/* 均显示「学员端暂未开放」并可返回教师登录。
+              学员端路由本身不删除（保留页面/权限守卫/测试），仅通过开关控制可达性。 */}
           <Route
             path="/s"
             element={
-              <RequireAuth>
-                <RoleOnly role="student">
-                  <AppShell />
-                </RoleOnly>
-              </RequireAuth>
+              <StudentPortalGuard>
+                <RequireAuth>
+                  <RoleOnly role="student">
+                    <AppShell />
+                  </RoleOnly>
+                </RequireAuth>
+              </StudentPortalGuard>
             }
           >
             <Route path="home" element={<StudentHomePage />} />

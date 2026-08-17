@@ -122,6 +122,18 @@ export class LocalDataLayer implements DataLayer {
     };
   }
 
+  // —— 本地存储覆盖（唯一访问点，架构约束：localStorage 仅在此文件引用） ——
+  /** 经统一存储抽象读取覆盖值；node 测试环境下自动退化为内存 Map，无 localStorage 亦可用 */
+  getLocalValue(key: string): string | null {
+    return storage.getItem(key);
+  }
+  setLocalValue(key: string, value: string): void {
+    storage.setItem(key, value);
+  }
+  removeLocalValue(key: string): void {
+    storage.removeItem(key);
+  }
+
   private log(user_id: string, action: string, target: string, changes: unknown) {
     this.cache.operation_logs.push({
       id: this.genId('ol'),

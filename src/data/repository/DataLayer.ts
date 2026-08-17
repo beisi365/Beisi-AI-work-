@@ -134,4 +134,12 @@ export interface DataLayer {
   // —— 订阅（页面刷新） ——
   /** 订阅若干表的变化，返回取消函数；实现内部用事件总线通知 */
   subscribe(tables: TableName[], listener: () => void): () => void;
+
+  // —— 本地存储覆盖（统一访问点，键值读写仅在 LocalDataLayer 内落到浏览器存储） ——
+  /** 读取本地存储中的覆盖值（如功能开关显式覆盖），无则返回 null */
+  getLocalValue(key: string): string | null;
+  /** 写入本地存储覆盖值 */
+  setLocalValue(key: string, value: string): void;
+  /** 删除本地存储覆盖值 */
+  removeLocalValue(key: string): void;
 }

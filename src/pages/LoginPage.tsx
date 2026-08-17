@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/ui';
 import type { Principal, Student, Teacher, User } from '../data/types';
 import { CATEGORY_LABEL, type StudentCategory } from '../lib/format';
+import { isStudentPortalEnabled } from '../lib/featureFlags';
 
 interface StuView extends Student {
   user?: User;
@@ -18,6 +19,7 @@ export default function LoginPage() {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [students, setStudents] = useState<StuView[]>([]);
   const [blocked, setBlocked] = useState<string | null>(null);
+  const studentPortalEnabled = isStudentPortalEnabled();
 
   useEffect(() => {
     (async () => {
@@ -102,23 +104,34 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="role-block">
-          <h3>以学员身份进入（示例账号）</h3>
-          <div className="role-grid">
-            {students.map((s) => (
-              <button key={s.id} className="role-opt" onClick={() => enterAsStudent(s)}>
-                <Avatar name={s.nickname} size={36} />
-                <div>
-                  <div className="ro-name">{s.nickname}</div>
-                  <div className="ro-sub">{CATEGORY_LABEL[s.category]}</div>
-                </div>
-              </button>
-            ))}
+        {studentPortalEnabled ? (
+          <div className="role-block">
+            <h3>以学员身份进入（示例账号）</h3>
+            <div className="role-grid">
+              {students.map((s) => (
+                <button key={s.id} className="role-opt" onClick={() => enterAsStudent(s)}>
+                  <Avatar name={s.nickname} size={36} />
+                  <div>
+                    <div className="ro-name">{s.nickname}</div>
+                    <div className="ro-sub">{CATEGORY_LABEL[s.category]}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="role-block">
+            <h3>学员端</h3>
+            <div className="alert-info">
+              学员端暂未开放（当前为教师主导模式）。如需启用，请在开发/测试环境或经授权后开启学员端开关。
+            </div>
+          </div>
+        )}
 
         <div className="login-note">
-          提示：学员端仅能看到本人数据，看不到其他学员、教师内部备注与 AI 草稿。教师端可见全部班级与学员。
+          {studentPortalEnabled
+            ? '提示：学员端仅能看到本人数据，看不到其他学员、教师内部备注与 AI 草稿。教师端可见全部班级与学员。'
+            : '当前为教师主导模式，仅支持教师登录与教学管理。'}
         </div>
           </>
         )}
