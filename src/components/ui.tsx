@@ -32,6 +32,7 @@ export function Card({
   children,
   className,
   padded = true,
+  style,
 }: {
   title?: ReactNode;
   desc?: ReactNode;
@@ -39,9 +40,10 @@ export function Card({
   children: ReactNode;
   className?: string;
   padded?: boolean;
+  style?: CSSProperties;
 }) {
   return (
-    <section className={`card${className ? ` ${className}` : ''}`}>
+    <section className={`card${className ? ` ${className}` : ''}`} style={style}>
       {(title || actions) && (
         <div className="card-head">
           <div>
@@ -76,8 +78,8 @@ export function StatTile({
   );
 }
 
-export function Tag({ tone = 'neutral', children }: { tone?: Tone; children: ReactNode }) {
-  return <span className={`tag tag--${tone}`}>{children}</span>;
+export function Tag({ tone = 'neutral', children, style }: { tone?: Tone; children: ReactNode; style?: CSSProperties }) {
+  return <span className={`tag tag--${tone}`} style={style}>{children}</span>;
 }
 
 export function ProgressBar({
@@ -204,4 +206,86 @@ export function Button({
       {children}
     </button>
   );
+}
+
+// ============================================================
+// 对话框（新增 / 编辑 / 调班 / 归档确认共用）
+// 移动端自动变为底部抽屉式弹出，避免遮挡底部导航
+// ============================================================
+export function Modal({
+  open,
+  title,
+  onClose,
+  children,
+  footer,
+  width = 540,
+}: {
+  open: boolean;
+  title?: ReactNode;
+  onClose: () => void;
+  children: ReactNode;
+  footer?: ReactNode;
+  width?: number;
+}) {
+  if (!open) return null;
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div
+        className="modal"
+        style={{ maxWidth: width }}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal
+      >
+        {title && (
+          <div className="modal-head">
+            <h3 className="modal-title">{title}</h3>
+            <button type="button" className="modal-close" onClick={onClose} aria-label="关闭">
+              ×
+            </button>
+          </div>
+        )}
+        <div className="modal-body">{children}</div>
+        {footer && <div className="modal-foot">{footer}</div>}
+      </div>
+    </div>
+  );
+}
+
+/** 表单字段包装：统一 label / 必填星号 / 错误与提示 */
+export function FormField({
+  label,
+  required,
+  error,
+  hint,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  error?: string;
+  hint?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className={`form-field${error ? ' form-field--error' : ''}`}>
+      <label className="form-label">
+        {label}
+        {required && <span className="req">*</span>}
+      </label>
+      {children}
+      {hint && <div className="form-hint">{hint}</div>}
+      {error && <div className="form-error">{error}</div>}
+    </div>
+  );
+}
+
+/** 轻量提示条（成功 / 警告），固定顶部居中 */
+export function Toast({
+  tone = 'success',
+  children,
+}: {
+  tone?: 'success' | 'danger' | 'neutral';
+  children: ReactNode;
+}) {
+  return <div className={`toast toast--${tone}`}>{children}</div>;
 }

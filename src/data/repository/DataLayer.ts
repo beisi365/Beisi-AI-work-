@@ -34,7 +34,7 @@ export interface Repository<T extends { id: string }> {
   /** 取单条 */
   get(id: string): Promise<T | null>;
   /** 新增：自动维护时间戳与 created_by，并落操作日志 */
-  insert(row: NewRow<T>): Promise<T>;
+  insert(row: NewRow<T>, actor?: ChangeActor): Promise<T>;
   /** 局部更新：刷新 updated_at，写操作日志；actor 明确操作者，submissions 状态变更会被守卫校验 */
   update(id: string, patch: Partial<T>, actor?: ChangeActor): Promise<T>;
   /** 删除（按表删除策略校验 cascade/restrict/setnull） */
@@ -119,6 +119,8 @@ export interface DataLayer {
 
   // —— 操作日志 ——
   getOperationLogs(where?: Partial<RowOf<'operation_logs'>>): Promise<RowOf<'operation_logs'>[]>;
+  /** 显式写入一条操作日志，user_id 为真实操作人（禁止 system 硬编码），供业务服务记录高层动作 */
+  appendLog(user_id: string, action: string, target: string, changes: unknown): void;
 
   // —— 重置 / 导入导出 ——
   reset(): Promise<void>;

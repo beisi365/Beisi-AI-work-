@@ -34,7 +34,12 @@ import type {
   OverviewStats,
   DifficultyRow,
 } from './DataLayer';
-import { assertSubmissionStatusChange, type ChangeActor } from '../../lib/submissionStatusGuards';
+import { assertSubmissionStatusChange, ForbiddenError, type ChangeActor } from '../../lib/submissionStatusGuards';
+import {
+  assertStudentSelfEdit,
+  filterTeacherSystemFields,
+  STUDENT_PRODUCED_TABLES,
+} from '../../lib/studentFieldGuard';
 import { canRead, canWrite, type PermContext } from './permissions';
 import { buildSeed, SEED_TABLE_NAMES, levelToNum } from '../seed';
 
@@ -57,6 +62,22 @@ const storage: {
 
 function clone<T>(v: T): T {
   return JSON.parse(JSON.stringify(v));
+}
+
+/**
+ * 学员读取归一化：旧数据（seed 的 20 名学员）不含 P1 新增字段时，
+ * 补全默认值，避免页面/服务读取 undefined 报错。
+ */
+function normalizeStudent(s: any): Student {
+  return {
+    ...s,
+    self_intro: s.self_intro ?? '',
+    ai_baseline: s.ai_baseline ?? null,
+    teacher_tags: Array.isArray(s.teacher_tags) ? s.teacher_tags : [],
+    learning_suggestion: s.learning_suggestion ?? null,
+    teacher_observation: s.teacher_observation ?? null,
+    archived_at: s.archived_at ?? null,
+  };
 }
 
 export class LocalDataLayer implements DataLayer {
@@ -138,12 +159,26 @@ export class LocalDataLayer implements DataLayer {
           });
         }
         if (q?.limit) rows = rows.slice(0, q.limit);
+        if (name === 'students') rows = rows.map((r) => normalizeStudent(r));
         return rows as R[];
       },
       async get(id: string): Promise<R | null> {
-        return clone(arr().find((r) => r.id === id) ?? null) as R | null;
+        const found = arr().find((r) => r.id === id) ?? null;
+        return (name === 'students' && found ? normalizeStudent(found) : found) as R | null;
       },
-      async insert(row: NewRow<R>): Promise<R> {
+      async insert(row: NewRow<R>, actor?: ChangeActor): Promise<R> {
+        // 归档守卫：已归档学员本人不得新增作品版本 / 作业提交 / 学习记录。
+        // 仅当 actor 为 student 且目标表为其产出表、且对应学员已归档时拒绝；
+        // 教师 / system / 无 actor 的调用不受影响（如 seed、服务内部写入）。
+        if (actor && actor.actorRole === 'student' && (STUDENT_PRODUCED_TABLES as readonly string[]).includes(name)) {
+          const sid = (row as Record<string, unknown>).student_id as string | undefined;
+          if (sid) {
+            const stu = self.cache.students.find((r) => r.id === sid) as Record<string, unknown> | undefined;
+            if (stu && stu.archived_at) {
+              throw new ForbiddenError('账号已归档，无法新增作品或学习数据');
+            }
+          }
+        }
         const now = Date.now();
         const full = {
           ...(row as object),
@@ -170,6 +205,20 @@ export class LocalDataLayer implements DataLayer {
             patchAny.status as SubmissionStatus,
             actor,
           );
+        }
+        // 学员资料字段守卫（第三层防线延伸）：写库前强制校验，非法字段整次失败。
+        if (name === 'students' && actor) {
+          if (actor.actorRole === 'student') {
+            // 所有权 + 白名单：抛错即中止，已写字段一并回滚
+            assertStudentSelfEdit(id, actor, patchAny);
+          } else if (actor.actorRole === 'teacher') {
+            // 教师禁止通过普通资料编辑篡改系统字段（主键/时间戳/归属）
+            const filtered = filterTeacherSystemFields(patchAny);
+            for (const k of Object.keys(patchAny)) {
+              if (!(k in filtered)) delete patchAny[k];
+            }
+          }
+          // system 角色：seed / 迁移 / 重置专用，不做字段限制
         }
         const updated = { ...arr()[idx], ...patch, id, updated_at: Date.now() } as R;
         arr()[idx] = updated;
@@ -238,6 +287,15 @@ export class LocalDataLayer implements DataLayer {
 
   async getOperationLogs(where?: Partial<OperationLog>): Promise<OperationLog[]> {
     return this.operationLogs.list({ where } as Query<OperationLog>);
+  }
+
+  /** 显式写入一条操作日志（真实操作人，禁止 system 硬编码）；事务内仅入缓存、提交时统一落盘 */
+  appendLog(user_id: string, action: string, target: string, changes: unknown): void {
+    this.log(user_id, action, target, changes);
+    if (!this.inTx) {
+      this.persist();
+      this.emit(['operation_logs']);
+    }
   }
 
   async reset(): Promise<void> {

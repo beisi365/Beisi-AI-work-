@@ -17,6 +17,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [students, setStudents] = useState<StuView[]>([]);
+  const [blocked, setBlocked] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -47,6 +48,11 @@ export default function LoginPage() {
   };
 
   const enterAsStudent = (s: StuView) => {
+    // 归档账号禁止登录：展示提示页，不进入系统
+    if (s.archived_at) {
+      setBlocked(s.nickname);
+      return;
+    }
     const p: Principal = {
       userId: s.user_id ?? '',
       role: 'student',
@@ -59,6 +65,23 @@ export default function LoginPage() {
   return (
     <div className="login-wrap">
       <div className="login-card">
+        {blocked ? (
+          <div className="login-head">
+            <h1>AI 培训学习工作台</h1>
+            <div className="alert-warn" style={{ marginTop: 16 }}>
+              学员「{blocked}」的账号已归档，暂时无法登录。如需恢复访问，请联系老师。
+            </div>
+            <button
+              type="button"
+              className="btn btn--primary"
+              style={{ marginTop: 16 }}
+              onClick={() => setBlocked(null)}
+            >
+              返回登录
+            </button>
+          </div>
+        ) : (
+          <>
         <div className="login-head">
           <h1>AI 培训学习工作台</h1>
           <p>演示登录 · 选择身份进入（仅角色切换，未接入真实账号认证）</p>
@@ -97,6 +120,8 @@ export default function LoginPage() {
         <div className="login-note">
           提示：学员端仅能看到本人数据，看不到其他学员、教师内部备注与 AI 草稿。教师端可见全部班级与学员。
         </div>
+          </>
+        )}
       </div>
     </div>
   );

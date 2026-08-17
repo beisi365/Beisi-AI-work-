@@ -73,6 +73,13 @@ export interface Student {
   can_self_service: boolean;
   uses_paid_ai: boolean;
   notes: string;
+  // —— P1 学员管理新增字段（向后兼容：旧数据读取时按默认值归一化） ——
+  self_intro: string; // 学员自我介绍：学员本人可编辑，教师可查看/协助编辑
+  ai_baseline: string | null; // 教师内部：AI 基线分析，仅教师可见/可编辑
+  teacher_tags: string[]; // 教师内部：学员档案标签，默认 []
+  teacher_observation: string | null; // 教师内部：长期观察记录
+  learning_suggestion: string | null; // 教师给出的学习建议：学员可见只读
+  archived_at: string | null; // 归档时间；null = 在读，有时间值 = 已归档（不另设 status/is_active）
   created_at: number;
   updated_at: number;
   created_by: string;
