@@ -3,7 +3,7 @@
 > vitest run
 
 
- RUN  v2.1.9 /Users/beisi-peter/Workbuddy/2026-08-13-16-35-17/ai-training-workbench
+ RUN  v2.1.9 <PROJECT_ROOT>
 
  ✓ tests/architecture.test.ts (1 test) 2ms
  ✓ tests/seed.test.ts (3 tests) 11ms

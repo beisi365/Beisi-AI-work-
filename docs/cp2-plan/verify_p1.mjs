@@ -16,7 +16,11 @@ import { spawn } from 'node:child_process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(__dirname, '..', '..');
-const CHROME = process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const CHROME = process.env.CHROME_BIN || '';
+if (!CHROME) {
+  console.error('[verify_p1] 未设置 CHROME_BIN，请设置该环境变量指向 Chrome 可执行文件后再运行');
+  process.exit(1);
+}
 const PORT = 4174;
 const BASE = `http://127.0.0.1:${PORT}`;
 const OUT = path.join(projectRoot, 'screenshots-p1') + path.sep;

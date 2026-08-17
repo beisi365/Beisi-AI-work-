@@ -3,9 +3,13 @@
 import puppeteer from 'puppeteer-core';
 import fs from 'node:fs';
 
-const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const CHROME = process.env.CHROME_BIN || '';
+if (!CHROME) {
+  console.error('[verify_cp21] 未设置 CHROME_BIN，请设置该环境变量指向 Chrome 可执行文件后再运行');
+  process.exit(1);
+}
 const BASE = 'http://localhost:5173';
-const ROOT = '/Users/beisi-peter/WorkBuddy/2026-08-13-16-35-17/ai-training-workbench';
+const ROOT = new URL('../..', import.meta.url).pathname;
 const OUT = `${ROOT}/docs/cp2-plan/shots`;
 fs.mkdirSync(OUT, { recursive: true });
 

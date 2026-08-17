@@ -2,9 +2,13 @@
 import puppeteer from 'puppeteer-core';
 import fs from 'node:fs';
 
-const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const CHROME = process.env.CHROME_BIN || '';
+if (!CHROME) {
+  console.error('[verify_build] 未设置 CHROME_BIN，请设置该环境变量指向 Chrome 可执行文件后再运行');
+  process.exit(1);
+}
 const BASE = 'http://localhost:4173';
-const OUT = '/Users/beisi-peter/WorkBuddy/2026-08-13-16-35-17/ai-training-workbench/docs/cp2-plan/shots';
+const OUT = new URL('./shots', import.meta.url).pathname;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const log = (...a) => console.log('[build-verify]', ...a);
 const rec = [];
