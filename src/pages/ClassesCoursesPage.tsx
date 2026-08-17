@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext';
 import { useRepository } from '../hooks/useRepository';
 import {
   Button,
@@ -9,29 +11,71 @@ import {
   ProgressBar,
   SectionTitle,
   Tag,
+  Toast,
 } from '../components/ui';
 import { getClassesWithStats } from '../lib/queries';
-import { ABILITY_LABEL, rateText } from '../lib/format';
+import { ABILITY_LABEL, formatDate, rateText, SESSION_LABEL } from '../lib/format';
+import { ENROLLMENT_STATUS } from '../lib/enrollment';
+import { AttendanceRegisterModal, AttendanceHistoryModal } from '../components/StudentModals';
 
 export default function ClassesCoursesPage() {
   const navigate = useNavigate();
+  const { principal } = useAuth();
+  const actor = { actorId: principal?.teacherId ?? '', actorRole: 'teacher' as const };
+  const [toast, setToast] = useState('');
+  const flash = (m: string) => {
+    setToast(m);
+    window.setTimeout(() => setToast(''), 2600);
+  };
+
+  // 课次与出勤弹窗状态
+  const [attOpen, setAttOpen] = useState(false);
+  const [attClassId, setAttClassId] = useState('');
+  const [attSessionId, setAttSessionId] = useState('');
+  const [histOpen, setHistOpen] = useState(false);
+  const [histClassId, setHistClassId] = useState('');
+  const [histSessionId, setHistSessionId] = useState<string | null>(null);
+
+  const openRegister = (classId: string, sessionId: string) => {
+    setAttClassId(classId);
+    setAttSessionId(sessionId);
+    setAttOpen(true);
+  };
+  const openHistory = (classId: string, sessionId: string | null) => {
+    setHistClassId(classId);
+    setHistSessionId(sessionId);
+    setHistOpen(true);
+  };
+
   const { data, loading } = useRepository(
-    ['classes', 'enrollments', 'attendance', 'submissions', 'assignments', 'class_sessions', 'courses', 'lessons'],
+    ['classes', 'enrollments', 'attendance', 'submissions', 'assignments', 'class_sessions', 'courses', 'lessons', 'students'],
     async (db) => {
-      const [classes, courses, lessons] = await Promise.all([
+      const [classes, courses, lessons, sessions, attendance, enrollments, students] = await Promise.all([
         getClassesWithStats(db),
         db.courses.list(),
         db.lessons.list(),
+        db.classSessions.list(),
+        db.attendance.list(),
+        db.enrollments.list(),
+        db.students.list(),
       ]);
-      return { classes, courses, lessons };
+      return { classes, courses, lessons, sessions, attendance, enrollments, students };
     },
   );
 
   if (loading || !data) return <LoadingState />;
 
+  const lessonById = new Map(data.lessons.map((l) => [l.id, l]));
+  const studentById = new Map(data.students.map((s) => [s.id, s]));
+  const enrolledOfClass = (classId: string) =>
+    data.enrollments
+      .filter((e) => e.class_id === classId && e.status === ENROLLMENT_STATUS.ACTIVE)
+      .map((e) => studentById.get(e.student_id))
+      .filter((s): s is NonNullable<typeof s> => !!s && !s.archived_at);
+
   return (
     <>
-      <PageHeader title="班级与课程" desc="查看各班学情概览，以及课程的整体安排与课次能力维度" />
+      <PageHeader title="班级与课程" desc="查看各班学情概览、课次出勤登记，以及课程的整体安排与课次能力维度" />
 
       <Grid min={300}>
         {data.classes.map((c) => (
@@ -95,6 +139,78 @@ export default function ClassesCoursesPage() {
         ))}
       </Grid>
 
+      <SectionTitle>课次与出勤</SectionTitle>
+      {data.classes.map((c) => {
+        const sessionsOfClass = data.sessions
+          .filter((s) => s.class_id === c.classRow.id)
+          .sort((a, b) => b.scheduled_start - a.scheduled_start);
+        const enrolled = enrolledOfClass(c.classRow.id);
+        return (
+          <Card
+            key={`sess-${c.classRow.id}`}
+            title={c.classRow.name}
+            desc={`共 ${sessionsOfClass.length} 次课 · 在读 ${enrolled.length} 人`}
+          >
+            {sessionsOfClass.length === 0 ? (
+              <div className="empty-compact">该班级暂无课次</div>
+            ) : (
+              <table className="ltable">
+                <thead>
+                  <tr>
+                    <th>日期</th>
+                    <th>课次</th>
+                    <th>状态</th>
+                    <th>考勤进度</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sessionsOfClass.map((s) => {
+                    const recorded = data.attendance.filter((a) => a.class_session_id === s.id).length;
+                    return (
+                      <tr key={s.id}>
+                        <td>{formatDate(s.scheduled_start)}</td>
+                        <td>
+                          <strong>{lessonById.get(s.lesson_id)?.title ?? '课程'}</strong>
+                        </td>
+                        <td>
+                          <Tag tone={s.status === 'done' ? 'neutral' : s.status === 'scheduled' ? 'accent' : 'weak'}>
+                            {SESSION_LABEL[s.status] ?? s.status}
+                          </Tag>
+                        </td>
+                        <td className="muted">
+                          已登记 {recorded}/{enrolled.length}
+                        </td>
+                        <td>
+                          <div className="row-actions">
+                            <Button variant="primary" size="sm" onClick={() => openRegister(c.classRow.id, s.id)}>
+                              登记出勤
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => openHistory(c.classRow.id, s.id)}>
+                              查看出勤
+                            </Button>
+                            <span title="规划中">
+                              <Button variant="ghost" size="sm" disabled>
+                                教学记录
+                              </Button>
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+            <div style={{ marginTop: 12 }}>
+              <Button variant="ghost" size="sm" onClick={() => openHistory(c.classRow.id, null)}>
+                本班出勤历史与累计出勤率
+              </Button>
+            </div>
+          </Card>
+        );
+      })}
+
       <SectionTitle>课程与课次</SectionTitle>
       {data.courses.map((co) => {
         const ls = data.lessons
@@ -136,6 +252,22 @@ export default function ClassesCoursesPage() {
           </Card>
         );
       })}
+
+      <AttendanceRegisterModal
+        open={attOpen}
+        onClose={() => setAttOpen(false)}
+        actor={actor}
+        defaultClassId={attClassId}
+        defaultSessionId={attSessionId}
+        onSaved={() => flash('出勤已登记')}
+      />
+      <AttendanceHistoryModal
+        open={histOpen}
+        onClose={() => setHistOpen(false)}
+        classId={histClassId}
+        sessionId={histSessionId}
+      />
+      {toast && <Toast tone="success">{toast}</Toast>}
     </>
   );
 }

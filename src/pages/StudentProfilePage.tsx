@@ -249,6 +249,7 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
                 <tr>
                   <th>日期</th>
                   <th>状态</th>
+                  {isTeacher && <th>备注</th>}
                   {isTeacher && <th>操作</th>}
                 </tr>
               </thead>
@@ -259,6 +260,9 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
                     <td>
                       <Tag tone={ATTENDANCE_TONE[a.status]}>{ATTENDANCE_LABEL[a.status]}</Tag>
                     </td>
+                    {isTeacher && (
+                      <td>{a.note ? a.note : <span className="muted">—</span>}</td>
+                    )}
                     {isTeacher && (
                       <td>
                         <select

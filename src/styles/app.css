@@ -1361,6 +1361,17 @@
   border-color: var(--color-danger);
 }
 
+/* —— P2.2 课程与出勤：考勤备注输入 & 累计统计 chips —— */
+.att-note-input {
+  margin-top: 6px;
+}
+.att-summary-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 4px;
+}
+
 /* —— 教师内部档案区（仅教师可见） —— */
 .internal-zone {
   border: 1px dashed var(--color-accent);

@@ -7,7 +7,15 @@
 import { useEffect, useState } from 'react';
 import { db } from '../data/repository';
 import type { ChangeActor } from '../lib/submissionStatusGuards';
-import type { Attendance, AttendanceStatus, ClassRow, ClassSession, Enrollment, Student } from '../data/types';
+import type {
+  Attendance,
+  AttendanceStatus,
+  ClassRow,
+  ClassSession,
+  Enrollment,
+  Lesson,
+  Student,
+} from '../data/types';
 import {
   archiveStudent,
   createStudent,
@@ -17,9 +25,10 @@ import {
   transferClass,
   type CreateStudentInput,
 } from '../lib/studentService';
-import { ATTENDANCE_LABEL, formatDate } from '../lib/format';
+import { ATTENDANCE_LABEL, formatDate, rateText, SESSION_LABEL } from '../lib/format';
 import { ENROLLMENT_STATUS } from '../lib/enrollment';
-import { Button, FormField, Modal } from './ui';
+import { attendanceSummary } from '../lib/queries';
+import { Button, Card, FormField, Modal, Tag } from './ui';
 
 // —— 学员本人可改字段（与 STUDENT_SELF_EDITABLE 保持一致，仅用于表单渲染） ——
 const SELF_FIELDS: { key: keyof Student; label: string; kind: 'text' | 'textarea' | 'number' | 'bool' }[] = [
@@ -557,15 +566,21 @@ export function AttendanceRegisterModal({
   onClose,
   actor,
   onSaved,
+  defaultClassId,
+  defaultSessionId,
 }: {
   open: boolean;
   onClose: () => void;
   actor: ChangeActor;
   onSaved?: () => void;
+  /** 从课程与出勤页具体场次直接打开时，预置班级与场次 */
+  defaultClassId?: string;
+  defaultSessionId?: string;
 }) {
-  const [classId, setClassId] = useState('');
-  const [sessionId, setSessionId] = useState('');
+  const [classId, setClassId] = useState(defaultClassId ?? '');
+  const [sessionId, setSessionId] = useState(defaultSessionId ?? '');
   const [statusMap, setStatusMap] = useState<Record<string, AttendanceStatus>>({});
+  const [noteMap, setNoteMap] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
   const [all, setAll] = useState<{
@@ -578,6 +593,11 @@ export function AttendanceRegisterModal({
 
   useEffect(() => {
     if (!open) return;
+    // 每次打开按默认值重置选择（支持从具体场次直接打开）
+    setClassId(defaultClassId ?? '');
+    setSessionId(defaultSessionId ?? '');
+    setStatusMap({});
+    setNoteMap({});
     let alive = true;
     (async () => {
       const [classes, enrollments, sessions, attendance, students] = await Promise.all([
@@ -593,7 +613,7 @@ export function AttendanceRegisterModal({
     return () => {
       alive = false;
     };
-  }, [open]);
+  }, [open, defaultClassId, defaultSessionId]);
 
   const classes = all?.classes ?? [];
   const enrollments = all?.enrollments ?? [];
@@ -610,21 +630,31 @@ export function AttendanceRegisterModal({
     .map((e) => students.find((s) => s.id === e.student_id))
     .filter((s): s is Student => !!s && !s.archived_at);
 
-  // 切换班级 / 场次时，依据已有考勤预填（默认 present）
+  // 切换班级 / 场次时，依据已有考勤预填（默认 present；备注按已有值回填）
   useEffect(() => {
     if (!sessionId) {
       setStatusMap({});
+      setNoteMap({});
       return;
     }
-    const existing = new Map(
+    const attStatus = new Map(
       attendance.filter((a) => a.class_session_id === sessionId).map((a) => [a.student_id, a.status]),
     );
-    const init: Record<string, AttendanceStatus> = {};
-    for (const st of enrolledStudents) init[st.id] = existing.get(st.id) ?? 'present';
-    setStatusMap(init);
-    // 仅在班级 / 场次变化时重新预填
+    const attNote = new Map(
+      attendance.filter((a) => a.class_session_id === sessionId).map((a) => [a.student_id, a.note]),
+    );
+    const initStatus: Record<string, AttendanceStatus> = {};
+    const initNote: Record<string, string> = {};
+    for (const st of enrolledStudents) {
+      initStatus[st.id] = attStatus.get(st.id) ?? 'present';
+      initNote[st.id] = attNote.get(st.id) ?? '';
+    }
+    setStatusMap(initStatus);
+    setNoteMap(initNote);
+    // 班级 / 场次变化，或异步加载的考勤数据就绪后，都需要按最新考勤预填
+    // （避免重新打开弹窗时仍读取上一次打开前的旧快照）
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, classId]);
+  }, [sessionId, classId, all]);
 
   const submit = async () => {
     setErr('');
@@ -639,18 +669,19 @@ export function AttendanceRegisterModal({
       await db.transaction(async (tx) => {
         for (const st of enrolledStudents) {
           const status = statusMap[st.id] ?? 'present';
+          const note = noteMap[st.id] ?? '';
           const existing = attendance.find(
             (a) => a.class_session_id === sessionId && a.student_id === st.id,
           );
           if (existing) {
-            await tx.attendance.update(existing.id, { status });
+            await tx.attendance.update(existing.id, { status, note });
           } else {
             await tx.attendance.insert({
               class_session_id: sessionId,
               student_id: st.id,
               status,
               time,
-              note: '',
+              note,
               created_by: actor.actorId,
             } as never);
           }
@@ -742,6 +773,12 @@ export function AttendanceRegisterModal({
                         </label>
                       ))}
                     </div>
+                    <input
+                      className="input att-note-input"
+                      placeholder="备注（可选）"
+                      value={noteMap[st.id] ?? ''}
+                      onChange={(e) => setNoteMap((p) => ({ ...p, [st.id]: e.target.value }))}
+                    />
                   </div>
                 ))}
               </div>
@@ -750,6 +787,156 @@ export function AttendanceRegisterModal({
         )}
 
         {err && <div className="form-error" style={{ marginTop: 8 }}>{err}</div>}
+      </div>
+    </Modal>
+  );
+}
+
+// ============================================================
+// 班级出勤历史（教师）：按班级（可选具体场次）查看考勤记录与累计出勤率
+// 复用 attendance 表 + attendanceSummary；不新建状态枚举，不新增数据模型。
+// ============================================================
+export function AttendanceHistoryModal({
+  open,
+  onClose,
+  classId,
+  sessionId,
+}: {
+  open: boolean;
+  onClose: () => void;
+  classId: string;
+  sessionId?: string | null;
+}) {
+  const [all, setAll] = useState<{
+    classes: ClassRow[];
+    sessions: ClassSession[];
+    attendance: Attendance[];
+    students: Student[];
+    enrollments: Enrollment[];
+    lessons: Lesson[];
+  } | null>(null);
+
+  useEffect(() => {
+    if (!open || !classId) return;
+    let alive = true;
+    (async () => {
+      const [classes, sessions, attendance, students, enrollments, lessons] = await Promise.all([
+        db.classes.list(),
+        db.classSessions.list(),
+        db.attendance.list(),
+        db.students.list(),
+        db.enrollments.list(),
+        db.lessons.list(),
+      ]);
+      if (!alive) return;
+      setAll({ classes, sessions, attendance, students, enrollments, lessons });
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [open, classId]);
+
+  const classes = all?.classes ?? [];
+  const sessions = all?.sessions ?? [];
+  const attendance = all?.attendance ?? [];
+  const students = all?.students ?? [];
+  const enrollments = all?.enrollments ?? [];
+  const lessons = all?.lessons ?? [];
+
+  const classRow = classes.find((c) => c.id === classId);
+  const lessonById = new Map(lessons.map((l) => [l.id, l]));
+
+  const enrolledStudents: Student[] = enrollments
+    .filter((e) => e.class_id === classId && e.status === ENROLLMENT_STATUS.ACTIVE)
+    .map((e) => students.find((s) => s.id === e.student_id))
+    .filter((s): s is Student => !!s && !s.archived_at);
+
+  const sessionsOfClass = sessions
+    .filter((s) => s.class_id === classId && (!sessionId || s.id === sessionId))
+    .sort((a, b) => b.scheduled_start - a.scheduled_start);
+
+  const sessionIds = new Set(sessionsOfClass.map((s) => s.id));
+  const relevantAtt = attendance.filter((a) => sessionIds.has(a.class_session_id));
+  const summary = attendanceSummary(relevantAtt);
+  const total = relevantAtt.length;
+  const rate = total ? (summary.present + summary.late) / total : 0;
+
+  const attBySession = new Map<string, Map<string, Attendance>>();
+  for (const a of relevantAtt) {
+    if (!attBySession.has(a.class_session_id)) attBySession.set(a.class_session_id, new Map());
+    attBySession.get(a.class_session_id)!.set(a.student_id, a);
+  }
+
+  return (
+    <Modal
+      open={open}
+      title="班级出勤历史"
+      onClose={onClose}
+      width={760}
+      footer={<Button variant="ghost" onClick={onClose}>关闭</Button>}
+    >
+      <div className="stack">
+        <div className="spread">
+          <strong>{classRow?.name ?? '—'}</strong>
+          <span className="muted">累计出勤率 {rateText(rate)}</span>
+        </div>
+        <div className="att-summary-chips">
+          {(['present', 'late', 'leave', 'absent'] as AttendanceStatus[]).map((s) => (
+            <Tag key={s} tone={s === 'absent' ? 'danger' : s === 'late' ? 'weak' : 'neutral'}>
+              {ATTENDANCE_LABEL[s]} {summary[s]}
+            </Tag>
+          ))}
+        </div>
+
+        {sessionsOfClass.length === 0 ? (
+          <div className="empty-compact">该班级暂无场次</div>
+        ) : (
+          sessionsOfClass.map((s) => {
+            const attMap = attBySession.get(s.id) ?? new Map<string, Attendance>();
+            const recorded = attMap.size;
+            return (
+              <Card
+                key={s.id}
+                title={`${formatDate(s.scheduled_start)} · ${lessonById.get(s.lesson_id)?.title ?? '课程'}`}
+                desc={`${SESSION_LABEL[s.status] ?? s.status} · 已登记 ${recorded}/${enrolledStudents.length}`}
+              >
+                {enrolledStudents.length === 0 ? (
+                  <div className="empty-compact">该班级暂无在读学员</div>
+                ) : (
+                  <table className="ltable">
+                    <thead>
+                      <tr>
+                        <th>学员</th>
+                        <th>出勤</th>
+                        <th>备注</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {enrolledStudents.map((st) => {
+                        const a = attMap.get(st.id);
+                        return (
+                          <tr key={st.id}>
+                            <td>{st.nickname}</td>
+                            <td>
+                              {a ? (
+                                <Tag tone={a.status === 'absent' ? 'danger' : a.status === 'late' ? 'weak' : 'neutral'}>
+                                  {ATTENDANCE_LABEL[a.status]}
+                                </Tag>
+                              ) : (
+                                <span className="muted">未登记</span>
+                              )}
+                            </td>
+                            <td className="muted">{a?.note ? a.note : '—'}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </Card>
+            );
+          })
+        )}
       </div>
     </Modal>
   );
