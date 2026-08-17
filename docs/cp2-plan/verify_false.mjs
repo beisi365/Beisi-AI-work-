@@ -17,7 +17,11 @@ import puppeteer from 'puppeteer-core';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, '..', '..');
-const CHROME = process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const CHROME = process.env.CHROME_PATH || '';
+if (!CHROME) {
+  console.error('[verify_false] 未设置 CHROME_PATH，请设置该环境变量指向 Chrome 可执行文件后再运行');
+  process.exit(1);
+}
 const OUT = path.join(PROJECT_ROOT, 'docs/cp2-plan/accept/formal');
 const FF_PATH = path.join(PROJECT_ROOT, 'src/lib/featureFlags.ts');
 fs.mkdirSync(OUT, { recursive: true });

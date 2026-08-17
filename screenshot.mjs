@@ -2,7 +2,11 @@ import puppeteer from 'puppeteer-core';
 import fs from 'node:fs';
 import { readFileSync } from 'node:fs';
 
-const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const CHROME = process.env.CHROME_BIN || '';
+if (!CHROME) {
+  console.error('[screenshot] 未设置 CHROME_BIN，请设置该环境变量指向 Chrome 可执行文件后再运行');
+  process.exit(1);
+}
 const BASE = 'http://127.0.0.1:4173';
 const OUT = new URL('./screenshots/', import.meta.url).pathname;
 fs.mkdirSync(OUT, { recursive: true });
