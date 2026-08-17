@@ -19,9 +19,15 @@ import {
   ProgressBar,
   Tag,
   Tabs,
+  Toast,
 } from '../components/ui';
 import { Sparkline } from '../components/charts';
 import { getStudentDashboard, type StudentDashboard } from '../lib/queries';
+import {
+  StudentArchiveModal,
+  StudentEditModal,
+  StudentTransferModal,
+} from '../components/StudentModals';
 import {
   ABILITY_LABEL,
   ABILITY_ORDER,
@@ -59,6 +65,19 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
   const isTeacher = principal?.role === 'teacher';
   const [tab, setTab] = useState<TabKey>('overview');
 
+  // —— P1 交互弹窗状态 ——
+  const [editOpen, setEditOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const [toast, setToast] = useState('');
+  const actor = isTeacher
+    ? ({ actorId: principal?.teacherId ?? '', actorRole: 'teacher' } as const)
+    : ({ actorId: principal?.studentId ?? '', actorRole: 'student' } as const);
+  const flash = (m: string) => {
+    setToast(m);
+    window.setTimeout(() => setToast(''), 2600);
+  };
+
   const { data, loading } = useRepository(
     [
       'students',
@@ -87,6 +106,7 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
 
   if (loading || !data) return <LoadingState />;
   const { dash, workVersions, aiAnalysis, teacherReviews } = data;
+  const archived = !!dash.student.archived_at;
 
   const tabItems: { key: TabKey; label: string }[] = [
     { key: 'overview', label: '概览' },
@@ -107,10 +127,32 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
               <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
                 ← 返回列表
               </Button>
+              <Button size="sm" variant="ghost" onClick={() => setEditOpen(true)}>
+                编辑档案
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setTransferOpen(true)}>
+                调班
+              </Button>
+              <Button
+                size="sm"
+                variant={archived ? 'primary' : 'danger'}
+                onClick={() => setArchiveOpen(true)}
+              >
+                {archived ? '恢复' : '归档'}
+              </Button>
               <Tag tone={CATEGORY_TONE[inferCat(sid)]}>{CATEGORY_LABEL[inferCat(sid)]}</Tag>
             </>
           ) : (
-            <Tag tone="neutral">我的档案</Tag>
+            <>
+              {archived ? (
+                <Tag tone="neutral">账号已归档</Tag>
+              ) : (
+                <Button size="sm" variant="primary" onClick={() => setEditOpen(true)}>
+                  编辑我的资料
+                </Button>
+              )}
+              <Tag tone="neutral">我的档案</Tag>
+            </>
           )
         }
       />
@@ -136,6 +178,9 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
             <Field label="使用 AI 工具">{dash.student.ai_tools_used}</Field>
             <Field label="自助能力">{dash.student.can_self_service ? '可自助' : '需协助'}</Field>
             <Field label="付费 AI">{dash.student.uses_paid_ai ? '是' : '否'}</Field>
+            {dash.student.self_intro ? (
+              <Field label="自我介绍">{dash.student.self_intro}</Field>
+            ) : null}
           </Card>
           <Card title="学习概况">
             <Field label="出勤率">
@@ -163,6 +208,33 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
             )}
           </Card>
           </div>
+
+          {isTeacher ? (
+            <Card
+              title="教师内部档案"
+              desc="仅教师可见，不对学员展示，也不允许学员修改"
+              className="internal-card"
+              style={{ marginTop: 'var(--sp-4)' }}
+            >
+              <div className="internal-head">
+                <span className="internal-badge">仅教师可见</span>
+              </div>
+              <Field label="AI 基线分析">{dash.student.ai_baseline || '—'}</Field>
+              <Field label="学员档案标签">{(dash.student.teacher_tags || []).join('、') || '—'}</Field>
+              <Field label="长期观察记录">{dash.student.teacher_observation || '—'}</Field>
+              <Field label="学习建议（学员可见，作为后续学习建议）">
+                {dash.student.learning_suggestion || '—'}
+              </Field>
+            </Card>
+          ) : (
+            <Card
+              title="学习建议"
+              desc="由教师给出，学员可见只读"
+              style={{ marginTop: 'var(--sp-4)' }}
+            >
+              <Field label="学习建议">{dash.student.learning_suggestion || '暂无教师建议'}</Field>
+            </Card>
+          )}
         </>
       )}
 
@@ -215,6 +287,7 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
         <WorksTab
           sid={sid}
           isTeacher={isTeacher}
+          archived={archived}
           principal={principal}
           submissions={dash.submissions}
           workVersions={workVersions}
@@ -248,6 +321,38 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
           />
         </Card>
       )}
+
+      {!isTeacher && archived && (
+        <Card title="账号已归档" style={{ marginTop: 'var(--sp-4)' }}>
+          <div className="alert-warn">
+            该账号已归档，暂时无法编辑资料或产生新的作品/学习数据。如需恢复访问，请联系老师。
+          </div>
+        </Card>
+      )}
+
+      <StudentEditModal
+        open={editOpen}
+        student={dash.student}
+        isTeacher={isTeacher}
+        actor={actor}
+        onClose={() => setEditOpen(false)}
+        onSaved={() => flash(isTeacher ? '档案已更新' : '资料已保存')}
+      />
+      <StudentTransferModal
+        open={transferOpen}
+        student={dash.student}
+        actor={actor}
+        onClose={() => setTransferOpen(false)}
+        onSaved={() => flash('调班成功')}
+      />
+      <StudentArchiveModal
+        open={archiveOpen}
+        student={dash.student}
+        actor={actor}
+        onClose={() => setArchiveOpen(false)}
+        onSaved={() => flash('操作成功')}
+      />
+      {toast && <Toast tone="success">{toast}</Toast>}
     </>
   );
 }
@@ -258,6 +363,7 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
 function WorksTab({
   sid,
   isTeacher,
+  archived,
   principal,
   submissions,
   workVersions,
@@ -266,6 +372,7 @@ function WorksTab({
 }: {
   sid: string;
   isTeacher: boolean;
+  archived: boolean;
   principal: Principal | null;
   submissions: NonNullable<Awaited<ReturnType<typeof getStudentDashboard>>['submissions']>;
   workVersions: WorkVersion[];
@@ -369,7 +476,7 @@ function WorksTab({
                 </div>
               )}
 
-              {canStudentEdit && (
+              {canStudentEdit && !archived && (
                 <div>
                   {addingFor === s.id ? (
                     <div className="form-row">
@@ -403,6 +510,11 @@ function WorksTab({
                       + 新增作品版本
                     </Button>
                   )}
+                </div>
+              )}
+              {canStudentEdit && archived && (
+                <div className="muted" style={{ fontSize: 'var(--fs-secondary)' }}>
+                  账号已归档，暂不能新增作品版本
                 </div>
               )}
             </div>
