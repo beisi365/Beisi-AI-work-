@@ -809,6 +809,47 @@
   .mtab--active {
     color: var(--color-accent);
   }
+
+  /* “更多”抽屉：次级导航与危险操作集中于此，避免主栏＞5项挤压变形 */
+  .more-sheet-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 20;
+    display: flex;
+    align-items: flex-end;
+  }
+  .more-sheet {
+    width: 100%;
+    background: var(--color-bg);
+    border-top: 1px solid var(--color-border);
+    border-radius: 16px 16px 0 0;
+    padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .more-sheet-title {
+    font-weight: 700;
+    padding: 4px 8px 8px;
+  }
+  .more-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 8px;
+    border-radius: 10px;
+    color: var(--color-text);
+    font-size: 15px;
+    text-decoration: none;
+  }
+  .more-item:hover,
+  .more-item:active {
+    background: var(--color-surface);
+  }
+  .more-item--danger {
+    color: var(--color-danger);
+  }
 }
 
 @media (max-width: 560px) {
@@ -1463,4 +1504,36 @@
     bottom: 0;
     background: var(--color-bg);
   }
+}
+
+/* —— 教师优先视图卡片（学员档案概览顶部，仅教师可见） —— */
+.teacher-focus-card .focus-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--sp-4);
+}
+.focus-item {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-btn);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--color-surface);
+}
+.focus-label {
+  font-weight: 600;
+  font-size: var(--fs-secondary);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--sp-2);
+}
+.focus-value {
+  font-size: var(--fs-body);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+.focus-records {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--fs-secondary);
 }

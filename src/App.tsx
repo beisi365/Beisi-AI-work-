@@ -12,6 +12,7 @@ import TimelinePage from './pages/TimelinePage';
 import CourseMapPage from './pages/CourseMapPage';
 import PracticeRoomPage from './pages/PracticeRoomPage';
 import AssessmentsPage from './pages/cp2/AssessmentsPage';
+import { Cp2Placeholder } from './pages/cp2/Cp2Placeholder';
 import ReviewsPage from './pages/cp2/ReviewsPage';
 import CommunicationsPage from './pages/cp2/CommunicationsPage';
 import AlertsPage from './pages/cp2/AlertsPage';
@@ -108,14 +109,19 @@ export default function App() {
             <Route path="timeline" element={<TimelinePage />} />
             <Route path="course-map" element={<CourseMapPage />} />
             <Route path="course-map/:lessonId" element={<PracticeRoomPage />} />
-            {/* CP2 模块路由：导航显示与可访问性均由功能开关控制。assessments 已开放，其余待各 CP2.x 阶段实现 */}
-            {isCp2Enabled('assessments') && <Route path="assessments" element={<AssessmentsPage />} />}
+            {/* 考核中心：导航一级入口（能力评估统一命名）。CP2.1 已实现真实能力评估页，
+                故始终注册路由指向真实 AssessmentsPage，避免导航死链；reports/settings 仍为规划占位。
+                注意：此路由暴露的是已构建的评估页，并非 P2.1 范围外的“正式考核”工作流。 */}
+            <Route path="assessments" element={<AssessmentsPage />} />
             <Route path="reviews" element={<ReviewsPage />} />
             <Route path="communications" element={<CommunicationsPage />} />
             <Route path="alerts" element={<AlertsPage />} />
             <Route path="todos" element={<TodosPage />} />
             {/* 仅开发环境：CP2.1 能力评估内部测试路由（featureFlags.assessments 仍为 false，不进正式导航） */}
             {import.meta.env.DEV && <Route path="dev/assessments" element={<AssessmentsDevPage />} />}
+            {/* P2.1 规划中模块：进入一级导航但内容为「规划中」占位，阶段验收后替换真实实现 */}
+            <Route path="reports" element={<Cp2Placeholder title="成长报告" phase="P2.3 之后" />} />
+            <Route path="settings" element={<Cp2Placeholder title="系统设置" phase="P2.4 之后" />} />
           </Route>
 
           {/* 学员端：教师主导模式下默认关闭。StudentPortalGuard 置于路由最外层，
@@ -145,6 +151,9 @@ export default function App() {
             <Route path="communications" element={<CommunicationsPage />} />
             {/* 仅开发环境：学员只读能力评估内部测试路由 */}
             {import.meta.env.DEV && <Route path="dev/assessments" element={<StudentAssessmentsDevPage />} />}
+            {/* 兜底：未定义的 /s/* 子路径。关闭态由外层 StudentPortalGuard 拦截显示关闭页；
+                开启态则重定向到学员首页，避免空白页。 */}
+            <Route path="*" element={<Navigate to="/s/home" replace />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

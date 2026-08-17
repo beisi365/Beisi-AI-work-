@@ -165,6 +165,7 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
 
       {tab === 'overview' && (
         <>
+          {isTeacher && <TeacherFocusCard dash={dash} />}
           <LearningSummary dash={dash} />
           <div className="two-col" style={{ marginTop: 'var(--sp-4)' }}>
           <Card title="基本信息">
@@ -741,6 +742,158 @@ function RecordsTimeline({
         );
       })}
     </div>
+  );
+}
+
+// ============================================================
+// 教师优先视图卡片（仅教师可见，置于概览顶部）
+// 优先展示：当前班级与状态、最近一次出勤、最近一次作品、最近一次考核、
+// 当前主要困难、下一步教学建议、待处理事项、最近三条成长记录。
+// 全部基于真实数据；无数据项显示「暂无」，不生成模拟判断。
+// ============================================================
+function TeacherFocusCard({ dash }: { dash: StudentDashboard }) {
+  const { classRow, student, attendance, submissions, ability, concerns, learningRecords, sessions, lessons } = dash;
+
+  // 当前班级与状态
+  const archived = !!student.archived_at;
+  const statusText = archived ? '已归档' : '在读';
+  const statusTone: 'neutral' | 'success' = archived ? 'neutral' : 'success';
+
+  // 最近一次出勤（按考勤时间倒序）
+  const lastAtt = [...attendance].sort((a, b) => b.time - a.time)[0];
+
+  // 最近一次作品（提交，按创建时间倒序）
+  const lastSub = [...submissions].sort((a, b) => (b.created_at ?? 0) - (a.created_at ?? 0))[0];
+
+  // 最近一次考核（六维已评估维度计数）
+  const assessedDims = ABILITY_ORDER.filter((d) => ability[d]);
+  const abilityText = assessedDims.length ? `已评估 ${assessedDims.length}/6 维` : '暂无考核';
+
+  // 当前主要困难：开放关注事项 + 近期课堂问题（真实数据）
+  const concernTexts = concerns.map((c) => c.type);
+  const recentProblems = learningRecords
+    .filter((r) => r.problems && r.problems.trim())
+    .slice(0, 2)
+    .map((r) => r.problems);
+  const difficulties = [...concernTexts, ...recentProblems];
+
+  // 下一步教学建议：最近一条非空建议
+  const nextSug = [...learningRecords]
+    .filter((r) => r.next_suggestion && r.next_suggestion.trim())
+    .sort((a, b) => (b.created_at ?? 0) - (a.created_at ?? 0))[0]?.next_suggestion;
+
+  // 待处理事项：待提交作业 + 开放关注事项
+  const pendingSubs = submissions.filter((s) => s.status === 'pending').length;
+  const todoParts: string[] = [];
+  if (pendingSubs > 0) todoParts.push(`${pendingSubs} 份作业待提交`);
+  if (concerns.length > 0) todoParts.push(`${concerns.length} 项关注事项`);
+  const todoText = todoParts.length ? todoParts.join('；') : '暂无待处理事项';
+
+  // 最近三条成长记录（按场次时间倒序）
+  const sessionMap = new Map(sessions.map((s) => [s.id, s]));
+  const lessonMap = new Map(lessons.map((l) => [l.id, l]));
+  const courseTitle = (sid: string) => {
+    const s = sessionMap.get(sid);
+    return s ? lessonMap.get(s.lesson_id)?.title ?? '课程' : '课程';
+  };
+  const recentRecords = [...learningRecords]
+    .sort((a, b) => {
+      const sa = sessionMap.get(a.class_session_id)?.scheduled_start ?? a.created_at ?? 0;
+      const sb = sessionMap.get(b.class_session_id)?.scheduled_start ?? b.created_at ?? 0;
+      return sb - sa;
+    })
+    .slice(0, 3);
+
+  const Item = ({ label, children }: { label: string; children: React.ReactNode }) => (
+    <div className="focus-item">
+      <div className="focus-label">{label}</div>
+      <div className="focus-value">{children}</div>
+    </div>
+  );
+
+  return (
+    <Card
+      title="教师优先视图"
+      desc="仅教师可见：快速掌握该学员当前教学状态与下一步动作"
+      className="teacher-focus-card"
+    >
+      <div className="focus-grid">
+        <Item label="当前班级与状态">
+          <div className="row" style={{ gap: 8 }}>
+            <span>{classRow?.name ?? '未分班'}</span>
+            <Tag tone={statusTone}>{statusText}</Tag>
+          </div>
+          {classRow?.schedule && <div className="muted" style={{ fontSize: 'var(--fs-secondary)' }}>{classRow.schedule}</div>}
+        </Item>
+
+        <Item label="最近一次出勤">
+          {lastAtt ? (
+            <div className="row" style={{ gap: 8 }}>
+              <Tag tone={ATTENDANCE_TONE[lastAtt.status]}>{ATTENDANCE_LABEL[lastAtt.status]}</Tag>
+              <span className="muted">{formatDate(lastAtt.time)}</span>
+            </div>
+          ) : (
+            <span className="muted">暂无出勤记录</span>
+          )}
+        </Item>
+
+        <Item label="最近一次作品">
+          {lastSub ? (
+            <div>
+              <div>{lastSub.assignment?.title ?? '作业'}</div>
+              <div className="row" style={{ gap: 6, marginTop: 4 }}>
+                <Tag tone={SUBMISSION_TONE[lastSub.status]}>{SUBMISSION_LABEL[lastSub.status]}</Tag>
+                {lastSub.lesson?.title && <span className="muted" style={{ fontSize: 'var(--fs-secondary)' }}>{lastSub.lesson.title}</span>}
+              </div>
+            </div>
+          ) : (
+            <span className="muted">暂无作品</span>
+          )}
+        </Item>
+
+        <Item label="最近一次考核">
+          <Tag tone={assessedDims.length ? 'accent' : 'neutral'}>{abilityText}</Tag>
+        </Item>
+
+        <Item label="当前主要困难">
+          {difficulties.length === 0 ? (
+            <span className="muted">暂无记录</span>
+          ) : (
+            <ul className="summary-list">
+              {difficulties.slice(0, 4).map((d, i) => (
+                <li key={i}>{d}</li>
+              ))}
+            </ul>
+          )}
+        </Item>
+
+        <Item label="下一步教学建议">
+          {nextSug ? nextSug : <span className="muted">暂无建议</span>}
+        </Item>
+
+        <Item label="待处理事项">{todoText}</Item>
+
+        <Item label="最近三条成长记录">
+          {recentRecords.length === 0 ? (
+            <span className="muted">暂无成长记录</span>
+          ) : (
+            <ul className="focus-records">
+              {recentRecords.map((r) => (
+                <li key={r.id}>
+                  <span className="muted" style={{ fontSize: 'var(--fs-secondary)' }}>
+                    {sessionMap.get(r.class_session_id) ? formatDate(sessionMap.get(r.class_session_id)!.scheduled_start) : '—'}
+                  </span>
+                  <span style={{ marginLeft: 6 }}>{courseTitle(r.class_session_id)}</span>
+                  <span className="muted" style={{ marginLeft: 6, fontSize: 'var(--fs-secondary)' }}>
+                    预习 {r.prep} · 完成度 {r.exercise_completion}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Item>
+      </div>
+    </Card>
   );
 }
 

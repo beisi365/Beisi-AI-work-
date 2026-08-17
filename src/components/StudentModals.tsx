@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react';
 import { db } from '../data/repository';
 import type { ChangeActor } from '../lib/submissionStatusGuards';
-import type { ClassRow, Student } from '../data/types';
+import type { Attendance, AttendanceStatus, ClassRow, ClassSession, Enrollment, Student } from '../data/types';
 import {
   archiveStudent,
   createStudent,
@@ -17,6 +17,8 @@ import {
   transferClass,
   type CreateStudentInput,
 } from '../lib/studentService';
+import { ATTENDANCE_LABEL, formatDate } from '../lib/format';
+import { ENROLLMENT_STATUS } from '../lib/enrollment';
 import { Button, FormField, Modal } from './ui';
 
 // —— 学员本人可改字段（与 STUDENT_SELF_EDITABLE 保持一致，仅用于表单渲染） ——
@@ -542,6 +544,385 @@ export function StudentArchiveModal({
         </div>
       )}
       {err && <div className="form-error" style={{ marginTop: 8 }}>{err}</div>}
+    </Modal>
+  );
+}
+
+// ============================================================
+// 登记出勤（教师快捷操作）：选班级 → 选场次 → 为在读学员批量登记考勤
+// 已存在考勤则更新，否则插入；整组操作放入事务，任一步失败整体回滚。
+// ============================================================
+export function AttendanceRegisterModal({
+  open,
+  onClose,
+  actor,
+  onSaved,
+}: {
+  open: boolean;
+  onClose: () => void;
+  actor: ChangeActor;
+  onSaved?: () => void;
+}) {
+  const [classId, setClassId] = useState('');
+  const [sessionId, setSessionId] = useState('');
+  const [statusMap, setStatusMap] = useState<Record<string, AttendanceStatus>>({});
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState('');
+  const [all, setAll] = useState<{
+    classes: ClassRow[];
+    enrollments: Enrollment[];
+    sessions: ClassSession[];
+    attendance: Attendance[];
+    students: Student[];
+  } | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    (async () => {
+      const [classes, enrollments, sessions, attendance, students] = await Promise.all([
+        db.classes.list(),
+        db.enrollments.list(),
+        db.classSessions.list(),
+        db.attendance.list(),
+        db.students.list(),
+      ]);
+      if (!alive) return;
+      setAll({ classes, enrollments, sessions, attendance, students });
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [open]);
+
+  const classes = all?.classes ?? [];
+  const enrollments = all?.enrollments ?? [];
+  const sessions = all?.sessions ?? [];
+  const attendance = all?.attendance ?? [];
+  const students = all?.students ?? [];
+
+  const sessionsOfClass = sessions
+    .filter((s) => s.class_id === classId)
+    .sort((a, b) => b.scheduled_start - a.scheduled_start);
+
+  const enrolledStudents: Student[] = enrollments
+    .filter((e) => e.class_id === classId && e.status === ENROLLMENT_STATUS.ACTIVE)
+    .map((e) => students.find((s) => s.id === e.student_id))
+    .filter((s): s is Student => !!s && !s.archived_at);
+
+  // 切换班级 / 场次时，依据已有考勤预填（默认 present）
+  useEffect(() => {
+    if (!sessionId) {
+      setStatusMap({});
+      return;
+    }
+    const existing = new Map(
+      attendance.filter((a) => a.class_session_id === sessionId).map((a) => [a.student_id, a.status]),
+    );
+    const init: Record<string, AttendanceStatus> = {};
+    for (const st of enrolledStudents) init[st.id] = existing.get(st.id) ?? 'present';
+    setStatusMap(init);
+    // 仅在班级 / 场次变化时重新预填
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, classId]);
+
+  const submit = async () => {
+    setErr('');
+    if (!classId || !sessionId) {
+      setErr('请先选择班级与场次');
+      return;
+    }
+    setSaving(true);
+    try {
+      const session = sessions.find((s) => s.id === sessionId);
+      const time = session?.scheduled_start ?? Date.now();
+      await db.transaction(async (tx) => {
+        for (const st of enrolledStudents) {
+          const status = statusMap[st.id] ?? 'present';
+          const existing = attendance.find(
+            (a) => a.class_session_id === sessionId && a.student_id === st.id,
+          );
+          if (existing) {
+            await tx.attendance.update(existing.id, { status });
+          } else {
+            await tx.attendance.insert({
+              class_session_id: sessionId,
+              student_id: st.id,
+              status,
+              time,
+              note: '',
+              created_by: actor.actorId,
+            } as never);
+          }
+        }
+      });
+      onSaved?.();
+      onClose();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : '登记失败');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal
+      open={open}
+      title="登记出勤"
+      onClose={onClose}
+      width={640}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={saving}>
+            取消
+          </Button>
+          <Button variant="primary" onClick={submit} disabled={saving}>
+            {saving ? '处理中…' : '保存考勤'}
+          </Button>
+        </>
+      }
+    >
+      <div className="stack">
+        <FormField label="选择班级" required>
+          <select
+            className="select"
+            value={classId}
+            onChange={(e) => {
+              setClassId(e.target.value);
+              setSessionId('');
+            }}
+          >
+            <option value="">请选择班级</option>
+            {classes.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </FormField>
+
+        {classId && (
+          <FormField label="选择场次" required>
+            <select className="select" value={sessionId} onChange={(e) => setSessionId(e.target.value)}>
+              <option value="">请选择场次</option>
+              {sessionsOfClass.length === 0 && <option value="" disabled>该班级暂无场次</option>}
+              {sessionsOfClass.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {formatDate(s.scheduled_start)} ·{' '}
+                  {s.status === 'done' ? '已上' : s.status === 'scheduled' ? '待上' : s.status === 'ongoing' ? '进行中' : '已取消'}
+                </option>
+              ))}
+            </select>
+          </FormField>
+        )}
+
+        {sessionId && (
+          <div>
+            <div className="sub-label">在读学员（共 {enrolledStudents.length} 人）</div>
+            {enrolledStudents.length === 0 ? (
+              <div className="empty-compact">该班级暂无在读学员</div>
+            ) : (
+              <div className="att-register-list">
+                {enrolledStudents.map((st) => (
+                  <div key={st.id} className="att-register-row">
+                    <span className="att-register-name">{st.nickname}</span>
+                    <div className="att-register-opts">
+                      {(['present', 'late', 'leave', 'absent'] as AttendanceStatus[]).map((s) => (
+                        <label
+                          key={s}
+                          className={`att-opt att-opt--${s}${statusMap[st.id] === s ? ' att-opt--on' : ''}`}
+                        >
+                          <input
+                            type="radio"
+                            name={`att-${st.id}`}
+                            checked={statusMap[st.id] === s}
+                            onChange={() => setStatusMap((p) => ({ ...p, [st.id]: s }))}
+                          />
+                          {ATTENDANCE_LABEL[s]}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {err && <div className="form-error" style={{ marginTop: 8 }}>{err}</div>}
+      </div>
+    </Modal>
+  );
+}
+
+// ============================================================
+// 添加教师观察（教师快捷操作）：选学员 → 选场次 → 记录 teacher_observation / next_suggestion
+// 写入 learning_records，真实落地；不绑定作业，作为课堂/阶段观察留痕。
+// ============================================================
+export function TeacherObservationModal({
+  open,
+  onClose,
+  actor,
+  onSaved,
+}: {
+  open: boolean;
+  onClose: () => void;
+  actor: ChangeActor;
+  onSaved?: () => void;
+}) {
+  const [studentId, setStudentId] = useState('');
+  const [sessionId, setSessionId] = useState('');
+  const [observation, setObservation] = useState('');
+  const [suggestion, setSuggestion] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState('');
+  const [all, setAll] = useState<{
+    students: Student[];
+    enrollments: Enrollment[];
+    sessions: ClassSession[];
+  } | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    (async () => {
+      const [students, enrollments, sessions] = await Promise.all([
+        db.students.list(),
+        db.enrollments.list(),
+        db.classSessions.list(),
+      ]);
+      if (!alive) return;
+      setAll({ students, enrollments, sessions });
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [open]);
+
+  const activeStudents = (all?.students ?? []).filter((s) => !s.archived_at);
+  const activeClassOf = (sid: string) => {
+    const en = (all?.enrollments ?? []).find(
+      (e) => e.student_id === sid && e.status === ENROLLMENT_STATUS.ACTIVE,
+    );
+    return en?.class_id ?? '';
+  };
+  const sessionsOfStudent = studentId
+    ? (all?.sessions ?? [])
+        .filter((s) => s.class_id === activeClassOf(studentId))
+        .sort((a, b) => b.scheduled_start - a.scheduled_start)
+    : [];
+
+  const submit = async () => {
+    setErr('');
+    if (!studentId) {
+      setErr('请选择学员');
+      return;
+    }
+    if (!sessionId) {
+      setErr('请选择关联场次');
+      return;
+    }
+    if (!observation.trim() && !suggestion.trim()) {
+      setErr('请至少填写一项观察或下一步建议');
+      return;
+    }
+    setSaving(true);
+    try {
+      await db.learningRecords.insert({
+        student_id: studentId,
+        class_session_id: sessionId,
+        prep: '—',
+        exercise_completion: '—',
+        tools: '',
+        key_prompts: '',
+        problems: '',
+        need_help: false,
+        teacher_observation: observation.trim(),
+        ai_analysis_ref: null,
+        next_suggestion: suggestion.trim(),
+        submission_id: null,
+        created_by: actor.actorId,
+      } as never);
+      onSaved?.();
+      onClose();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : '保存失败');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal
+      open={open}
+      title="添加教师观察"
+      onClose={onClose}
+      width={560}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={saving}>
+            取消
+          </Button>
+          <Button variant="primary" onClick={submit} disabled={saving}>
+            {saving ? '处理中…' : '保存观察'}
+          </Button>
+        </>
+      }
+    >
+      <div className="stack">
+        <FormField label="选择学员" required>
+          <select
+            className="select"
+            value={studentId}
+            onChange={(e) => {
+              setStudentId(e.target.value);
+              setSessionId('');
+            }}
+          >
+            <option value="">请选择学员</option>
+            {activeStudents.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.nickname}
+              </option>
+            ))}
+          </select>
+        </FormField>
+
+        {studentId && (
+          <FormField label="关联场次" required hint="观察将记录到该学员所在班级的某次课（作为课堂/阶段观察留痕）">
+            <select className="select" value={sessionId} onChange={(e) => setSessionId(e.target.value)}>
+              <option value="">请选择场次</option>
+              {sessionsOfStudent.length === 0 && <option value="" disabled>该学员所在班级暂无场次</option>}
+              {sessionsOfStudent.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {formatDate(s.scheduled_start)} ·{' '}
+                  {s.status === 'done' ? '已上' : s.status === 'scheduled' ? '待上' : s.status === 'ongoing' ? '进行中' : '已取消'}
+                </option>
+              ))}
+            </select>
+          </FormField>
+        )}
+
+        <FormField label="观察记录" hint="教师内部可见，记录课堂表现、状态与判断">
+          <textarea
+            className="textarea"
+            value={observation}
+            onChange={(e) => setObservation(e.target.value)}
+            placeholder="例如：本节课思路清晰，但提示词拆解仍需加强…"
+          />
+        </FormField>
+
+        <FormField label="下一步教学建议" hint="给该学员的后续学习方向">
+          <textarea
+            className="textarea"
+            value={suggestion}
+            onChange={(e) => setSuggestion(e.target.value)}
+            placeholder="例如：下周重点练习需求拆解与结构化提示词…"
+          />
+        </FormField>
+
+        {err && <div className="form-error" style={{ marginTop: 8 }}>{err}</div>}
+      </div>
     </Modal>
   );
 }

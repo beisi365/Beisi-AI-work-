@@ -1,4 +1,4 @@
-import type { DataLayer } from '../data/repository/DataLayer';
+import type { DataLayer, DifficultyRow } from '../data/repository/DataLayer';
 import type {
   Student,
   ClassRow,
@@ -18,6 +18,7 @@ import type { StudentCategory } from './format';
 import { ATTENDANCE_LABEL } from './format';
 import { ENROLLMENT_STATUS } from './enrollment';
 import { toStudentView } from './studentService';
+import { SEED_NOW } from '../data/seed';
 
 // ============================================================
 // 纯查询函数：组合 DataLayer 读取，供页面与测试复用。
@@ -400,4 +401,226 @@ export async function getAbilityHistory(
   dimension: string,
 ): Promise<AbilityAssessment[]> {
   return db.getAbilityHistory(studentId, dimension as never);
+}
+
+// ============================================================
+// 教师教学总览（P2.1）：聚合首页所需的真实查询
+// 所有数字均来自真实数据；无数据条件返回空数组/0，由页面渲染空状态。
+// 演示时间基准使用 SEED_NOW（种子数据时间线的“现在”），使日期相关模块在演示中可见。
+// ============================================================
+function startOfDay(ts: number): number {
+  const d = new Date(ts);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+export interface TeacherOverview {
+  classes: ClassStat[];
+  totalStudents: number;
+  avgAttendanceRate: number;
+  avgSubmissionRate: number;
+  avgCompletionRate: number;
+  /** 待批作业：学员已提交、教师尚未评定（to_review） */
+  pendingGrading: number;
+  focusStudents: FocusStudent[];
+  /** 近期课程安排：已排课（scheduled）场次 */
+  upcomingSessions: ClassSession[];
+  difficulties: DifficultyRow[];
+  /** 今日课程：与演示“现在”同一自然日 */
+  todaySessions: ClassSession[];
+  /** 待登记出勤：已上场次中，考勤记录数 < 在读学员数 */
+  attendanceToRegister: { session: ClassSession; className: string; lessonTitle: string; missing: number }[];
+  /** 待完成考核：能力评估中尚未发布（draft/confirmed） */
+  pendingAssessments: number;
+  /** 最近新增学员：演示“现在”前 30 天内创建 */
+  recentStudents: Student[];
+  /** 连续缺席学员：最长连续 absent 段 ≥ 2 */
+  consecutiveAbsent: { student: Student; classRow: ClassRow | undefined; count: number }[];
+  /** 长期未提交作品学员：存在“已上场次作业”仍为 pending */
+  longNoSubmission: { student: Student; classRow: ClassRow | undefined; pendingCount: number }[];
+  /** 即将结业班级：演示“现在”起 30 天内结课且在进行中 */
+  graduatingClasses: { classRow: ClassRow; studentCount: number; daysLeft: number }[];
+}
+
+export async function getTeacherOverview(db: DataLayer): Promise<TeacherOverview> {
+  const [
+    classes,
+    students,
+    enrollments,
+    sessions,
+    attendance,
+    submissions,
+    assignments,
+    lessons,
+    ability,
+  ] = await Promise.all([
+    db.classes.list(),
+    db.students.list(),
+    db.enrollments.list(),
+    db.classSessions.list(),
+    db.attendance.list(),
+    db.submissions.list(),
+    db.assignments.list(),
+    db.lessons.list(),
+    db.abilityAssessments.list(),
+  ]);
+
+  const classById = new Map(classes.map((c) => [c.id, c]));
+  const lessonById = new Map(lessons.map((l) => [l.id, l]));
+  const enrolledByClass = new Map<string, string[]>();
+  for (const e of enrollments) {
+    if (!enrolledByClass.has(e.class_id)) enrolledByClass.set(e.class_id, []);
+    enrolledByClass.get(e.class_id)!.push(e.student_id);
+  }
+  const studentClass = new Map(enrollments.map((e) => [e.student_id, e.class_id]));
+  const studentById = new Map(students.map((s) => [s.id, s]));
+
+  const classStats = await getClassesWithStats(db);
+  const totalStudents = classStats.reduce((s, c) => s + c.studentCount, 0);
+  const avgAttendanceRate = classStats.length
+    ? classStats.reduce((s, c) => s + c.attendanceRate, 0) / classStats.length
+    : 0;
+  const avgSubmissionRate = classStats.length
+    ? classStats.reduce((s, c) => s + c.submissionRate, 0) / classStats.length
+    : 0;
+  const avgCompletionRate = classStats.length
+    ? classStats.reduce((s, c) => s + c.completionRate, 0) / classStats.length
+    : 0;
+
+  const pendingGrading = submissions.filter((s) => s.status === 'to_review').length;
+  const focusStudents = await getFocusStudents(db);
+  const upcomingSessions = await getUpcomingSessions(db);
+  const d1 = await db.getHighFreqDifficulties('cl1');
+  const d2 = await db.getHighFreqDifficulties('cl2');
+  const difficulties = mergeDifficultiesForOverview([...d1, ...d2]);
+
+  // 今日课程：与演示“现在”(SEED_NOW) 同一自然日
+  const today0 = startOfDay(SEED_NOW);
+  const tomorrow0 = today0 + 24 * 60 * 60 * 1000;
+  const todaySessions = sessions.filter(
+    (s) => s.status === 'scheduled' && s.scheduled_start >= today0 && s.scheduled_start < tomorrow0,
+  );
+
+  // 待登记出勤：已上场次中，考勤记录数 < 在读学员数
+  const attendanceToRegister: TeacherOverview['attendanceToRegister'] = [];
+  for (const s of sessions) {
+    if (s.status !== 'done') continue;
+    const enrolled = enrolledByClass.get(s.class_id)?.length ?? 0;
+    const recorded = attendance.filter((a) => a.class_session_id === s.id).length;
+    const missing = enrolled - recorded;
+    if (missing > 0) {
+      attendanceToRegister.push({
+        session: s,
+        className: classById.get(s.class_id)?.name ?? '—',
+        lessonTitle: lessonById.get(s.lesson_id)?.title ?? '课程',
+        missing,
+      });
+    }
+  }
+
+  // 待完成考核：能力评估中尚未发布（draft/confirmed）
+  const pendingAssessments = ability.filter((a) => a.status === 'draft' || a.status === 'confirmed').length;
+
+  // 最近新增学员：演示“现在”前 30 天内创建（种子学员均为基准日创建，故演示中为空 → 显示空状态）
+  const recentCutoff = SEED_NOW - 30 * 24 * 60 * 60 * 1000;
+  const recentStudents = students
+    .filter((s) => (s.created_at ?? 0) > recentCutoff)
+    .sort((a, b) => (b.created_at ?? 0) - (a.created_at ?? 0))
+    .slice(0, 8);
+
+  // 连续缺席学员：每位学员考勤按场次日期排序，最长连续 absent 段 ≥ 2
+  const sessionDate = new Map(sessions.map((s) => [s.id, s.scheduled_start]));
+  const consecutiveAbsent: TeacherOverview['consecutiveAbsent'] = [];
+  for (const stu of students) {
+    const atts = attendance
+      .filter((a) => a.student_id === stu.id && sessionDate.has(a.class_session_id))
+      .map((a) => ({ t: sessionDate.get(a.class_session_id)!, status: a.status }))
+      .sort((a, b) => a.t - b.t);
+    let maxRun = 0;
+    let run = 0;
+    for (const a of atts) {
+      if (a.status === 'absent') {
+        run += 1;
+        maxRun = Math.max(maxRun, run);
+      } else {
+        run = 0;
+      }
+    }
+    if (maxRun >= 2) {
+      consecutiveAbsent.push({
+        student: stu,
+        classRow: classById.get(studentClass.get(stu.id) ?? ''),
+        count: maxRun,
+      });
+    }
+  }
+
+  // 长期未提交作品学员：存在“已上场次作业”仍为 pending 的学员
+  const doneSessionIds = new Set(sessions.filter((s) => s.status === 'done').map((s) => s.id));
+  const asgSession = new Map(assignments.map((a) => [a.id, a.class_session_id]));
+  const longNoSubmissionMap = new Map<string, number>();
+  for (const sub of submissions) {
+    if (sub.status !== 'pending') continue;
+    const sessId = asgSession.get(sub.assignment_id);
+    if (sessId && doneSessionIds.has(sessId)) {
+      longNoSubmissionMap.set(sub.student_id, (longNoSubmissionMap.get(sub.student_id) ?? 0) + 1);
+    }
+  }
+  const longNoSubmission: TeacherOverview['longNoSubmission'] = [...longNoSubmissionMap.entries()]
+    .map(([sid, pendingCount]) => ({
+      student: studentById.get(sid)!,
+      classRow: classById.get(studentClass.get(sid) ?? ''),
+      pendingCount,
+    }))
+    .filter((x) => x.student)
+    .sort((a, b) => b.pendingCount - a.pendingCount);
+
+  // 即将结业班级：演示“现在”起 30 天内结课且在进行中
+  const graduatingClasses: TeacherOverview['graduatingClasses'] = [];
+  for (const c of classes) {
+    if (c.status !== '进行中') continue;
+    const end = Date.parse(c.end_date);
+    if (Number.isNaN(end)) continue;
+    const daysLeft = Math.ceil((end - SEED_NOW) / (24 * 60 * 60 * 1000));
+    if (daysLeft >= 0 && daysLeft <= 30) {
+      graduatingClasses.push({
+        classRow: c,
+        studentCount: classStats.find((cs) => cs.classRow.id === c.id)?.studentCount ?? 0,
+        daysLeft,
+      });
+    }
+  }
+
+  return {
+    classes: classStats,
+    totalStudents,
+    avgAttendanceRate,
+    avgSubmissionRate,
+    avgCompletionRate,
+    pendingGrading,
+    focusStudents,
+    upcomingSessions,
+    difficulties,
+    todaySessions,
+    attendanceToRegister,
+    pendingAssessments,
+    recentStudents,
+    consecutiveAbsent,
+    longNoSubmission,
+    graduatingClasses,
+  };
+}
+
+function mergeDifficultiesForOverview(lists: DifficultyRow[]): DifficultyRow[] {
+  const map = new Map<string, DifficultyRow>();
+  for (const d of lists) {
+    const cur = map.get(d.problem);
+    if (cur) {
+      cur.count += d.count;
+      cur.affectedStudents = Array.from(new Set([...cur.affectedStudents, ...d.affectedStudents]));
+    } else {
+      map.set(d.problem, { ...d, affectedStudents: [...d.affectedStudents] });
+    }
+  }
+  return [...map.values()].sort((a, b) => b.count - a.count);
 }

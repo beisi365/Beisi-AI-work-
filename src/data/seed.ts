@@ -33,6 +33,8 @@ import { ENROLLMENT_STATUS } from '../lib/enrollment';
 const BASE = Date.UTC(2026, 0, 5, 9, 0, 0);
 const DAY = 24 * 60 * 60 * 1000;
 const now = BASE + 90 * DAY;
+// 演示“现在”：种子数据时间线的锚点，供总览中与日期相关的模块（今日课程/即将结业等）计算
+export const SEED_NOW = now;
 
 const DIMENSIONS: AbilityDimension[] = [
   'basics',
