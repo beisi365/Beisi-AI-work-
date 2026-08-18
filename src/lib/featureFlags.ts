@@ -19,8 +19,8 @@ export const CP2_FLAGS: Record<Cp2Module, boolean> = {
   assessments: true,
   reviews: false,
   communications: false,
-  alerts: false,
-  todos: false,
+  alerts: true,
+  todos: true,
 };
 
 /** 判断某个 CP2 模块是否已对正式导航开放 */

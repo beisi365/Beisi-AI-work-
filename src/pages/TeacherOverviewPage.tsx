@@ -16,6 +16,7 @@ import {
 } from '../components/ui';
 import { RankBar } from '../components/charts';
 import { getTeacherOverview, type TeacherOverview } from '../lib/queries';
+import { getTeacherAlertStats } from '../lib/alerts';
 import { CATEGORY_LABEL, CATEGORY_TONE, formatDate, rateText, SESSION_LABEL } from '../lib/format';
 import type { ClassSession } from '../data/types';
 import { StudentCreateModal, AttendanceRegisterModal, TeacherObservationModal } from '../components/StudentModals';
@@ -54,6 +55,13 @@ export default function TeacherOverviewPage() {
     ],
     async (d) => getTeacherOverview(d),
   );
+
+  // P2.4 真实统计：需要关注（未解决 concern）/ 我的待办（该教师未完成待办）
+  const { data: alertStats } = useRepository(
+    ['concerns', 'todos'],
+    async (d) => getTeacherAlertStats(d, actor.actorId),
+  );
+  const stats = alertStats ?? { openConcerns: 0, myTodos: 0 };
 
   if (loading || !data) return <LoadingState />;
   const ov: TeacherOverview = data;
@@ -127,6 +135,18 @@ export default function TeacherOverviewPage() {
             unit="项待完成考核"
             accent
             onClick={() => navigate('/t/assessments')}
+          />
+          <TodoTile
+            num={stats.openConcerns}
+            unit="项需要关注"
+            accent
+            onClick={() => navigate('/t/alerts')}
+          />
+          <TodoTile
+            num={stats.myTodos}
+            unit="项我的待办"
+            accent
+            onClick={() => navigate('/t/todos')}
           />
         </div>
       </SectionWrap>
