@@ -1,5 +1,7 @@
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { db } from '../data/repository';
+import AssignmentModal from '../components/AssignmentModal';
 import { useAuth } from '../auth/AuthContext';
 import { useRepository } from '../hooks/useRepository';
 import {
@@ -15,10 +17,53 @@ import {
   TEACHER_GRADE_ACTIONS,
   TEACHER_COMMENT_LABEL,
   teacherCanGrade,
+  formatDate,
   formatDateTime,
 } from '../lib/format';
 import { selectWorksSubmissions, paginate } from '../lib/queries';
-import type { SubmissionStatus, WorkVersion, TeacherReview } from '../data/types';
+import type { SubmissionStatus, WorkVersion, TeacherReview, Assignment } from '../data/types';
+
+// —— 教师结构化评价标签（轻量，不评分、不排名、不强制） ——
+const TAG_CATEGORIES: { key: string; options: string[] }[] = [
+  { key: '完成度', options: ['超出预期', '达标', '基本完成', '未达标'] },
+  { key: 'AI工具熟练度', options: ['熟练使用', '能独立完成', '需指导', '不熟悉'] },
+  { key: '提示词能力', options: ['结构清晰', '目标明确', '需优化', '偏弱'] },
+  { key: '创意', options: ['有亮点', '中规中矩', '可拓展'] },
+  { key: '判断力', options: ['独立思考', '需引导', '偏差明显'] },
+  { key: '需要加强', options: ['排版', '逻辑', '主题表达', '技术实现', '提示词'] },
+  { key: '下一步目标', options: ['尝试多模态', '深化主题', '提升完成度', '加强练习'] },
+];
+
+function parseReviewTags(s?: string | null): Record<string, string[]> {
+  if (!s) return {};
+  try {
+    const obj = JSON.parse(s);
+    if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
+      const out: Record<string, string[]> = {};
+      for (const k of Object.keys(obj)) {
+        const v = (obj as Record<string, unknown>)[k];
+        if (Array.isArray(v)) out[k] = v as string[];
+      }
+      return out;
+    }
+  } catch {
+    /* 容忍损坏数据 */
+  }
+  return {};
+}
+
+function reviewTagEntries(s?: string | null): [string, string][] {
+  const parsed = parseReviewTags(s);
+  return Object.entries(parsed).flatMap(([cat, arr]) => arr.map((opt) => [cat, opt] as [string, string]));
+}
+
+function hasReviewTags(s?: string | null): boolean {
+  return reviewTagEntries(s).length > 0;
+}
+
+function serializeReviewTags(tags: Record<string, string[]>): string {
+  return JSON.stringify(tags);
+}
 
 const ALL_STATUS: SubmissionStatus[] = ['pending', 'to_review', 'need_revise', 'completed', 'excellent'];
 const PAGE_SIZE = 20;
@@ -29,10 +74,11 @@ export default function WorksPage() {
   const myStudentId = principal?.studentId ?? '';
 
   // —— 所有 hooks 必须在 early-return 之前调用，hooks 顺序需保持稳定 ——
+  const [searchParams] = useSearchParams();
   const [classFilter, setClassFilter] = useState('all');
-  const [studentFilter, setStudentFilter] = useState('all');
+  const [studentFilter, setStudentFilter] = useState(() => searchParams.get('student') ?? 'all');
   const [lessonFilter, setLessonFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') ?? 'all');
   const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [addingFor, setAddingFor] = useState<string | null>(null);
@@ -40,6 +86,24 @@ export default function WorksPage() {
   // 教师填写评语：当前正在编辑评语的作业 id 与草稿文本
   const [commentFor, setCommentFor] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
+  // 教师结构化标签（轻量，不评分、不排名），按类别映射到标签数组
+  const [commentTags, setCommentTags] = useState<Record<string, string[]>>({});
+
+  // 作业新建 / 编辑弹窗状态
+  const [assignmentOpen, setAssignmentOpen] = useState(false);
+  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
+  const openAssignment = (a?: Assignment | null) => {
+    setEditingAssignment(a ?? null);
+    setAssignmentOpen(true);
+  };
+
+  // 从总览跳转带参数时，自动应用初始筛选（单向：URL → state）
+  useEffect(() => {
+    const st = searchParams.get('status');
+    const student = searchParams.get('student');
+    if (st) setStatusFilter(st);
+    if (student) setStudentFilter(student);
+  }, [searchParams]);
 
   const { data, loading } = useRepository(
     [
@@ -51,9 +115,11 @@ export default function WorksPage() {
       'classes',
       'teacher_reviews',
       'files',
+      'courses',
+      'class_sessions',
     ],
     async (d) => {
-      const [subs, assignments, lessons, students, workVersions, classes, teacherReviews, files] =
+      const [subs, assignments, lessons, students, workVersions, classes, teacherReviews, files, courses, classSessions] =
         await Promise.all([
           d.submissions.list(),
           d.assignments.list(),
@@ -63,8 +129,21 @@ export default function WorksPage() {
           d.classes.list(),
           d.teacherReviews.list(),
           d.files.list(),
+          d.courses.list(),
+          d.classSessions.list(),
         ]);
-      return { subs, assignments, lessons, students, workVersions, classes, teacherReviews, files };
+      return {
+        subs,
+        assignments,
+        lessons,
+        students,
+        workVersions,
+        classes,
+        teacherReviews,
+        files,
+        courses,
+        classSessions,
+      };
     },
   );
 
@@ -143,6 +222,17 @@ export default function WorksPage() {
     pageNumbers.push(totalPages);
   }
 
+  const toggleTag = (cat: string, opt: string) => {
+    setCommentTags((prev) => {
+      const cur = prev[cat] ?? [];
+      const next = cur.includes(opt) ? cur.filter((x) => x !== opt) : [...cur, opt];
+      const out: Record<string, string[]> = { ...prev };
+      if (next.length) out[cat] = next;
+      else delete out[cat];
+      return out;
+    });
+  };
+
   // 行内展开详情
   const renderDetail = (submissionId: string) => {
     const s = subs.find((x) => x.id === submissionId)!;
@@ -150,15 +240,74 @@ export default function WorksPage() {
     const lessonId = asg?.lesson_id;
     const vers = versBySub.get(s.id) ?? [];
     const review = reviewFor(s.student_id, lessonId);
+    const courseNameOf = (lid: string | undefined): string => {
+      if (!lid) return '—';
+      const ls = data.lessons.find((l) => l.id === lid);
+      const c = ls ? data.courses.find((cc) => cc.id === ls.course_id) : undefined;
+      return c ? c.title : '未知课程';
+    };
+    const sessionLabelOf = (sid: string | null | undefined): string => {
+      if (!sid) return '未绑定';
+      const cs = data.classSessions.find((x) => x.id === sid);
+      return cs ? `${cs.status === 'done' ? '已上' : '待上'} · ${formatDate(cs.scheduled_start)}` : '—';
+    };
     return (
       <div className="col" style={{ gap: 12 }}>
+        {/* 作业信息：展示绑定班级 / 课程 / 课节 / 课次，教师可编辑 */}
+        <div>
+          <div className="muted" style={{ fontSize: 'var(--fs-secondary)', marginBottom: 6 }}>
+            作业信息
+          </div>
+          {asg ? (
+            <div className="review-box">
+              <div className="row spread" style={{ gap: 12, flexWrap: 'wrap' }}>
+                <span><strong>班级：</strong>{classById.get(asg.class_id)?.name ?? '—'}</span>
+                <span><strong>课程：</strong>{courseNameOf(asg.lesson_id)}</span>
+                <span><strong>课节：</strong>{lessonById.get(asg.lesson_id)?.title ?? '—'}</span>
+                <span><strong>课次：</strong>{sessionLabelOf(asg.class_session_id)}</span>
+              </div>
+              <div style={{ marginTop: 8 }}><strong>标题：</strong>{asg.title}</div>
+              <div style={{ marginTop: 4 }}><strong>要求：</strong>{asg.requirements || '—'}</div>
+              <div style={{ marginTop: 4 }}><strong>截止：</strong>{asg.due_date || '—'}</div>
+              <div style={{ marginTop: 4 }}><strong>评分标准：</strong>{asg.rubric || '—'}</div>
+            </div>
+          ) : (
+            <span className="muted">作业信息缺失</span>
+          )}
+          {isTeacher && asg && (
+            <div style={{ marginTop: 8 }}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openAssignment(asg);
+                }}
+              >
+                编辑作业
+              </Button>
+            </div>
+          )}
+        </div>
+
         {/* 教师评语（来自 teacher_reviews，已存在数据，无则占位） */}
         <div>
           <div className="muted" style={{ fontSize: 'var(--fs-secondary)', marginBottom: 6 }}>
             教师评语
           </div>
-          {review && review.teacher_text ? (
-            <div className="review-box">{review.teacher_text}</div>
+          {review && (review.teacher_text || hasReviewTags(review.tags)) ? (
+            <div className="review-box">
+              {review.teacher_text && <div>{review.teacher_text}</div>}
+              {hasReviewTags(review.tags) && (
+                <div className="att-summary-chips" style={{ marginTop: review.teacher_text ? 8 : 0 }}>
+                  {reviewTagEntries(review.tags).map(([cat, opt]) => (
+                    <span key={`${cat}-${opt}`} className="tag-chip tag-chip--on">
+                      {cat}：{opt}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           ) : (
             <span className="muted">暂无教师评语</span>
           )}
@@ -241,6 +390,30 @@ export default function WorksPage() {
                   onChange={(e) => setCommentText(e.target.value)}
                   placeholder="输入对本次作业的评语…"
                 />
+                <div className="form-row" style={{ marginTop: 10 }}>
+                  <label>结构化标签（可选，不评分、不排名、不强制）</label>
+                  {TAG_CATEGORIES.map((cat) => (
+                    <div key={cat.key} className="att-summary-chips">
+                      <span className="muted" style={{ marginRight: 4 }}>{cat.key}：</span>
+                      {cat.options.map((opt) => {
+                        const on = (commentTags[cat.key] ?? []).includes(opt);
+                        return (
+                          <button
+                            type="button"
+                            key={opt}
+                            className={`tag-chip${on ? ' tag-chip--on' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleTag(cat.key, opt);
+                            }}
+                          >
+                            {opt}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
                 <div className="row">
                   <Button
                     variant="primary"
@@ -250,13 +423,16 @@ export default function WorksPage() {
                       const existing = reviewFor(s.student_id, lessonId);
                       let reviewId = existing?.id;
                       if (existing) {
-                        await db.teacherReviews.update(existing.id, { teacher_text: commentText.trim() });
+                        await db.teacherReviews.update(existing.id, {
+                          teacher_text: commentText.trim(),
+                          tags: serializeReviewTags(commentTags),
+                        });
                       } else {
                         const created = await db.teacherReviews.insert({
                           student_id: s.student_id,
                           ref_lesson_id: lessonId ?? null,
                           teacher_id: principal?.teacherId ?? '',
-                          tags: '',
+                          tags: serializeReviewTags(commentTags),
                           ai_draft: '',
                           teacher_text: commentText.trim(),
                           status: 'confirmed',
@@ -267,6 +443,7 @@ export default function WorksPage() {
                       }
                       if (reviewId) await db.submissions.update(s.id, { teacher_review_id: reviewId }, { actorId: principal?.teacherId ?? '', actorRole: 'teacher' });
                       setCommentText('');
+                      setCommentTags({});
                       setCommentFor(null);
                     }}
                   >
@@ -284,6 +461,7 @@ export default function WorksPage() {
                 onClick={(e) => {
                   e.stopPropagation();
                   setCommentText(review?.teacher_text ?? '');
+                  setCommentTags(parseReviewTags(review?.tags));
                   setCommentFor(s.id);
                 }}
               >
@@ -415,7 +593,42 @@ export default function WorksPage() {
             </option>
           ))}
         </select>
+        {isTeacher && (
+          <div style={{ marginLeft: 'auto' }}>
+            <Button variant="primary" size="sm" onClick={() => openAssignment()}>
+              新建作业
+            </Button>
+          </div>
+        )}
       </div>
+
+      {/* —— 作业目录（教师布置的作业，含新建 / 未提交作业，可直接查看与编辑） —— */}
+      {isTeacher && (
+        <div className="card" style={{ marginBottom: 16 }}>
+          <div className="card-title">作业目录（教师布置）</div>
+          <div className="assignment-dir">
+            {data.assignments.map((a) => {
+              const cls = classById.get(a.class_id);
+              const ls = lessonById.get(a.lesson_id);
+              const course = ls ? data.courses.find((c) => c.id === ls.course_id) : undefined;
+              return (
+                <div key={a.id} className="row spread assignment-dir-row">
+                  <div className="col" style={{ gap: 2, minWidth: 0 }}>
+                    <strong>{a.title}</strong>
+                    <span className="muted" style={{ fontSize: 'var(--fs-secondary)' }}>
+                      {cls?.name ?? '—'} · {course?.title ?? '未知课程'} · {ls?.title ?? '—'}
+                      {a.due_date ? ` · 截止 ${a.due_date}` : ''}
+                    </span>
+                  </div>
+                  <Button size="sm" variant="ghost" onClick={() => openAssignment(a)}>
+                    编辑
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* —— 作业管理列表 —— */}
       {pageResult.total === 0 ? (
@@ -542,6 +755,12 @@ export default function WorksPage() {
           </div>
         </>
       )}
+      <AssignmentModal
+        open={assignmentOpen}
+        assignment={editingAssignment}
+        onClose={() => setAssignmentOpen(false)}
+        onSaved={() => {}}
+      />
     </>
   );
 }

@@ -114,7 +114,7 @@ export default function TeacherOverviewPage() {
             num={ov.pendingGrading}
             unit="份待批作业"
             accent
-            onClick={() => navigate('/t/works')}
+            onClick={() => navigate('/t/works?status=to_review')}
           />
           <TodoTile
             num={ov.attendanceToRegister.length}
@@ -216,7 +216,7 @@ export default function TeacherOverviewPage() {
                 <div
                   key={x.student.id}
                   className="list-item clickable"
-                  onClick={() => navigate(`/t/students/${x.student.id}`)}
+                  onClick={() => navigate(`/t/works?student=${x.student.id}&status=pending`)}
                 >
                   <div className="focus-main">
                     <div className="row" style={{ gap: 8 }}>
