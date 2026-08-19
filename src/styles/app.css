@@ -1671,13 +1671,89 @@
 .hero-login {
   position: relative;
   min-height: 100vh;
-  background:
-    radial-gradient(ellipse 80% 60% at 75% 35%, rgba(255, 121, 31, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 100% 80% at 50% 100%, rgba(255, 121, 31, 0.05) 0%, transparent 70%),
-    linear-gradient(180deg, #0c0a08 0%, #0a0807 50%, #050403 100%);
+  background: #050309; /* 真黑底兜底（与 cosmic-bg 底色接缝处） */
   color: #e8e6e3;
-  overflow-x: hidden;
+  overflow: hidden;
   padding: 28px 32px 56px;
+}
+
+/* —— 全屏宇宙背景层（fixed inset:0） —— */
+.cosmic-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.cosmic-bg-svg {
+  width: 100vw;
+  height: 100vh;
+  display: block;
+}
+
+/* —— 左上暗晕：让标题在密集星点上仍清晰可读 —— */
+.hero-vignette {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 65%;
+  max-width: 820px;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 30% 45%, rgba(5, 3, 9, 0.65) 0%, rgba(5, 3, 9, 0.3) 50%, transparent 80%),
+    linear-gradient(90deg, rgba(5, 3, 9, 0.5) 0%, transparent 70%);
+}
+
+/* —— 内容层（在宇宙背景之上） —— */
+.login-page-wrap {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* —— CosmicBackground 内的星点闪烁 —— */
+.cb-twinkle {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cb-twinkle 3.5s ease-in-out infinite alternate;
+}
+@keyframes cb-twinkle {
+  0%   { opacity: 0.35; transform: scale(0.85); }
+  100% { opacity: 1;    transform: scale(1.5);  }
+}
+
+/* —— 远景视差环：缓慢流动 —— */
+.cb-far-ring {
+  animation: cb-far-dash 60s linear infinite;
+  transform-box: fill-box;
+}
+@keyframes cb-far-dash {
+  to { stroke-dashoffset: -300; }
+}
+
+/* —— 远景尘埃：绕整页中心公转 —— */
+.cb-dust-particle {
+  transform-origin: 800px 500px;
+  animation: cb-orbit 60s linear infinite;
+}
+.cb-dust-rev { animation-direction: reverse; }
+@keyframes cb-orbit {
+  to { transform: rotate(360deg); }
+}
+
+/* —— 星云：极慢呼吸 + 缓慢漂移 —— */
+.cb-nebulas {
+  transform-origin: 800px 500px;
+  animation: cb-neb-drift 80s ease-in-out infinite alternate;
+}
+@keyframes cb-neb-drift {
+  0%   { opacity: 0.85; transform: translate(-6px, 4px) scale(1);    }
+  100% { opacity: 1;    transform: translate(8px, -6px) scale(1.04); }
 }
 
 /* —— 顶部品牌导航 —— */
@@ -2078,6 +2154,10 @@
   .hs-rings,
   .hs-star-tw,
   .hs-dust-particle,
+  .cb-twinkle,
+  .cb-far-ring,
+  .cb-dust-particle,
+  .cb-nebulas,
   .hero-text,
   .hero-visual,
   .hero-nav {

@@ -4,6 +4,7 @@ import { db } from '../data/repository';
 import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/ui';
 import { HeroSphere } from '../components/HeroSphere';
+import { CosmicBackground } from '../components/CosmicBackground';
 import type { Principal, Student, Teacher, User } from '../data/types';
 import { CATEGORY_LABEL, type StudentCategory } from '../lib/format';
 import { isStudentPortalEnabled } from '../lib/featureFlags';
@@ -77,6 +78,14 @@ export default function LoginPage() {
 
   return (
     <div className="hero-login">
+      {/* —— 全屏宇宙背景层（fixed inset:0, 整页沉浸式） —— */}
+      <CosmicBackground />
+
+      {/* —— 左侧暗晕：让标题在星海里仍可读 —— */}
+      <div className="hero-vignette" aria-hidden="true" />
+
+      {/* —— 内容层（z-index 1,盖在背景之上） —— */}
+      <div className="login-page-wrap">
       {/* —— 顶部品牌导航 —— */}
       <header className="hero-nav">
         <div className="hero-brand">AI 培训学习工作台</div>
@@ -207,6 +216,7 @@ export default function LoginPage() {
       </section>
 
       <footer className="hero-foot">© AI 培训学习工作台 · 演示版本</footer>
+      </div>
     </div>
   );
 }
