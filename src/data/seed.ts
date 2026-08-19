@@ -104,8 +104,11 @@ export function buildSeed(): DBShape {
 
   // —— 教师 + 用户 ——
   const teacherDefs = [
-    { id: 't1', name: '王老师', bio: 'AI 应用培训讲师', subjects: 'AI写作/提示词' },
-    { id: 't2', name: '李老师', bio: 'AI 工具实操讲师', subjects: 'AI图像/视频' },
+    { id: 't1', name: '王老师', title: 'AI 首席讲师', bio: '8 年 AI 应用培训经验，专注提示词工程与 AI 写作方法论', subjects: 'AI写作/提示词' },
+    { id: 't2', name: '李老师', title: '视觉设计讲师', bio: '资深设计师，擅长 AI 图像生成与短视频创作工作流', subjects: 'AI图像/视频' },
+    { id: 't3', name: '陈老师', title: '办公效率讲师', bio: '前互联网大厂产品经理，主讲 AI 在 PPT / Excel / 数据处理中的实战', subjects: 'AI办公/PPT' },
+    { id: 't4', name: '赵老师', title: '智能体讲师', bio: '专注智能体编排与自动化工作流，让 AI 真正落地业务', subjects: 'AI智能体/工作流' },
+    { id: 't5', name: '林老师', title: '教研主管', bio: '负责课程体系设计与学员成长路径规划', subjects: '课程统筹/学员成长' },
   ];
   teacherDefs.forEach((t) => {
     const uid = `u_${t.id}`;
@@ -122,6 +125,7 @@ export function buildSeed(): DBShape {
       id: t.id,
       user_id: uid,
       name: t.name,
+      title: t.title,
       bio: t.bio,
       subjects: t.subjects,
       created_at: BASE,

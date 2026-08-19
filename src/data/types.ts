@@ -92,6 +92,8 @@ export interface Teacher {
   id: string;
   user_id: string;
   name: string;
+  /** 身份/职位（如"AI 首席讲师"），可选；老数据无此字段时 UI 显示默认"AI 讲师" */
+  title?: string;
   bio: string;
   subjects: string;
   created_at: number;

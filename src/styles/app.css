@@ -2019,6 +2019,66 @@
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 14px;
 }
+.hero-role-card {
+  position: relative;
+}
+.hero-role-opt {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #e8e6e3;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+.hero-role-text {
+  min-width: 0; /* 让 flex 子项能正确收缩，避免长字段撑大 */
+  flex: 1;
+}
+.hero-role-title {
+  font-size: 11px;
+  color: #FF7A1A;
+  margin-top: 1px;
+  letter-spacing: 0.2px;
+}
+.hero-role-sub {
+  font-size: 12px;
+  color: #9a9691;
+  margin-top: 2px;
+}
+.hero-role-edit {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background: rgba(10, 6, 18, 0.85);
+  color: #c8c5be;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.18s ease, color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+.hero-role-card:hover .hero-role-edit,
+.hero-role-edit:focus-visible {
+  opacity: 1;
+}
+.hero-role-edit:hover {
+  color: #FF7A1A;
+  border-color: #FF7A1A;
+  background: rgba(255, 121, 31, 0.12);
+}
 .hero-role-opt {
   display: flex;
   align-items: center;

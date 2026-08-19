@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/ui';
 import { HeroSphere } from '../components/HeroSphere';
 import { CosmicBackground } from '../components/CosmicBackground';
+import { TeacherEditModal } from '../components/TeacherEditModal';
 import type { Principal, Student, Teacher, User } from '../data/types';
 import { CATEGORY_LABEL, type StudentCategory } from '../lib/format';
 import { isStudentPortalEnabled } from '../lib/featureFlags';
@@ -21,6 +22,7 @@ export default function LoginPage() {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [students, setStudents] = useState<StuView[]>([]);
   const [blocked, setBlocked] = useState<string | null>(null);
+  const [editTeacher, setEditTeacher] = useState<Teacher | null>(null);
   const studentPortalEnabled = isStudentPortalEnabled();
   const rolesRef = useRef<HTMLDivElement | null>(null);
 
@@ -157,20 +159,35 @@ export default function LoginPage() {
           <>
             <div id="role-teacher" className="hero-role-block">
               <h3 className="hero-login-title">以教师身份进入</h3>
-              <p className="hero-login-hint">点击下方任一教师账号即可登录（演示用，仅做角色切换）</p>
+              <p className="hero-login-hint">点击卡片登录；悬停后点击 ✎ 编辑身份、教学内容与介绍</p>
               <div className="hero-role-grid">
                 {teachers.map((t) => (
-                  <button
-                    key={t.id}
-                    className="hero-role-opt"
-                    onClick={() => enterAsTeacher(t)}
-                  >
-                    <Avatar name="师" size={36} />
-                    <div>
-                      <div className="hero-role-name">{t.name}</div>
-                      <div className="hero-role-sub">{t.subjects}</div>
-                    </div>
-                  </button>
+                  <div key={t.id} className="hero-role-card">
+                    <button
+                      type="button"
+                      className="hero-role-opt"
+                      onClick={() => enterAsTeacher(t)}
+                    >
+                      <Avatar name={t.name} size={36} />
+                      <div className="hero-role-text">
+                        <div className="hero-role-name">{t.name}</div>
+                        <div className="hero-role-title">{t.title ?? 'AI 讲师'}</div>
+                        <div className="hero-role-sub">{t.subjects}</div>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      className="hero-role-edit"
+                      aria-label={`编辑 ${t.name} 的资料`}
+                      title="编辑资料"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditTeacher(t);
+                      }}
+                    >
+                      ✎
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>
@@ -214,6 +231,16 @@ export default function LoginPage() {
           </>
         )}
       </section>
+
+      {/* —— 教师编辑弹窗（演示用） —— */}
+      <TeacherEditModal
+        open={!!editTeacher}
+        teacher={editTeacher}
+        onClose={() => setEditTeacher(null)}
+        onSaved={(updated) => {
+          setTeachers((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+        }}
+      />
 
       <footer className="hero-foot">© AI 培训学习工作台 · 演示版本</footer>
       </div>
