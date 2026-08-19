@@ -1992,9 +1992,11 @@
    登录角色入口区（暗色）
    ============================================================ */
 .hero-login-section {
-  /* 铺满整个版面宽度 —— 不再限 1200px（之前在多级 flex 链中被隐式 min-width 压到 604px）*/
+  /* 与上面 Hero 区(.hero-grid max-width:1200px + 居中)同一栏 —— section 也居中到 left=120, 宽 1200, 内部内容左对齐
+     width:100% 抵消 flex item 默认 min-width:auto 的内容最小宽度反推（之前实测被压到 604px）*/
   width: 100%;
-  margin: 64px 0 0;
+  max-width: 1200px;
+  margin: 64px auto 0;
   padding: 36px 0 0;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
