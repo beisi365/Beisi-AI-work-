@@ -18,6 +18,7 @@ import {
   StudentEditModal,
   StudentTransferModal,
 } from '../components/StudentModals';
+import { StudentImportModal } from '../components/StudentImportModal';
 
 const CATEGORY_OPTIONS: { value: StudentCategory; label: string }[] = [
   { value: 'normal', label: '正常' },
@@ -44,6 +45,7 @@ export default function StudentsListPage() {
 
   // 弹窗状态
   const [createOpen, setCreateOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Student | null>(null);
   const [transferTarget, setTransferTarget] = useState<Student | null>(null);
   const [archiveTarget, setArchiveTarget] = useState<Student | null>(null);
@@ -109,9 +111,14 @@ export default function StudentsListPage() {
         title="学员档案"
         desc="新增、筛选与维护学员资料；归档学员默认隐藏，可在「已归档」下查看与恢复"
         actions={
-          <Button variant="primary" onClick={() => setCreateOpen(true)}>
-            + 新增学员
-          </Button>
+          <>
+            <Button variant="ghost" onClick={() => setImportOpen(true)}>
+              批量导入
+            </Button>
+            <Button variant="primary" onClick={() => setCreateOpen(true)}>
+              + 新增学员
+            </Button>
+          </>
         }
       />
 
@@ -222,6 +229,12 @@ export default function StudentsListPage() {
         actor={actor}
         onClose={() => setCreateOpen(false)}
         onSaved={() => flash('已新增学员')}
+      />
+      <StudentImportModal
+        open={importOpen}
+        actor={actor}
+        onClose={() => setImportOpen(false)}
+        onSaved={() => flash('批量导入完成')}
       />
       <StudentEditModal
         open={!!editTarget}
