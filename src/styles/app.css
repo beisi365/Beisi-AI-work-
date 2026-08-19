@@ -1664,3 +1664,404 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ============================================================
+   首页 Hero（暗色）—— 黑底 + 橙色粒子环 + 高光公转
+   ============================================================ */
+.hero-login {
+  position: relative;
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse 80% 60% at 75% 35%, rgba(255, 121, 31, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 100% 80% at 50% 100%, rgba(255, 121, 31, 0.05) 0%, transparent 70%),
+    linear-gradient(180deg, #0c0a08 0%, #0a0807 50%, #050403 100%);
+  color: #e8e6e3;
+  overflow-x: hidden;
+  padding: 28px 32px 56px;
+}
+
+/* —— 顶部品牌导航 —— */
+.hero-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto 56px;
+  font-size: var(--fs-secondary);
+  animation: hero-fadein 0.6s ease-out both;
+}
+.hero-brand {
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.5px;
+  font-size: 15px;
+}
+.hero-brand::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--color-accent);
+  border-radius: 50%;
+  margin-right: 10px;
+  vertical-align: middle;
+  box-shadow: 0 0 12px var(--color-accent);
+}
+.hero-tagline {
+  color: #7a7773;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+/* —— Hero 分栏 —— */
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 56px;
+  max-width: 1200px;
+  margin: 0 auto;
+  align-items: center;
+}
+
+/* —— 文案列 —— */
+.hero-text {
+  animation: hero-fadein 0.8s ease-out 0.1s both;
+}
+.hero-tag {
+  display: inline-block;
+  color: var(--color-accent);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  padding: 4px 0;
+}
+.hero-title {
+  font-size: clamp(30px, 4.4vw, 48px);
+  font-weight: 800;
+  line-height: 1.18;
+  margin: 0 0 18px;
+  color: #fff;
+  letter-spacing: -0.5px;
+}
+.hero-sub {
+  color: #9a9691;
+  font-size: 15px;
+  line-height: 1.7;
+  margin: 0 0 28px;
+  max-width: 520px;
+}
+.hero-ctas {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+}
+.hero-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0 24px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+  letter-spacing: 0.3px;
+}
+.hero-cta--primary {
+  background: var(--color-accent);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(255, 121, 31, 0.25);
+}
+.hero-cta--primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(255, 121, 31, 0.4);
+}
+.hero-cta--ghost {
+  background: transparent;
+  color: #e8e6e3;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+.hero-cta--ghost:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+.hero-stats {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.hero-stat {
+  padding: 14px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  min-width: 168px;
+}
+.hero-stat-num {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+.hero-stat-label {
+  font-size: 12px;
+  color: #7a7773;
+}
+
+/* —— 视觉列（球体） —— */
+.hero-visual {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: hero-fadein 1.2s ease-out 0.25s both;
+}
+.hero-sphere {
+  width: 100%;
+  max-width: 660px;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 0 60px rgba(255, 121, 31, 0.18));
+}
+
+/* —— 粒子环流动动画 —— */
+.hs-ring {
+  transform-box: fill-box;
+}
+.hs-ring-1 { animation: hs-dash 7s linear infinite; }
+.hs-ring-2 { animation: hs-dash 10s linear infinite reverse; }
+.hs-ring-3 { animation: hs-dash 5s linear infinite; }
+.hs-ring-4 { animation: hs-dash 12s linear infinite reverse; }
+.hs-ring-5 { animation: hs-dash 4s linear infinite; }
+.hs-ring-6 { animation: hs-dash 6s linear infinite reverse; }
+@keyframes hs-dash {
+  to { stroke-dashoffset: -260; }
+}
+
+/* —— 背景辉光呼吸 —— */
+.hs-halo {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hs-pulse 6s ease-in-out infinite;
+}
+@keyframes hs-pulse {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.06); }
+}
+
+/* —— 球周光晕呼吸 —— */
+.hs-sphere-halo {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hs-spulse 4.5s ease-in-out infinite;
+}
+@keyframes hs-spulse {
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50%      { opacity: 0.75; transform: scale(1.12); }
+}
+
+/* —— 高光斑绕球公转（"球面一直在转"的视觉感） —— */
+.hs-spec {
+  transform-origin: 300px 250px;
+  animation: hs-orbit 7s linear infinite;
+}
+@keyframes hs-orbit {
+  to { transform: rotate(360deg); }
+}
+
+/* —— 整组极慢 wobble —— */
+.hs-rings {
+  transform-origin: 300px 250px;
+  animation: hs-wobble 42s ease-in-out infinite;
+}
+@keyframes hs-wobble {
+  0%, 100% { transform: rotate(-3deg); }
+  50%      { transform: rotate(3deg); }
+}
+
+@keyframes hero-fadein {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   登录角色入口区（暗色）
+   ============================================================ */
+.hero-login-section {
+  max-width: 1200px;
+  margin: 64px auto 0;
+  padding: 36px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.hero-login-title {
+  font-size: 16px;
+  color: #fff;
+  margin: 0 0 6px;
+  font-weight: 700;
+}
+.hero-login-hint {
+  font-size: 12px;
+  color: #7a7773;
+  margin: 0 0 18px;
+}
+.hero-role-block + .hero-role-block {
+  margin-top: 36px;
+}
+.hero-role-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+.hero-role-opt {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #e8e6e3;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+.hero-role-opt:hover {
+  border-color: var(--color-accent);
+  background: rgba(255, 121, 31, 0.08);
+  transform: translateY(-1px);
+}
+.hero-role-name {
+  font-weight: 600;
+  color: #fff;
+  font-size: 14px;
+}
+.hero-role-sub {
+  font-size: 12px;
+  color: #9a9691;
+  margin-top: 2px;
+}
+.hero-login-note {
+  margin-top: 28px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  font-size: 12px;
+  color: #9a9691;
+  line-height: 1.6;
+}
+.hero-foot {
+  max-width: 1200px;
+  margin: 48px auto 0;
+  text-align: center;
+  font-size: 12px;
+  color: #5a5752;
+  padding: 16px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* —— CTA 触发后角色区短暂高亮 —— */
+@keyframes flash-highlight-anim {
+  0%   { box-shadow: 0 0 0 0 rgba(255, 121, 31, 0); background: rgba(255, 121, 31, 0.06); }
+  50%  { box-shadow: 0 0 0 6px rgba(255, 121, 31, 0.18); background: rgba(255, 121, 31, 0.06); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 121, 31, 0); background: transparent; }
+}
+.flash-highlight {
+  animation: flash-highlight-anim 1.2s ease-out;
+  border-radius: 10px;
+  padding: 4px;
+  margin: -4px;
+}
+
+/* —— 在暗色 hero 中重写通用提示样式 —— */
+.hero-login .alert-info {
+  background: rgba(255, 121, 31, 0.08);
+  border: 1px solid rgba(255, 121, 31, 0.25);
+  color: #f3c9a3;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.hero-login .alert-warn {
+  background: rgba(255, 60, 60, 0.08);
+  border: 1px solid rgba(255, 60, 60, 0.25);
+  color: #ffb4b4;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* ============================================================
+   响应式
+   ============================================================ */
+@media (max-width: 900px) {
+  .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+  .hero-visual {
+    order: -1;
+  }
+  .hero-sphere {
+    max-width: 460px;
+  }
+  .hero-login {
+    padding: 20px 20px 40px;
+  }
+  .hero-nav {
+    margin-bottom: 36px;
+  }
+}
+@media (max-width: 560px) {
+  .hero-login {
+    padding: 16px 16px 32px;
+  }
+  .hero-stats {
+    flex-direction: column;
+  }
+  .hero-stat {
+    min-width: 0;
+    width: 100%;
+  }
+  .hero-ctas {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .hero-cta {
+    width: 100%;
+  }
+  .hero-login-section {
+    margin-top: 48px;
+  }
+  .hero-role-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ============================================================
+   无障碍：尊重用户系统级动效偏好
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .hs-ring,
+  .hs-halo,
+  .hs-sphere-halo,
+  .hs-spec,
+  .hs-rings,
+  .hero-text,
+  .hero-visual,
+  .hero-nav {
+    animation: none !important;
+  }
+  .hero-sphere {
+    filter: drop-shadow(0 0 30px rgba(255, 121, 31, 0.12));
+  }
+}
