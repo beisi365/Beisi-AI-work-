@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useRepository } from '../hooks/useRepository';
+import { db } from '../data/repository';
 import {
   Button,
   Card,
@@ -16,7 +17,7 @@ import {
 } from '../components/ui';
 import { RankBar } from '../components/charts';
 import { getTeacherOverview, type TeacherOverview } from '../lib/queries';
-import { getTeacherAlertStats } from '../lib/alerts';
+import { getTeacherAlertStats, syncAlerts } from '../lib/alerts';
 import { CATEGORY_LABEL, CATEGORY_TONE, formatDate, rateText, SESSION_LABEL } from '../lib/format';
 import type { ClassSession } from '../data/types';
 import { StudentCreateModal, AttendanceRegisterModal, TeacherObservationModal } from '../components/StudentModals';
@@ -25,6 +26,20 @@ export default function TeacherOverviewPage() {
   const navigate = useNavigate();
   const { principal } = useAuth();
   const actor = { actorId: principal?.teacherId ?? '', actorRole: 'teacher' as const };
+
+  // P2.4 补充（消除「总览预警盲区」）：
+  // 教师首次进入总览时做一次幂等预警扫描，使「需要关注」Tile 不再依赖先访问 /t/alerts。
+  // 复用现有 syncAlerts（同一 (student,type) 未解决 concern 已存在则跳过，不重复生成）；
+  // 写 concern 后 useRepository 对 concerns 的订阅会自动重载 getTeacherAlertStats → Tile 刷新。
+  // 扫描失败不阻塞总览其余展示，仅记录项目约定日志；ref 防止组件生命周期内重复扫描。
+  const scanned = useRef(false);
+  useEffect(() => {
+    if (scanned.current || !actor.actorId) return;
+    scanned.current = true;
+    syncAlerts(db, actor).catch((e) => console.error('[alerts] 总览预扫描失败', e));
+    // 仅执行一次
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // —— 快捷操作弹窗状态 ——
   const [createOpen, setCreateOpen] = useState(false);

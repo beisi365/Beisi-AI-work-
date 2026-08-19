@@ -134,16 +134,39 @@ async function waitFor(page, fn, timeout = 6000) {
 }
 
 // ============================================================
-// 1. 登录 + 总览基线（需要关注 / 我的待办 Tile）
+// 1. P1 验收起点：直进 /t/overview（不先访问 /t/alerts）自动幂等预扫描
 // ============================================================
 const desktop = await newPage(1440, 960);
-await loginTeacher(desktop);
+await loginTeacher(desktop); // localStorage 清空 = reset seed，初始 0 条 concern
 await go(desktop, '/t/overview');
-await sleep(900);
+// 总览挂载即触发 syncAlerts；等待扫描产出未解决 concern（最长 9s）
+const overviewScanned = await waitFor(
+  desktop,
+  () => {
+    const raw = JSON.parse(localStorage.getItem('aiwb_db_v1') || '{}');
+    return (raw.concerns || []).some((c) => c.status !== 'resolved');
+  },
+  9000,
+);
+await sleep(400);
 const beforeAlerts = await readTile(desktop, '需要关注');
 const beforeTodos = await readTile(desktop, '我的待办');
+const dbConcernsOverview = await dbTable(desktop, 'concerns');
+const dbUnresolvedOverview = dbConcernsOverview.filter((c) => c.status !== 'resolved').length;
 check('总览可读到「需要关注」「我的待办」Tile', beforeAlerts !== null && beforeTodos !== null, `alerts=${beforeAlerts} todos=${beforeTodos}`);
+check(
+  'P1: 直进总览不访问 alerts 即自动扫描出预警(从0变真实值)',
+  overviewScanned && beforeAlerts > 0,
+  `tile=${beforeAlerts} dbUnresolved=${dbUnresolvedOverview}`,
+);
+check(
+  'P1: 总览「需要关注」= 未解决 concern 数',
+  beforeAlerts === dbUnresolvedOverview,
+  `tile=${beforeAlerts} db=${dbUnresolvedOverview}`,
+);
 await desktop.screenshot({ path: OUT + 'overview.png', fullPage: true });
+// 留存总览预扫描后 concern 总数，供后续幂等校验
+const dbCountAfterOverviewScan = dbConcernsOverview.length;
 
 // ============================================================
 // 2. 进入 /t/alerts 自动扫描 → 预警出现
@@ -170,6 +193,12 @@ const dbConcernsAfterScan = await dbTable(desktop, 'concerns');
 const typeDist = {};
 for (const c of dbConcernsAfterScan) typeDist[c.type] = (typeDist[c.type] || 0) + 1;
 console.log('  [scan diag] concerns 类型分布 =', JSON.stringify(typeDist), '总数=', dbConcernsAfterScan.length);
+// P1 幂等：走访 /t/alerts 时其自身也会扫描，但已存在的未解决 concern 应被跳过（不重复）
+check(
+  'P1: 走访 /t/alerts 不重复生成 concern(幂等)',
+  dbConcernsAfterScan.length === dbCountAfterOverviewScan,
+  `overviewScan=${dbCountAfterOverviewScan} alertsScan=${dbConcernsAfterScan.length}`,
+);
 await desktop.screenshot({ path: OUT + 'alerts.png', fullPage: true });
 
 // ============================================================
@@ -287,6 +316,18 @@ await go(desktop, '/t/overview');
 await sleep(900);
 const todosTileFinal = await readTile(desktop, '我的待办');
 check('完成待办后总览「我的待办」-1', todosTileFinal === beforeTodos, `final=${todosTileFinal} base=${beforeTodos}`);
+
+// ============================================================
+// 8b. P1 step 9：刷新 /t/overview 后「需要关注」仍与 DB 未解决一致
+// ============================================================
+await desktop.reload({ waitUntil: 'networkidle0' });
+await sleep(400);
+await relinkTeacher(desktop);
+await go(desktop, '/t/overview');
+await sleep(1000);
+const finalOvTile = await readTile(desktop, '需要关注');
+const finalDbUnresolved = (await dbTable(desktop, 'concerns')).filter((c) => c.status !== 'resolved').length;
+check('P1: 刷新总览后「需要关注」仍与 DB 未解决一致', finalOvTile === finalDbUnresolved, `tile=${finalOvTile} db=${finalDbUnresolved}`);
 
 // ============================================================
 // 9. 移动端 390：预警页渲染且不溢出
