@@ -311,6 +311,10 @@ export class LocalDataLayer implements DataLayer {
   }
 
   async reset(): Promise<void> {
+    // 真正清掉 localStorage 的旧 seed，让下次加载时从 buildSeed() 重新生成（含新增教师/字段等）
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.removeItem('aiwb_db_v1');
+    }
     this.cache = buildSeed() as unknown as Record<TableName, any[]>;
     this.persist();
     this.emit([...SEED_TABLE_NAMES]);

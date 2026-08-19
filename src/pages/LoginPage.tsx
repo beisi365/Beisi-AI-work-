@@ -54,6 +54,12 @@ export default function LoginPage() {
     navigate('/t/overview');
   };
 
+  // 重置演示数据：清掉本地缓存的旧 seed 后刷新（仅 dev 演示模式）
+  const resetDemoData = () => {
+    if (!window.confirm('确认重置演示数据？\n\n这将清空本机的所有本地缓存（包括教师编辑、学员导入等），刷新后重新生成最新演示数据。')) return;
+    void db.reset().then(() => location.reload());
+  };
+
   const enterAsStudent = (s: StuView) => {
     // 归档账号禁止登录：展示提示页，不进入系统
     if (s.archived_at) {
@@ -242,7 +248,17 @@ export default function LoginPage() {
         }}
       />
 
-      <footer className="hero-foot">© AI 培训学习工作台 · 演示版本</footer>
+      <footer className="hero-foot">
+        <span>© AI 培训学习工作台 · 演示版本</span>
+        <button
+          type="button"
+          className="hero-reset-btn"
+          onClick={resetDemoData}
+          title="清空本地缓存并刷新，重新生成最新演示数据"
+        >
+          ↺ 重置演示数据
+        </button>
+      </footer>
       </div>
     </div>
   );
