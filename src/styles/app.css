@@ -1711,6 +1711,8 @@
   position: relative;
   z-index: 1;
   min-height: 100vh;
+  width: 100%;
+  min-width: 0; /* 防止多级 flex 隐式最小宽度把内层压窄 */
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -1990,8 +1992,9 @@
    登录角色入口区（暗色）
    ============================================================ */
 .hero-login-section {
-  max-width: 1200px;
-  margin: 64px auto 0;
+  /* 铺满整个版面宽度 —— 不再限 1200px（之前在多级 flex 链中被隐式 min-width 压到 604px）*/
+  width: 100%;
+  margin: 64px 0 0;
   padding: 36px 0 0;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
@@ -2011,8 +2014,8 @@
 }
 .hero-role-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
 }
 .hero-role-opt {
   display: flex;
@@ -2115,6 +2118,10 @@
   }
   .hero-nav {
     margin-bottom: 36px;
+  }
+  .hero-role-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
   }
 }
 @media (max-width: 560px) {
