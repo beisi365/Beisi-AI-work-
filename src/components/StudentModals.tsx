@@ -566,6 +566,7 @@ export function AttendanceRegisterModal({
   onClose,
   actor,
   onSaved,
+  title,
   defaultClassId,
   defaultSessionId,
 }: {
@@ -573,6 +574,8 @@ export function AttendanceRegisterModal({
   onClose: () => void;
   actor: ChangeActor;
   onSaved?: () => void;
+  /** 自定义弹窗标题（如“修改出勤”），默认“登记出勤” */
+  title?: string;
   /** 从课程与出勤页具体场次直接打开时，预置班级与场次 */
   defaultClassId?: string;
   defaultSessionId?: string;
@@ -699,7 +702,7 @@ export function AttendanceRegisterModal({
   return (
     <Modal
       open={open}
-      title="登记出勤"
+      title={title ?? '登记出勤'}
       onClose={onClose}
       width={640}
       footer={

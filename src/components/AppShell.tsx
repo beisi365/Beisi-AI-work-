@@ -130,7 +130,7 @@ interface NavItem {
 
 const TEACHER_NAV: NavItem[] = [
   { to: '/t/overview', label: '教学总览', icon: 'overview' },
-  { to: '/t/students', label: '学员与班级', icon: 'students' },
+  { to: '/t/students', label: '学员档案', icon: 'students' },
   { to: '/t/classes', label: '课程与出勤', icon: 'classes' },
   { to: '/t/works', label: '作业与作品', icon: 'works' },
   { to: '/t/assessments', label: '考核中心', icon: 'assessments' },
@@ -147,19 +147,36 @@ const STUDENT_NAV: NavItem[] = [
 ];
 
 // 移动端底部导航：最多 5 项（首页 / 学员 / 教学 / 考核 / 更多）。
-// 课程与出勤、成长报告、系统设置与危险操作（重置演示数据）收入“更多”抽屉，避免主栏挤压变形。
-const MOBILE_TEACHER_NAV: NavItem[] = [
+// 课程与出勤、学习预警、教师待办、成长报告、系统设置收入“更多”抽屉，避免主栏挤压变形。
+export const MOBILE_TEACHER_NAV: NavItem[] = [
   { to: '/t/overview', label: '首页', icon: 'overview' },
   { to: '/t/students', label: '学员', icon: 'students' },
   { to: '/t/works', label: '教学', icon: 'works' },
   { to: '/t/assessments', label: '考核', icon: 'assessments' },
 ];
-// “更多”抽屉内的次级导航（与桌面端一致，仅折叠展示）
-const MOBILE_TEACHER_MORE: NavItem[] = [
+
+// “更多”抽屉内的次级导航（与桌面端一致，仅折叠展示）。
+// 学习预警 / 教师待办 受 featureFlags 门控：开关关闭时对应入口消失。
+type MoreItem = NavItem & { flag?: Cp2Module };
+const MOBILE_TEACHER_MORE: MoreItem[] = [
   { to: '/t/classes', label: '课程与出勤', icon: 'classes' },
+  { to: '/t/alerts', label: '学习预警', icon: 'alerts', flag: 'alerts' },
+  { to: '/t/todos', label: '教师待办', icon: 'todos', flag: 'todos' },
   { to: '/t/reports', label: '成长报告', icon: 'reports' },
   { to: '/t/settings', label: '系统设置', icon: 'settings' },
 ];
+
+/** 教师移动端“更多”抽屉内容：受开关门控，关闭则对应入口消失。供单元测试断言。 */
+export function getTeacherMobileMoreNav(): NavItem[] {
+  return MOBILE_TEACHER_MORE.filter((it) => !it.flag || isCp2Enabled(it.flag));
+}
+
+/** 完整导航（桌面侧栏 / 移动端抽屉通用）：基础导航 + 受开关门控的 CP2 入口。供单元测试断言。 */
+export function getNav(isTeacher: boolean): NavItem[] {
+  const base = isTeacher ? TEACHER_NAV : STUDENT_NAV;
+  const cp2 = (isTeacher ? CP2_TEACHER_NAV : CP2_STUDENT_NAV).filter((it) => isCp2Enabled(it.flag));
+  return [...base, ...cp2];
+}
 
 interface Cp2NavItem extends NavItem {
   flag: Cp2Module;
@@ -187,9 +204,7 @@ export function AppShell() {
   if (!principal) return null;
 
   const isTeacher = principal.role === 'teacher';
-  const baseNav = isTeacher ? TEACHER_NAV : STUDENT_NAV;
-  const cp2Nav = (isTeacher ? CP2_TEACHER_NAV : CP2_STUDENT_NAV).filter((it) => isCp2Enabled(it.flag));
-  const nav = [...baseNav, ...cp2Nav];
+  const nav = getNav(isTeacher);
   const name = isTeacher ? `教师 ${principal.teacherId}` : `学员 ${principal.studentId}`;
 
   const onReset = () => {
@@ -284,7 +299,7 @@ export function AppShell() {
         <div className="more-sheet-overlay" onClick={() => setMoreOpen(false)}>
           <div className="more-sheet" onClick={(e) => e.stopPropagation()}>
             <div className="more-sheet-title">更多</div>
-            {MOBILE_TEACHER_MORE.map((it) => (
+            {getTeacherMobileMoreNav().map((it) => (
               <NavLink
                 key={it.to}
                 to={it.to}

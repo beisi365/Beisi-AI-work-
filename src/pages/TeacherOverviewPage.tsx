@@ -19,6 +19,7 @@ import { RankBar } from '../components/charts';
 import { getTeacherOverview, type TeacherOverview } from '../lib/queries';
 import { getTeacherAlertStats, syncAlerts } from '../lib/alerts';
 import { CATEGORY_LABEL, CATEGORY_TONE, formatDate, rateText, SESSION_LABEL } from '../lib/format';
+import { sessionAttendanceTarget } from '../lib/sessionNav';
 import type { ClassSession } from '../data/types';
 import { StudentCreateModal, AttendanceRegisterModal, TeacherObservationModal } from '../components/StudentModals';
 
@@ -43,7 +44,8 @@ export default function TeacherOverviewPage() {
 
   // —— 快捷操作弹窗状态 ——
   const [createOpen, setCreateOpen] = useState(false);
-  const [attOpen, setAttOpen] = useState(false);
+  // 出勤弹窗目标：null 关闭；{} 为顶部「登记出勤」手动选择；含 classId/sessionId 为今日课程直达（预选）
+  const [attTarget, setAttTarget] = useState<{ classId?: string; sessionId?: string; registered?: boolean } | null>(null);
   const [obsOpen, setObsOpen] = useState(false);
   const [toast, setToast] = useState('');
   const flash = (m: string) => {
@@ -81,6 +83,9 @@ export default function TeacherOverviewPage() {
   if (loading || !data) return <LoadingState />;
   const ov: TeacherOverview = data;
 
+  // 待登记出勤的场次集合（无考勤记录），用于区分「登记出勤」与「查看/修改出勤」
+  const unregisteredIds = new Set(ov.attendanceToRegister.map((x) => x.session.id));
+
   const focusByClass = (classId: string) => ov.focusStudents.filter((f) => f.classRow?.id === classId).length;
 
   return (
@@ -96,7 +101,7 @@ export default function TeacherOverviewPage() {
           <Button variant="primary" size="sm" onClick={() => setCreateOpen(true)}>
             + 新增学员
           </Button>
-          <Button size="sm" onClick={() => setAttOpen(true)}>
+          <Button size="sm" onClick={() => setAttTarget({})}>
             登记出勤
           </Button>
           <Button size="sm" onClick={() => navigate('/t/works')}>
@@ -143,7 +148,7 @@ export default function TeacherOverviewPage() {
             num={ov.attendanceToRegister.length}
             unit="场待登记出勤"
             accent
-            onClick={() => setAttOpen(true)}
+            onClick={() => setAttTarget({})}
           />
           <TodoTile
             num={ov.pendingAssessments}
@@ -326,9 +331,17 @@ export default function TeacherOverviewPage() {
             <EmptyState title="今日暂无排课" />
           ) : (
             <div className="list">
-              {ov.todaySessions.map((s: ClassSession) => (
-                <SessionLine key={s.id} s={s} />
-              ))}
+              {ov.todaySessions.map((s: ClassSession) => {
+                const registered = s.status === 'scheduled' ? false : !unregisteredIds.has(s.id);
+                return (
+                  <SessionLine
+                    key={s.id}
+                    s={s}
+                    registered={registered}
+                    onClick={() => setAttTarget({ ...sessionAttendanceTarget(s), registered })}
+                  />
+                );
+              })}
             </div>
           )}
         </Card>
@@ -341,9 +354,17 @@ export default function TeacherOverviewPage() {
             <EmptyState title="近期暂无排课" />
           ) : (
             <div className="list">
-              {ov.upcomingSessions.slice(0, 6).map((s: ClassSession) => (
-                <SessionLine key={s.id} s={s} />
-              ))}
+              {ov.upcomingSessions.slice(0, 6).map((s: ClassSession) => {
+                const registered = s.status === 'scheduled' ? false : !unregisteredIds.has(s.id);
+                return (
+                  <SessionLine
+                    key={s.id}
+                    s={s}
+                    registered={registered}
+                    onClick={() => setAttTarget({ ...sessionAttendanceTarget(s), registered })}
+                  />
+                );
+              })}
             </div>
           )}
         </Card>
@@ -432,10 +453,13 @@ export default function TeacherOverviewPage() {
         onSaved={() => flash('学员已新增')}
       />
       <AttendanceRegisterModal
-        open={attOpen}
-        onClose={() => setAttOpen(false)}
+        open={!!attTarget}
+        onClose={() => setAttTarget(null)}
         actor={actor}
-        onSaved={() => flash('出勤已登记')}
+        defaultClassId={attTarget?.classId}
+        defaultSessionId={attTarget?.sessionId}
+        title={attTarget?.registered ? '修改出勤' : '登记出勤'}
+        onSaved={() => flash(attTarget?.sessionId ? '出勤已更新' : '出勤已登记')}
       />
       <TeacherObservationModal
         open={obsOpen}
@@ -476,9 +500,28 @@ function TodoTile({
   );
 }
 
-function SessionLine({ s }: { s: ClassSession }) {
+function SessionLine({
+  s,
+  registered,
+  onClick,
+}: {
+  s: ClassSession;
+  registered: boolean;
+  onClick: () => void;
+}) {
   return (
-    <div className="list-item">
+    <div
+      className="list-item clickable"
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+    >
       <div>
         <div className="row" style={{ gap: 8 }}>
           <strong>{formatDate(s.scheduled_start)}</strong>
@@ -488,7 +531,7 @@ function SessionLine({ s }: { s: ClassSession }) {
           {s.location} · {s.delivery_mode === 'online' ? '线上' : s.delivery_mode === 'offline' ? '线下' : '混合'}
         </div>
       </div>
-      <span className="muted">{formatDate(s.scheduled_start)}</span>
+      <span className="muted">{registered ? '查看/修改出勤' : '登记出勤'}</span>
     </div>
   );
 }

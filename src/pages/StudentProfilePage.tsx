@@ -70,10 +70,12 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
   const [transferOpen, setTransferOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [toast, setToast] = useState('');
+  const [toastTone, setToastTone] = useState<'success' | 'danger'>('success');
   const actor = isTeacher
     ? ({ actorId: principal?.teacherId ?? '', actorRole: 'teacher' } as const)
     : ({ actorId: principal?.studentId ?? '', actorRole: 'student' } as const);
-  const flash = (m: string) => {
+  const flash = (m: string, tone: 'success' | 'danger' = 'success') => {
+    setToastTone(tone);
     setToast(m);
     window.setTimeout(() => setToast(''), 2600);
   };
@@ -269,7 +271,13 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
                           className="select"
                           value={a.status}
                           onChange={async (e) => {
-                            await db.attendance.update(a.id, { status: e.target.value as AttendanceStatus });
+                            const next = e.target.value as AttendanceStatus;
+                            try {
+                              await db.attendance.update(a.id, { status: next });
+                              flash('出勤状态已更新');
+                            } catch (err) {
+                              flash('出勤更新失败：' + (err instanceof Error ? err.message : '未知错误'), 'danger');
+                            }
                           }}
                         >
                           {(['present', 'late', 'leave', 'absent'] as AttendanceStatus[]).map((s) => (
@@ -357,7 +365,7 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
         onClose={() => setArchiveOpen(false)}
         onSaved={() => flash('操作成功')}
       />
-      {toast && <Toast tone="success">{toast}</Toast>}
+      {toast && <Toast tone={toastTone}>{toast}</Toast>}
     </>
   );
 }
