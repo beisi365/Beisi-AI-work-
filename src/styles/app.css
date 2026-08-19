@@ -1824,13 +1824,13 @@
 }
 .hero-sphere {
   width: 100%;
-  max-width: 660px;
+  max-width: 760px;
   height: auto;
   display: block;
   filter: drop-shadow(0 0 60px rgba(255, 121, 31, 0.18));
 }
 
-/* —— 粒子环流动动画 —— */
+/* —— 粒子环流动动画（主环 + 远景环通用） —— */
 .hs-ring {
   transform-box: fill-box;
 }
@@ -1840,8 +1840,28 @@
 .hs-ring-4 { animation: hs-dash 12s linear infinite reverse; }
 .hs-ring-5 { animation: hs-dash 4s linear infinite; }
 .hs-ring-6 { animation: hs-dash 6s linear infinite reverse; }
+.hs-ring-d1 { animation: hs-dash 20s linear infinite; }
+.hs-ring-d2 { animation: hs-dash 24s linear infinite reverse; }
 @keyframes hs-dash {
   to { stroke-dashoffset: -260; }
+}
+
+/* —— 星空闪烁（缩放动画，单元素 animationDuration/Delay 覆盖） —— */
+.hs-star-tw {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hs-twinkle 3s ease-in-out infinite;
+}
+@keyframes hs-twinkle {
+  0%, 100% { transform: scale(0.85); }
+  50%      { transform: scale(1.5); }
+}
+
+/* —— 尘埃粒子绕球公转 —— */
+.hs-dust-particle {
+  transform-box: view-box;
+  transform-origin: 450px 350px;
+  animation: hs-orbit 8s linear infinite;
 }
 
 /* —— 背景辉光呼吸 —— */
@@ -1868,7 +1888,7 @@
 
 /* —— 高光斑绕球公转（"球面一直在转"的视觉感） —— */
 .hs-spec {
-  transform-origin: 300px 250px;
+  transform-origin: 450px 350px;
   animation: hs-orbit 7s linear infinite;
 }
 @keyframes hs-orbit {
@@ -1877,7 +1897,7 @@
 
 /* —— 整组极慢 wobble —— */
 .hs-rings {
-  transform-origin: 300px 250px;
+  transform-origin: 450px 350px;
   animation: hs-wobble 42s ease-in-out infinite;
 }
 @keyframes hs-wobble {
@@ -2056,6 +2076,8 @@
   .hs-sphere-halo,
   .hs-spec,
   .hs-rings,
+  .hs-star-tw,
+  .hs-dust-particle,
   .hero-text,
   .hero-visual,
   .hero-nav {
