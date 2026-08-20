@@ -1207,6 +1207,43 @@
   resize: vertical;
 }
 
+/* —— 演示模式横幅（只读 + 视角切换） —— */
+.demo-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding: 8px 16px;
+  background: var(--color-accent-weak, #fff3e6);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--fs-secondary, 13px);
+  color: #b86b1f;
+  font-weight: 600;
+}
+.demo-switch {
+  display: flex;
+  gap: 6px;
+}
+.demo-switch-btn {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-radius: 999px;
+  padding: 3px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.demo-switch-btn:hover {
+  border-color: var(--color-accent);
+}
+.demo-switch-btn.is-active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
 /* —— 演示 AI 标注 —— */
 .ai-note {
   border: 1px dashed var(--color-accent);

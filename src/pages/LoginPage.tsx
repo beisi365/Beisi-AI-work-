@@ -9,7 +9,8 @@ import { TeacherEditModal } from '../components/TeacherEditModal';
 import type { Principal, Student, Teacher, User } from '../data/types';
 import { CATEGORY_LABEL, type StudentCategory } from '../lib/format';
 import { isStudentPortalEnabled } from '../lib/featureFlags';
-import { isDemoMode } from '../lib/demoMode';
+import { isDemoMode, getDemoPrincipal } from '../lib/demoMode';
+import { roleHome } from '../lib/routeHome';
 
 interface StuView extends Student {
   user?: User;
@@ -27,10 +28,11 @@ export default function LoginPage() {
   const studentPortalEnabled = isStudentPortalEnabled();
   const rolesRef = useRef<HTMLDivElement | null>(null);
 
-  // 只读演示模式：登录页直接跳过，进入演示工作台
+  // 只读演示模式：登录页直接跳过，按演示身份（教师/学员）进入对应首页，并保留 demo 参数
   useEffect(() => {
     if (isDemoMode()) {
-      navigate('/t/overview');
+      const role = getDemoPrincipal().role;
+      navigate(roleHome(role) + (role === 'teacher' ? '?demo=1' : '?demo=student'));
     }
   }, [navigate]);
 

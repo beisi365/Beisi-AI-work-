@@ -5,7 +5,8 @@ import { db } from '../data/repository';
 import { ROLE_LABEL } from '../lib/format';
 import { Avatar } from './ui';
 import { isCp2Enabled, type Cp2Module } from '../lib/featureFlags';
-import { useDemoMode } from '../lib/demoMode';
+import { useDemoMode, DEMO_PRINCIPAL, DEMO_STUDENT_PRINCIPAL } from '../lib/demoMode';
+import { roleHome } from '../lib/routeHome';
 
 type IconKey =
   | 'overview'
@@ -199,11 +200,18 @@ const CP2_STUDENT_NAV: Cp2NavItem[] = [
 ];
 
 export function AppShell() {
-  const { principal, logout } = useAuth();
+  const { principal, login, logout } = useAuth();
   const navigate = useNavigate();
   const [moreOpen, setMoreOpen] = useState(false);
   const { demo, readOnly } = useDemoMode();
   if (!principal) return null;
+
+  // 演示态视角切换：在教师/学员只读视角间切换（分享演示可看两端），跳转保留 demo 参数保证刷新后身份不丢
+  const switchDemoRole = (role: 'teacher' | 'student') => {
+    const next = role === 'teacher' ? DEMO_PRINCIPAL : DEMO_STUDENT_PRINCIPAL;
+    login(next);
+    navigate(roleHome(role) + (role === 'teacher' ? '?demo=1' : '?demo=student'));
+  };
 
   const isTeacher = principal.role === 'teacher';
   const nav = getNav(isTeacher);
@@ -247,7 +255,23 @@ export function AppShell() {
       <div className="content">
         {demo && (
           <div className="demo-banner">
-            演示模式 · 只读（仅供浏览，不可编辑）
+            <span>演示模式 · 只读（仅供浏览，不可编辑）</span>
+            <div className="demo-switch" role="group" aria-label="切换演示视角">
+              <button
+                type="button"
+                className={`demo-switch-btn${principal.role === 'teacher' ? ' is-active' : ''}`}
+                onClick={() => switchDemoRole('teacher')}
+              >
+                教师视角
+              </button>
+              <button
+                type="button"
+                className={`demo-switch-btn${principal.role === 'student' ? ' is-active' : ''}`}
+                onClick={() => switchDemoRole('student')}
+              >
+                学员视角
+              </button>
+            </div>
           </div>
         )}
         <header className="topbar">

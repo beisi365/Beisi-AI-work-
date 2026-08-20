@@ -1,4 +1,5 @@
-import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { AppShell } from './components/AppShell';
 import LoginPage from './pages/LoginPage';
@@ -24,7 +25,7 @@ import AssessmentsDevPage from './pages/cp2/AssessmentsDevPage';
 import StudentAssessmentsDevPage from './pages/cp2/StudentAssessmentsDevPage';
 import type { ReactNode } from 'react';
 import { roleHome } from './lib/routeHome';
-import { DemoModeProvider, isDemoMode } from './lib/demoMode';
+import { DemoModeProvider, isDemoMode, useDemoMode } from './lib/demoMode';
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { principal } = useAuth();
@@ -49,7 +50,13 @@ function RoleOnly({ role, children }: { role: 'teacher' | 'student'; children: R
 function HomeRedirect() {
   const { principal } = useAuth();
   if (!principal) return <Navigate to="/login" replace />;
-  return <Navigate to={roleHome(principal.role)} replace />;
+  // 演示态：跳转时保留 demo 参数，避免 SPA 跳转丢失只读身份（教师 → ?demo=1，学员 → ?demo=student）
+  const demoQ = isDemoMode()
+    ? principal.role === 'teacher'
+      ? '?demo=1'
+      : '?demo=student'
+    : '';
+  return <Navigate to={roleHome(principal.role) + demoQ} replace />;
 }
 
 /** 学员端关闭时的提示页：显示「学员端暂未开放」并可返回教师登录 */
@@ -87,11 +94,34 @@ function StudentPortalGuard({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+/**
+ * 演示态 URL 参数保持器：SPA 内部导航（侧栏 NavLink、页面内 navigate）可能丢失 ?demo 参数，
+ * 导致刷新后退出演示态或学员端守卫误判。此组件在演示态下监听路由变化，
+ * 若当前 URL 已无 demo 参数则自动 replace 补回（教师 → ?demo=1，学员 → ?demo=student）。
+ */
+function DemoParamKeeper() {
+  const { demo } = useDemoMode();
+  const { principal } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!demo || !principal) return;
+    const q = new URLSearchParams(location.search);
+    if (q.has('demo') || q.has('readonly') || q.get('mode') === 'demo') return;
+    const roleQ = principal.role === 'teacher' ? '?demo=1' : '?demo=student';
+    navigate(location.pathname + roleQ, { replace: true });
+  }, [demo, principal, location.pathname, location.search, navigate]);
+
+  return null;
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <DemoModeProvider demo={isDemoMode()}>
         <BrowserRouter>
+          <DemoParamKeeper />
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/" element={<HomeRedirect />} />

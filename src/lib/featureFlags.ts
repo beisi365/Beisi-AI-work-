@@ -7,6 +7,7 @@
 //   严禁把结构化状态塞入普通文本字段。
 
 import { db } from '../data/repository';
+import { isDemoMode } from './demoMode';
 
 export type Cp2Module =
   | 'assessments' // CP2.1 完整能力评估与历史对比
@@ -53,8 +54,10 @@ export function computeStudentPortalEnabled(
 }
 
 /** 读取学员端是否开放（真实运行环境）。覆盖值统一经 LocalDataLayer 存储抽象读取，
- *  不直接触碰底层浏览器存储（架构约束：键值读写仅在 LocalDataLayer 内完成）。 */
+ *  不直接触碰底层浏览器存储（架构约束：键值读写仅在 LocalDataLayer 内完成）。
+ *  注意：只读演示模式（?demo）下恒为开启，使分享演示也能浏览学员端视角。 */
 export function isStudentPortalEnabled(): boolean {
+  if (isDemoMode()) return true;
   const dev = import.meta.env.DEV;
   let override: string | null = null;
   try {
