@@ -9,6 +9,7 @@ import { TeacherEditModal } from '../components/TeacherEditModal';
 import type { Principal, Student, Teacher, User } from '../data/types';
 import { CATEGORY_LABEL, type StudentCategory } from '../lib/format';
 import { isStudentPortalEnabled } from '../lib/featureFlags';
+import { isDemoMode } from '../lib/demoMode';
 
 interface StuView extends Student {
   user?: User;
@@ -25,6 +26,13 @@ export default function LoginPage() {
   const [editTeacher, setEditTeacher] = useState<Teacher | null>(null);
   const studentPortalEnabled = isStudentPortalEnabled();
   const rolesRef = useRef<HTMLDivElement | null>(null);
+
+  // 只读演示模式：登录页直接跳过，进入演示工作台
+  useEffect(() => {
+    if (isDemoMode()) {
+      navigate('/t/overview');
+    }
+  }, [navigate]);
 
   useEffect(() => {
     (async () => {
@@ -43,6 +51,9 @@ export default function LoginPage() {
       );
     })();
   }, []);
+
+  // 只读演示模式：登录页直接跳过（上方 useEffect 已导航至工作台），这里不渲染任何可交互内容
+  if (isDemoMode()) return null;
 
   const enterAsTeacher = (t: Teacher) => {
     const p: Principal = {

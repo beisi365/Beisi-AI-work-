@@ -28,6 +28,7 @@ import {
   StudentEditModal,
   StudentTransferModal,
 } from '../components/StudentModals';
+import { useDemoMode } from '../lib/demoMode';
 import {
   ABILITY_LABEL,
   ABILITY_ORDER,
@@ -79,6 +80,7 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
     setToast(m);
     window.setTimeout(() => setToast(''), 2600);
   };
+  const { readOnly } = useDemoMode();
 
   const { data, loading } = useRepository(
     [
@@ -129,19 +131,23 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
               <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
                 ← 返回列表
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => setEditOpen(true)}>
-                编辑档案
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => setTransferOpen(true)}>
-                调班
-              </Button>
-              <Button
-                size="sm"
-                variant={archived ? 'primary' : 'danger'}
-                onClick={() => setArchiveOpen(true)}
-              >
-                {archived ? '恢复' : '归档'}
-              </Button>
+              {!readOnly && (
+                <>
+                  <Button size="sm" variant="ghost" onClick={() => setEditOpen(true)}>
+                    编辑档案
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setTransferOpen(true)}>
+                    调班
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={archived ? 'primary' : 'danger'}
+                    onClick={() => setArchiveOpen(true)}
+                  >
+                    {archived ? '恢复' : '归档'}
+                  </Button>
+                </>
+              )}
               <Tag tone={CATEGORY_TONE[inferCat(sid)]}>{CATEGORY_LABEL[inferCat(sid)]}</Tag>
             </>
           ) : (
@@ -149,9 +155,11 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
               {archived ? (
                 <Tag tone="neutral">账号已归档</Tag>
               ) : (
-                <Button size="sm" variant="primary" onClick={() => setEditOpen(true)}>
-                  编辑我的资料
-                </Button>
+                !readOnly && (
+                  <Button size="sm" variant="primary" onClick={() => setEditOpen(true)}>
+                    编辑我的资料
+                  </Button>
+                )
               )}
               <Tag tone="neutral">我的档案</Tag>
             </>
@@ -252,7 +260,7 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
                   <th>日期</th>
                   <th>状态</th>
                   {isTeacher && <th>备注</th>}
-                  {isTeacher && <th>操作</th>}
+                  {isTeacher && !readOnly && <th>操作</th>}
                 </tr>
               </thead>
               <tbody>
@@ -265,7 +273,7 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
                     {isTeacher && (
                       <td>{a.note ? a.note : <span className="muted">—</span>}</td>
                     )}
-                    {isTeacher && (
+                    {isTeacher && !readOnly ? (
                       <td>
                         <select
                           className="select"
@@ -287,7 +295,7 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
                           ))}
                         </select>
                       </td>
-                    )}
+                    ) : null}
                   </tr>
                 ))}
               </tbody>
@@ -392,6 +400,7 @@ function WorksTab({
   aiAnalysis: AiAnalysis[];
   teacherReviews: TeacherReview[];
 }) {
+  const { readOnly } = useDemoMode();
   const navigate = useNavigate();
   void navigate;
   const [addingFor, setAddingFor] = useState<string | null>(null);
@@ -421,7 +430,7 @@ function WorksTab({
                 <span className="muted">状态</span>
                 <Tag tone={SUBMISSION_TONE[s.status]}>{SUBMISSION_LABEL[s.status]}</Tag>
               </div>
-              {isTeacher && (
+              {isTeacher && !readOnly && (
                 <div className="grade-actions">
                   <span className="muted" style={{ fontSize: 'var(--fs-secondary)' }}>
                     教师评定：
@@ -489,7 +498,7 @@ function WorksTab({
                 </div>
               )}
 
-              {canStudentEdit && !archived && (
+              {canStudentEdit && !archived && !readOnly && (
                 <div>
                   {addingFor === s.id ? (
                     <div className="form-row">
@@ -585,6 +594,7 @@ function RecordsTimeline({
   records: LrItem[];
   lessons: NonNullable<Awaited<ReturnType<typeof getStudentDashboard>>['lessons']>;
 }) {
+  const { readOnly } = useDemoMode();
   const [localRecords, setLocalRecords] = useState<LrItem[]>(records);
   const [addingFor, setAddingFor] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -673,9 +683,15 @@ function RecordsTimeline({
         {kind === 'missing' && (
           <div className="rec-action">
             {isTeacher ? (
-              <button type="button" className="btn-supplement" onClick={() => setAddingFor(session.id)}>
-                补充记录
-              </button>
+              !readOnly ? (
+                <button type="button" className="btn-supplement" onClick={() => setAddingFor(session.id)}>
+                  补充记录
+                </button>
+              ) : (
+                <span className="muted" style={{ fontSize: 'var(--fs-secondary)' }}>
+                  本场记录待补充
+                </span>
+              )
             ) : (
               <span className="muted" style={{ fontSize: 'var(--fs-secondary)' }}>
                 本场记录待补充，可联系教师补全

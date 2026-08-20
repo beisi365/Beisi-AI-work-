@@ -5,6 +5,7 @@ import { useRepository } from '../../hooks/useRepository';
 import { db } from '../../data/repository';
 import { Button, Card, EmptyState, Modal, PageHeader, Tag, Toast } from '../../components/ui';
 import { CONCERN_LABEL, formatDate } from '../../lib/format';
+import { useDemoMode } from '../../lib/demoMode';
 import type { Concern, Student } from '../../data/types';
 import {
   confirmConcern,
@@ -19,6 +20,7 @@ const STATUS_ORDER: Concern['status'][] = ['pending', 'confirmed', 'resolved'];
 export default function AlertsPage() {
   const navigate = useNavigate();
   const { principal } = useAuth();
+  const { readOnly } = useDemoMode();
   const actor: AlertActor = { actorId: principal?.teacherId ?? '', actorRole: 'teacher' };
 
   const [toast, setToast] = useState('');
@@ -101,9 +103,11 @@ export default function AlertsPage() {
         title="学习预警"
         desc="系统基于出勤、提交、能力评估与学习记录自动识别风险学员，教师确认与处置"
         actions={
-          <Button variant="primary" size="sm" onClick={refresh} disabled={busy}>
-            刷新预警
-          </Button>
+          !readOnly && (
+            <Button variant="primary" size="sm" onClick={refresh} disabled={busy}>
+              刷新预警
+            </Button>
+          )
         }
       />
 
@@ -146,17 +150,17 @@ export default function AlertsPage() {
                           <Button size="sm" variant="ghost" onClick={() => navigate(`/t/students/${c.student_id}`)}>
                             查看学员
                           </Button>
-                          {c.status === 'pending' && (
+                          {!readOnly && c.status === 'pending' && (
                             <Button size="sm" onClick={() => onConfirm(c)}>
                               确认
                             </Button>
                           )}
-                          {c.status !== 'resolved' && (
+                          {!readOnly && c.status !== 'resolved' && (
                             <Button size="sm" variant="primary" onClick={() => openResolve(c)}>
                               解决
                             </Button>
                           )}
-                          {c.status !== 'resolved' && (
+                          {!readOnly && c.status !== 'resolved' && (
                             <Button size="sm" variant="ghost" onClick={() => onConvert(c)}>
                               转为待办
                             </Button>

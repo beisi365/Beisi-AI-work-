@@ -4,6 +4,7 @@ import { useAuth } from '../../auth/AuthContext';
 import { useRepository } from '../../hooks/useRepository';
 import { PageHeader, Card, Button, Tag, EmptyState, Grid, SectionTitle } from '../../components/ui';
 import { ABILITY_LABEL, LEVEL_LABEL, formatDate } from '../../lib/format';
+import { useDemoMode } from '../../lib/demoMode';
 import type { AbilityAssessment, AbilityDimension, AbilityLevel, AssessmentStatus } from '../../data/types';
 import {
   ALL_DIMENSIONS,
@@ -70,6 +71,7 @@ function DimCard({
 // devMode=true 时显示“内部开发页”提示（仅开发环境可见），false 为正式入口。
 export function TeacherAssessmentComposer({ devMode = false }: { devMode?: boolean }) {
   const { principal } = useAuth();
+  const { readOnly } = useDemoMode();
   const students = useRepository(['students'], (d) => d.students.list());
   const [studentId, setStudentId] = useState('');
   const [groups, setGroups] = useState<AssessmentGroupSummary[]>([]);
@@ -195,6 +197,7 @@ export function TeacherAssessmentComposer({ devMode = false }: { devMode?: boole
         </Card>
       ) : (
         <>
+          {!readOnly && (
           <Card
             title="新建评估组（草稿）"
             desc={`六维共用一组 ID；draft 允许维度未完成，确认前须六维齐全、每维主动选择等级且具备事实证据。已完成 ${completed}/6`}
@@ -287,6 +290,7 @@ export function TeacherAssessmentComposer({ devMode = false }: { devMode?: boole
               </>
             )}
           </Card>
+          )}
 
           <SectionTitle>评估组（按时间倒序）</SectionTitle>
           {groups.length === 0 ? (
@@ -306,38 +310,38 @@ export function TeacherAssessmentComposer({ devMode = false }: { devMode?: boole
                   </span>
                 }
                 actions={
-                  <div className="row" style={{ gap: 8 }}>
-                    {g.status === 'draft' && (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="primary"
-                          disabled={busy || !canConfirm(g)}
-                          onClick={() => run(() => confirmAssessmentGroup(db, g.groupId))}
-                        >
-                          确认
-                        </Button>
-                        <Button size="sm" variant="ghost" disabled={busy} onClick={() => run(() => voidAssessmentGroup(db, g.groupId))}>
-                          作废
-                        </Button>
-                      </>
-                    )}
-                    {g.status === 'confirmed' && (
-                      <>
-                        <Button size="sm" variant="primary" disabled={busy} onClick={() => run(() => publishAssessmentGroup(db, g.groupId))}>
-                          发布
-                        </Button>
-                        <Button size="sm" variant="ghost" disabled={busy} onClick={() => run(() => voidAssessmentGroup(db, g.groupId))}>
-                          作废
-                        </Button>
-                      </>
-                    )}
-                    {g.status === 'published' && (
-                      <Button size="sm" variant="default" disabled={busy} onClick={() => run(() => reviseAssessmentGroup(db, g.groupId))}>
-                        修正（新建草稿组）
+                <div className="row" style={{ gap: 8 }}>
+                  {g.status === 'draft' && !readOnly && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        disabled={busy || !canConfirm(g)}
+                        onClick={() => run(() => confirmAssessmentGroup(db, g.groupId))}
+                      >
+                        确认
                       </Button>
-                    )}
-                  </div>
+                      <Button size="sm" variant="ghost" disabled={busy} onClick={() => run(() => voidAssessmentGroup(db, g.groupId))}>
+                        作废
+                      </Button>
+                    </>
+                  )}
+                  {g.status === 'confirmed' && !readOnly && (
+                    <>
+                      <Button size="sm" variant="primary" disabled={busy} onClick={() => run(() => publishAssessmentGroup(db, g.groupId))}>
+                        发布
+                      </Button>
+                      <Button size="sm" variant="ghost" disabled={busy} onClick={() => run(() => voidAssessmentGroup(db, g.groupId))}>
+                        作废
+                      </Button>
+                    </>
+                  )}
+                  {g.status === 'published' && !readOnly && (
+                    <Button size="sm" variant="default" disabled={busy} onClick={() => run(() => reviseAssessmentGroup(db, g.groupId))}>
+                      修正（新建草稿组）
+                    </Button>
+                  )}
+                </div>
                 }
               >
                 <Grid min={220}>

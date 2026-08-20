@@ -6,10 +6,12 @@ import { db } from '../../data/repository';
 import { Button, Card, EmptyState, FormField, Modal, PageHeader, Tag, Toast } from '../../components/ui';
 import type { Student, Todo } from '../../data/types';
 import { completeTodo, type AlertActor } from '../../lib/alerts';
+import { useDemoMode } from '../../lib/demoMode';
 
 export default function TodosPage() {
   const navigate = useNavigate();
   const { principal } = useAuth();
+  const { readOnly } = useDemoMode();
   const actor: AlertActor = { actorId: principal?.teacherId ?? '', actorRole: 'teacher' };
 
   const [toast, setToast] = useState('');
@@ -74,9 +76,11 @@ export default function TodosPage() {
         title="教师待办"
         desc="教师自行创建的跟进事项；预警可手动转为待办，系统不会自动生成待办"
         actions={
-          <Button variant="primary" size="sm" onClick={() => setCreateOpen(true)}>
-            + 新建待办
-          </Button>
+          !readOnly && (
+            <Button variant="primary" size="sm" onClick={() => setCreateOpen(true)}>
+              + 新建待办
+            </Button>
+          )
         }
       />
 
@@ -109,7 +113,7 @@ export default function TodosPage() {
                       查看学员
                     </Button>
                   )}
-                  {t.status !== 'done' && (
+                  {t.status !== 'done' && !readOnly && (
                     <Button size="sm" variant="primary" onClick={() => onComplete(t)}>
                       完成
                     </Button>

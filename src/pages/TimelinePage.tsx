@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useRepository } from '../hooks/useRepository';
 import { Button, EmptyState, LoadingState, PageHeader, Tag } from '../components/ui';
 import { formatDate } from '../lib/format';
+import { useDemoMode } from '../lib/demoMode';
 import type { AttendanceStatus, ClassSession, LearningRecord, Lesson } from '../data/types';
 
 /** 合并后的时间线条目：已有学习记录 / 缺席无记录 / 已到课但记录待补 */
@@ -27,6 +28,7 @@ export default function TimelinePage() {
   const [studentFilter, setStudentFilter] = useState('all');
   const [editing, setEditing] = useState<string | null>(null);
   const [note, setNote] = useState('');
+  const { readOnly } = useDemoMode();
 
   const { data, loading } = useRepository(
     ['learning_records', 'attendance', 'class_sessions', 'lessons', 'students', 'enrollments', 'classes'],
@@ -221,7 +223,7 @@ export default function TimelinePage() {
                   {r.need_help && <Tag tone="danger">需要帮助</Tag>}
                   <span>教师建议：{r.next_suggestion}</span>
 
-                  {isTeacher && (
+                  {isTeacher && !readOnly && (
                     <div className="form-row" style={{ marginTop: 6 }}>
                       <label>教师观察（内部）</label>
                       {editing === r.id ? (

@@ -20,12 +20,14 @@ import { getTeacherOverview, type TeacherOverview } from '../lib/queries';
 import { getTeacherAlertStats, syncAlerts } from '../lib/alerts';
 import { CATEGORY_LABEL, CATEGORY_TONE, formatDate, rateText, SESSION_LABEL } from '../lib/format';
 import { sessionAttendanceTarget } from '../lib/sessionNav';
+import { useDemoMode } from '../lib/demoMode';
 import type { ClassSession } from '../data/types';
 import { StudentCreateModal, AttendanceRegisterModal, TeacherObservationModal } from '../components/StudentModals';
 
 export default function TeacherOverviewPage() {
   const navigate = useNavigate();
   const { principal } = useAuth();
+  const { readOnly } = useDemoMode();
   const actor = { actorId: principal?.teacherId ?? '', actorRole: 'teacher' as const };
 
   // P2.4 补充（消除「总览预警盲区」）：
@@ -96,30 +98,32 @@ export default function TeacherOverviewPage() {
       />
 
       {/* 快捷操作：均进入现有真实页面或弹窗；批量导入为规划项，不实现上传 */}
-      <Card>
-        <div className="quick-actions">
-          <Button variant="primary" size="sm" onClick={() => setCreateOpen(true)}>
-            + 新增学员
-          </Button>
-          <Button size="sm" onClick={() => setAttTarget({})}>
-            登记出勤
-          </Button>
-          <Button size="sm" onClick={() => navigate('/t/works')}>
-            登记作品
-          </Button>
-          <Button size="sm" onClick={() => navigate('/t/assessments')}>
-            发起考核
-          </Button>
-          <Button size="sm" onClick={() => setObsOpen(true)}>
-            添加教师观察
-          </Button>
-          <span title="规划中：批量导入将在后续阶段开放">
-            <Button size="sm" variant="ghost" disabled>
-              批量导入（规划中）
+      {!readOnly && (
+        <Card>
+          <div className="quick-actions">
+            <Button variant="primary" size="sm" onClick={() => setCreateOpen(true)}>
+              + 新增学员
             </Button>
-          </span>
-        </div>
-      </Card>
+            <Button size="sm" onClick={() => setAttTarget({})}>
+              登记出勤
+            </Button>
+            <Button size="sm" onClick={() => navigate('/t/works')}>
+              登记作品
+            </Button>
+            <Button size="sm" onClick={() => navigate('/t/assessments')}>
+              发起考核
+            </Button>
+            <Button size="sm" onClick={() => setObsOpen(true)}>
+              添加教师观察
+            </Button>
+            <span title="规划中：批量导入将在后续阶段开放">
+              <Button size="sm" variant="ghost" disabled>
+                批量导入（规划中）
+              </Button>
+            </span>
+          </div>
+        </Card>
+      )}
 
       {/* 顶部指标：5 项等分一行，移动端受控两列对齐 */}
       <div className="overview-stats">
@@ -148,7 +152,7 @@ export default function TeacherOverviewPage() {
             num={ov.attendanceToRegister.length}
             unit="场待登记出勤"
             accent
-            onClick={() => setAttTarget({})}
+            onClick={readOnly ? undefined : () => setAttTarget({})}
           />
           <TodoTile
             num={ov.pendingAssessments}
@@ -338,7 +342,7 @@ export default function TeacherOverviewPage() {
                     key={s.id}
                     s={s}
                     registered={registered}
-                    onClick={() => setAttTarget({ ...sessionAttendanceTarget(s), registered })}
+                    onClick={readOnly ? undefined : () => setAttTarget({ ...sessionAttendanceTarget(s), registered })}
                   />
                 );
               })}
@@ -361,7 +365,7 @@ export default function TeacherOverviewPage() {
                     key={s.id}
                     s={s}
                     registered={registered}
-                    onClick={() => setAttTarget({ ...sessionAttendanceTarget(s), registered })}
+                    onClick={readOnly ? undefined : () => setAttTarget({ ...sessionAttendanceTarget(s), registered })}
                   />
                 );
               })}
@@ -490,7 +494,7 @@ function TodoTile({
   num: number;
   unit: string;
   accent?: boolean;
-  onClick: () => void;
+  onClick?: () => void;
 }) {
   return (
     <button type="button" className={`todo-tile${accent && num > 0 ? ' todo-tile--accent' : ''}`} onClick={onClick}>
@@ -507,7 +511,7 @@ function SessionLine({
 }: {
   s: ClassSession;
   registered: boolean;
-  onClick: () => void;
+  onClick?: () => void;
 }) {
   return (
     <div
@@ -516,7 +520,7 @@ function SessionLine({
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if ((e.key === 'Enter' || e.key === ' ') && onClick) {
           e.preventDefault();
           onClick();
         }

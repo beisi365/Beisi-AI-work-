@@ -5,6 +5,7 @@ import { db } from '../data/repository';
 import { ROLE_LABEL } from '../lib/format';
 import { Avatar } from './ui';
 import { isCp2Enabled, type Cp2Module } from '../lib/featureFlags';
+import { useDemoMode } from '../lib/demoMode';
 
 type IconKey =
   | 'overview'
@@ -201,6 +202,7 @@ export function AppShell() {
   const { principal, logout } = useAuth();
   const navigate = useNavigate();
   const [moreOpen, setMoreOpen] = useState(false);
+  const { demo, readOnly } = useDemoMode();
   if (!principal) return null;
 
   const isTeacher = principal.role === 'teacher';
@@ -234,13 +236,20 @@ export function AppShell() {
           ))}
         </nav>
         <div className="sidebar-foot">
-          <button className="btn btn--ghost btn--sm" onClick={onReset}>
-            重置演示数据
-          </button>
+          {!readOnly && (
+            <button className="btn btn--ghost btn--sm" onClick={onReset}>
+              重置演示数据
+            </button>
+          )}
         </div>
       </aside>
 
       <div className="content">
+        {demo && (
+          <div className="demo-banner">
+            演示模式 · 只读（仅供浏览，不可编辑）
+          </div>
+        )}
         <header className="topbar">
           <div className="topbar-role">
             <Avatar name={principal.role === 'teacher' ? '师' : '学'} size={32} />
@@ -249,9 +258,11 @@ export function AppShell() {
               <div className="topbar-sub">{ROLE_LABEL[principal.role]} · 演示角色</div>
             </div>
           </div>
-          <button className="btn btn--ghost btn--sm" onClick={() => { logout(); navigate('/login'); }}>
-            退出登录
-          </button>
+          {!readOnly && (
+            <button className="btn btn--ghost btn--sm" onClick={() => { logout(); navigate('/login'); }}>
+              退出登录
+            </button>
+          )}
         </header>
         <main className="main">
           <Outlet />
@@ -310,17 +321,19 @@ export function AppShell() {
                 <span>{it.label}</span>
               </NavLink>
             ))}
-            <button
-              type="button"
-              className="more-item more-item--danger"
-              onClick={() => {
-                setMoreOpen(false);
-                onReset();
-              }}
-            >
-              <Icon k="alerts" />
-              <span>重置演示数据</span>
-            </button>
+            {!readOnly && (
+              <button
+                type="button"
+                className="more-item more-item--danger"
+                onClick={() => {
+                  setMoreOpen(false);
+                  onReset();
+                }}
+              >
+                <Icon k="alerts" />
+                <span>重置演示数据</span>
+              </button>
+            )}
           </div>
         </div>
       )}

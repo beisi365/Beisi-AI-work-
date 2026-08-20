@@ -19,6 +19,7 @@ import {
   StudentTransferModal,
 } from '../components/StudentModals';
 import { StudentImportModal } from '../components/StudentImportModal';
+import { useDemoMode } from '../lib/demoMode';
 
 const CATEGORY_OPTIONS: { value: StudentCategory; label: string }[] = [
   { value: 'normal', label: '正常' },
@@ -42,6 +43,7 @@ export default function StudentsListPage() {
   const [statusFilter, setStatusFilter] = useState<'active' | 'archived' | 'all'>('active');
   const [nameSearch, setNameSearch] = useState('');
   const [toast, setToast] = useState('');
+  const { readOnly } = useDemoMode();
 
   // 弹窗状态
   const [createOpen, setCreateOpen] = useState(false);
@@ -111,14 +113,16 @@ export default function StudentsListPage() {
         title="学员档案"
         desc="新增、筛选与维护学员资料；归档学员默认隐藏，可在「已归档」下查看与恢复"
         actions={
-          <>
-            <Button variant="ghost" onClick={() => setImportOpen(true)}>
-              批量导入
-            </Button>
-            <Button variant="primary" onClick={() => setCreateOpen(true)}>
-              + 新增学员
-            </Button>
-          </>
+          !readOnly && (
+            <>
+              <Button variant="ghost" onClick={() => setImportOpen(true)}>
+                批量导入
+              </Button>
+              <Button variant="primary" onClick={() => setCreateOpen(true)}>
+                + 新增学员
+              </Button>
+            </>
+          )
         }
       />
 
@@ -201,21 +205,23 @@ export default function StudentsListPage() {
                   <td data-label="提交率">{rateText(d.submissionRate)}</td>
                   <td data-label="完成率">{rateText(d.completionRate)}</td>
                   <td data-label="操作" onClick={(e) => e.stopPropagation()}>
-                    <div className="list-actions">
-                      <Button size="sm" variant="ghost" onClick={() => setEditTarget(d.student)}>
-                        编辑
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => setTransferTarget(d.student)}>
-                        调班
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={d.student.archived_at ? 'primary' : 'danger'}
-                        onClick={() => setArchiveTarget(d.student)}
-                      >
-                        {d.student.archived_at ? '恢复' : '归档'}
-                      </Button>
-                    </div>
+                    {!readOnly && (
+                      <div className="list-actions">
+                        <Button size="sm" variant="ghost" onClick={() => setEditTarget(d.student)}>
+                          编辑
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => setTransferTarget(d.student)}>
+                          调班
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={d.student.archived_at ? 'primary' : 'danger'}
+                          onClick={() => setArchiveTarget(d.student)}
+                        >
+                          {d.student.archived_at ? '恢复' : '归档'}
+                        </Button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}

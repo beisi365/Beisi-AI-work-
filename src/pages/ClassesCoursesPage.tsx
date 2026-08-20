@@ -17,11 +17,13 @@ import { getClassesWithStats } from '../lib/queries';
 import { ABILITY_LABEL, formatDate, rateText, SESSION_LABEL } from '../lib/format';
 import { ENROLLMENT_STATUS } from '../lib/enrollment';
 import { AttendanceRegisterModal, AttendanceHistoryModal } from '../components/StudentModals';
+import { useDemoMode } from '../lib/demoMode';
 
 export default function ClassesCoursesPage() {
   const navigate = useNavigate();
   const { principal } = useAuth();
   const actor = { actorId: principal?.teacherId ?? '', actorRole: 'teacher' as const };
+  const { readOnly } = useDemoMode();
   const [toast, setToast] = useState('');
   const flash = (m: string) => {
     setToast(m);
@@ -183,9 +185,11 @@ export default function ClassesCoursesPage() {
                         </td>
                         <td>
                           <div className="row-actions">
-                            <Button variant="primary" size="sm" onClick={() => openRegister(c.classRow.id, s.id)}>
-                              登记出勤
-                            </Button>
+                            {!readOnly && (
+                              <Button variant="primary" size="sm" onClick={() => openRegister(c.classRow.id, s.id)}>
+                                登记出勤
+                              </Button>
+                            )}
                             <Button variant="ghost" size="sm" onClick={() => openHistory(c.classRow.id, s.id)}>
                               查看出勤
                             </Button>

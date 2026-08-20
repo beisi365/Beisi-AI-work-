@@ -24,19 +24,24 @@ import AssessmentsDevPage from './pages/cp2/AssessmentsDevPage';
 import StudentAssessmentsDevPage from './pages/cp2/StudentAssessmentsDevPage';
 import type { ReactNode } from 'react';
 import { roleHome } from './lib/routeHome';
+import { DemoModeProvider, isDemoMode } from './lib/demoMode';
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { principal } = useAuth();
-  if (!principal) return <Navigate to="/login" replace />;
+  // 只读演示模式：跳过登录校验，直接使用演示身份渲染
+  if (!isDemoMode() && !principal) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
 function RoleOnly({ role, children }: { role: 'teacher' | 'student'; children: ReactNode }) {
   const { principal } = useAuth();
-  if (!principal) return <Navigate to="/login" replace />;
-  if (principal.role !== role) {
-    // 越权访问：按当前 principal.role 返回本人首页（学员→/s/home，教师→/t/overview）
-    return <Navigate to={roleHome(principal.role)} replace />;
+  // 只读演示模式：放行所有角色守卫（演示身份恒为教师）
+  if (!isDemoMode()) {
+    if (!principal) return <Navigate to="/login" replace />;
+    if (principal.role !== role) {
+      // 越权访问：按当前 principal.role 返回本人首页（学员→/s/home，教师→/t/overview）
+      return <Navigate to={roleHome(principal.role)} replace />;
+    }
   }
   return <>{children}</>;
 }
@@ -85,10 +90,11 @@ function StudentPortalGuard({ children }: { children: ReactNode }) {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/" element={<HomeRedirect />} />
+      <DemoModeProvider demo={isDemoMode()}>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/" element={<HomeRedirect />} />
 
           {/* 教师端 */}
           <Route
@@ -159,6 +165,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
+      </DemoModeProvider>
     </AuthProvider>
   );
 }

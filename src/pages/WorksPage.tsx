@@ -21,6 +21,7 @@ import {
   formatDateTime,
 } from '../lib/format';
 import { selectWorksSubmissions, paginate } from '../lib/queries';
+import { useDemoMode } from '../lib/demoMode';
 import type { SubmissionStatus, WorkVersion, TeacherReview, Assignment } from '../data/types';
 
 // —— 教师结构化评价标签（轻量，不评分、不排名、不强制） ——
@@ -72,6 +73,7 @@ export default function WorksPage() {
   const { principal } = useAuth();
   const isTeacher = principal?.role === 'teacher';
   const myStudentId = principal?.studentId ?? '';
+  const { readOnly } = useDemoMode();
 
   // —— 所有 hooks 必须在 early-return 之前调用，hooks 顺序需保持稳定 ——
   const [searchParams] = useSearchParams();
@@ -274,7 +276,7 @@ export default function WorksPage() {
           ) : (
             <span className="muted">作业信息缺失</span>
           )}
-          {isTeacher && asg && (
+          {isTeacher && asg && !readOnly && (
             <div style={{ marginTop: 8 }}>
               <Button
                 size="sm"
@@ -359,7 +361,7 @@ export default function WorksPage() {
           </div>
         </div>
 
-        {isTeacher ? (
+        {isTeacher && !readOnly ? (
           <div className="grade-actions">
             <span className="muted" style={{ fontSize: 'var(--fs-secondary)' }}>
               教师评定：
@@ -470,6 +472,7 @@ export default function WorksPage() {
             )}
           </div>
         ) : (
+          !readOnly && (
           <div>
             {addingFor === s.id ? (
               <div className="form-row">
@@ -511,6 +514,7 @@ export default function WorksPage() {
               </Button>
             )}
           </div>
+          )
         )}
       </div>
     );
@@ -593,7 +597,7 @@ export default function WorksPage() {
             </option>
           ))}
         </select>
-        {isTeacher && (
+        {isTeacher && !readOnly && (
           <div style={{ marginLeft: 'auto' }}>
             <Button variant="primary" size="sm" onClick={() => openAssignment()}>
               新建作业
@@ -620,9 +624,11 @@ export default function WorksPage() {
                       {a.due_date ? ` · 截止 ${a.due_date}` : ''}
                     </span>
                   </div>
-                  <Button size="sm" variant="ghost" onClick={() => openAssignment(a)}>
-                    编辑
-                  </Button>
+                  {!readOnly && (
+                    <Button size="sm" variant="ghost" onClick={() => openAssignment(a)}>
+                      编辑
+                    </Button>
+                  )}
                 </div>
               );
             })}
