@@ -24,7 +24,8 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [students, setStudents] = useState<StuView[]>([]);
-  const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
+  const [classes, setClasses] = useState<{ id: string; name: string; teacher_id?: string }[]>([]);
+  const [activeClass, setActiveClass] = useState<string>('cl1');
   const [blocked, setBlocked] = useState<string | null>(null);
   const [editTeacher, setEditTeacher] = useState<Teacher | null>(null);
   const studentPortalEnabled = isStudentPortalEnabled();
@@ -48,7 +49,7 @@ export default function LoginPage() {
         db.enrollments.list(),
       ]);
       setTeachers(ts);
-      setClasses(cls.map((c) => ({ id: c.id, name: c.name })));
+      setClasses(cls.map((c) => ({ id: c.id, name: c.name, teacher_id: c.teacher_id })));
       setStudents(
         sts.map((s) => ({
           ...s,
@@ -70,6 +71,13 @@ export default function LoginPage() {
       students: students.filter((s) => s.class_id === cid),
     }));
   }, [students, classes]);
+
+  // 默认只显示其中一个班的 25 名学员；通过顶部「老师·班级」切换标签查看其他班
+  const teacherNameByClass = (cid: string) => {
+    const cls = classes.find((c) => c.id === cid);
+    return teachers.find((t) => t.id === cls?.teacher_id)?.name ?? '';
+  };
+  const activeGroup = studentsByClass.find((g) => g.id === activeClass) ?? studentsByClass[0];
 
   // 只读演示模式：登录页直接跳过（上方 useEffect 已导航至工作台），这里不渲染任何可交互内容
   if (isDemoMode()) return null;
@@ -234,15 +242,30 @@ export default function LoginPage() {
                 <p className="hero-login-hint">
                   学员端仅能看到本人数据，看不到其他学员与教师内部备注
                 </p>
-                <div className="class-groups">
-                  {studentsByClass.map((g) => (
-                    <div key={g.id} className="class-group">
+                <div className="login-student-area">
+                  <div className="login-class-tabs">
+                    {studentsByClass.map((g) => (
+                      <button
+                        key={g.id}
+                        type="button"
+                        className={`login-class-tab${activeClass === g.id ? ' login-class-tab--active' : ''}`}
+                        onClick={() => setActiveClass(g.id)}
+                      >
+                        <span className="login-class-tab-label">
+                          {teacherNameByClass(g.id)} · {g.name}
+                        </span>
+                        <span className="login-class-tab-count">{g.students.length}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {activeGroup && (
+                    <div className="class-group" key={activeGroup.id}>
                       <div className="class-group-head">
-                        <span className="class-group-name">{g.name}</span>
-                        <span className="class-group-count">{g.students.length} 名</span>
+                        <span className="class-group-name">{activeGroup.name}</span>
+                        <span className="class-group-count">{activeGroup.students.length} 名</span>
                       </div>
                       <div className="hero-role-grid">
-                        {g.students.map((s) => (
+                        {activeGroup.students.map((s) => (
                           <button
                             key={s.id}
                             className="hero-role-opt"
@@ -257,7 +280,7 @@ export default function LoginPage() {
                         ))}
                       </div>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             ) : (

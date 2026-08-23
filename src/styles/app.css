@@ -2099,11 +2099,6 @@
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 14px;
 }
-.class-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
 .class-group {
   display: flex;
   flex-direction: column;
@@ -2125,6 +2120,44 @@
 .class-group-count {
   color: rgba(232, 230, 227, 0.6);
   font-size: 12px;
+}
+.login-class-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.login-class-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(232, 230, 227, 0.88);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.login-class-tab:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.login-class-tab--active {
+  background: rgba(255, 122, 26, 0.16);
+  border-color: rgba(255, 122, 26, 0.55);
+  color: #ff7a1a;
+  font-weight: 600;
+}
+.login-class-tab-label {
+  white-space: nowrap;
+}
+.login-class-tab-count {
+  font-size: 12px;
+  color: rgba(232, 230, 227, 0.55);
+}
+.login-class-tab--active .login-class-tab-count {
+  color: #ff7a1a;
 }
 .hero-role-card {
   position: relative;
