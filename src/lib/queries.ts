@@ -30,7 +30,9 @@ export function inferCategory(id: string): StudentCategory {
   if (n <= 8) return 'normal';
   if (n <= 13) return 'behind';
   if (n <= 17) return 'progress';
-  return 'strong';
+  // n>=18：按固定周期分布，保证新增学员（s21+）类别多样，且与种子 inferCat 保持一致
+  const cycle: StudentCategory[] = ['strong', 'strong', 'strong', 'normal', 'normal', 'normal', 'behind', 'progress'];
+  return cycle[(n - 18) % cycle.length];
 }
 
 /** 已上课程（场次 done）对应的作业 id 集合：提交率分母应只计已发布/已到期的作业 */

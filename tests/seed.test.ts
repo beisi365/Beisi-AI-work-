@@ -10,11 +10,11 @@ describe('演示数据 seed', () => {
   });
 
   it('核心数量正确', async () => {
-    expect((await db.students.list()).length).toBe(20);
-    expect((await db.classes.list()).length).toBe(2);
+    expect((await db.students.list()).length).toBe(125);
+    expect((await db.classes.list()).length).toBe(5);
     expect((await db.lessons.list()).length).toBe(12);
-    expect((await db.classSessions.list()).length).toBe(24);
-    expect((await db.assignments.list()).length).toBe(24);
+    expect((await db.classSessions.list()).length).toBe(60);
+    expect((await db.assignments.list()).length).toBe(60);
   });
 
   it('外键可解析', () => {

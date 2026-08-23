@@ -42,9 +42,9 @@ describe('新增学员原子性', () => {
     const bU = (await db.users.list()).length;
     const bE = (await db.enrollments.list()).length;
     const res = await createStudent(db, teacher, {
-      loginName: '学员21',
-      account: 'stu_s21',
-      nickname: '学员21',
+      loginName: '学员201',
+      account: 'stu_s201',
+      nickname: '学员201',
       classId: 'cl1',
       self_intro: '大家好',
     });

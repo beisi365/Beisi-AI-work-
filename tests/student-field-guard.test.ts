@@ -157,9 +157,9 @@ describe('五、归档/恢复操作日志为真实教师 ID', () => {
 describe('六、新增学员报名使用集中常量', () => {
   it('新增学员报名状态为“在读”常量值', async () => {
     const res = await createStudent(db, teacher, {
-      loginName: '学员21',
-      account: 'stu_s21',
-      nickname: '学员21',
+      loginName: '学员201',
+      account: 'stu_s201',
+      nickname: '学员201',
       classId: 'cl1',
     });
     expect(res.enrollment.status).toBe('在读');

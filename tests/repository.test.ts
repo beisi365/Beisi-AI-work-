@@ -67,6 +67,6 @@ describe('LocalDataLayer 仓储与事务', () => {
   it('reset 恢复到种子数据', async () => {
     await db.todos.insert({ owner_type: 'system', owner_id: 'sys', title: 'z', related_student_id: null, due: null, status: 'todo', created_by: 'u_t1' });
     await db.reset();
-    expect((await db.students.list()).length).toBe(20);
+    expect((await db.students.list()).length).toBe(125);
   });
 });

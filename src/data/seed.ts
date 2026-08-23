@@ -46,12 +46,17 @@ const DIMENSIONS: AbilityDimension[] = [
 ];
 
 // 学员类别配比：正常 8 / 落后 5 / 进步明显 4 / 基础较强 3 = 20
-const CATEGORIES = ([
-  ...Array(8).fill('normal'),
-  ...Array(5).fill('behind'),
-  ...Array(4).fill('progress'),
-  ...Array(3).fill('strong'),
-] as unknown) as ('normal' | 'behind' | 'progress' | 'strong')[];
+// 学员类别推断（与 src/lib/queries.ts 的 inferCategory 保持逐字同步：前 17 位分段不变以兼容既有
+// 表现与测试；n>=18 按固定周期分布，保证新增学员类别多样，且页面与种子数据完全一致）
+type StudentCategory = 'normal' | 'behind' | 'progress' | 'strong';
+function inferCat(id: string): StudentCategory {
+  const n = Number(id.replace(/\D/g, ''));
+  if (n <= 8) return 'normal';
+  if (n <= 13) return 'behind';
+  if (n <= 17) return 'progress';
+  const cycle: StudentCategory[] = ['strong', 'strong', 'strong', 'normal', 'normal', 'normal', 'behind', 'progress'];
+  return cycle[(n - 18) % cycle.length];
+}
 
 // 演示用：按学员类别 + 计数产生多样化的提交状态。submitted 与 to_review 语义重叠
 //（无独立入队环节），已合并为 to_review；故此处仅返回 to_review/need_revise/completed/excellent。
@@ -185,10 +190,13 @@ export function buildSeed(): DBShape {
     });
   });
 
-  // —— 班级（2 个） ——
-  const classDefs = [
-    { id: 'cl1', name: '夜校一班', teacher_id: 't1' },
-    { id: 'cl2', name: '周末二班', teacher_id: 't2' },
+  // —— 班级（5 个，分别对应 t1–t5 五位教师） ——
+  const classDefs: { id: string; name: string; teacher_id: string; schedule: string; location: string; mode: 'online' | 'offline' }[] = [
+    { id: 'cl1', name: '夜校一班', teacher_id: 't1', schedule: '每周一晚', location: '线上会议室', mode: 'online' },
+    { id: 'cl2', name: '周末二班', teacher_id: 't2', schedule: '每周六', location: '社区教室', mode: 'offline' },
+    { id: 'cl3', name: '进阶三班', teacher_id: 't3', schedule: '每周三晚', location: '线上会议室', mode: 'online' },
+    { id: 'cl4', name: '智能体四班', teacher_id: 't4', schedule: '每周五晚', location: '线上会议室', mode: 'online' },
+    { id: 'cl5', name: '教研五班', teacher_id: 't5', schedule: '每周日', location: '社区教室', mode: 'offline' },
   ];
   classDefs.forEach((c) => {
     classes.push({
@@ -198,8 +206,8 @@ export function buildSeed(): DBShape {
       teacher_id: c.teacher_id,
       start_date: '2026-01-05',
       end_date: '2026-04-05',
-      schedule: c.id === 'cl1' ? '每周一晚' : '每周六',
-      capacity: 15,
+      schedule: c.schedule,
+      capacity: 25,
       status: '进行中',
       created_at: BASE,
       updated_at: BASE,
@@ -207,11 +215,18 @@ export function buildSeed(): DBShape {
     });
   });
 
-  // —— 学员（20） + 用户 + 报名 ——
-  CATEGORIES.forEach((cat, i) => {
+  // —— 学员（125 = 5 班 × 25 人） + 用户 + 报名 ——
+  // 顺序填充：每 5 人一轮，分别落入 cl1–cl5（对应 t1–t5），每班恰好 25 人，互不重叠
+  const studentTeacher: Record<string, string> = {};
+  const TOTAL_STUDENTS = 125;
+  for (let i = 0; i < TOTAL_STUDENTS; i++) {
+    const clsDef = classDefs[i % classDefs.length];
+    const cls = clsDef.id;
+    const tid = clsDef.teacher_id;
     const sid = `s${(i + 1).toString().padStart(2, '0')}`;
     const uid = `u_${sid}`;
-    const cls = i < 10 ? 'cl1' : 'cl2';
+    const cat = inferCat(sid);
+    studentTeacher[sid] = tid;
     users.push({
       id: uid,
       role: 'student',
@@ -258,14 +273,15 @@ export function buildSeed(): DBShape {
       created_at: BASE,
       updated_at: BASE,
     });
-  });
+  }
 
   // —— 班级实际授课场次（每班 12 节，前 8 节已上，后 4 节待上） ——
   const sessionByClassLesson: Record<string, string> = {};
+  const classOffset: Record<string, number> = { cl1: 0, cl2: 3, cl3: 1, cl4: 4, cl5: 2 };
   classDefs.forEach((c) => {
     lessons.forEach((ls, i) => {
       const sid = nid('cs');
-      const start = BASE + i * 7 * DAY + (c.id === 'cl1' ? 0 : 3 * DAY);
+      const start = BASE + i * 7 * DAY + (classOffset[c.id] ?? 0) * DAY;
       const done = i < 8;
       classSessions.push({
         id: sid,
@@ -276,8 +292,8 @@ export function buildSeed(): DBShape {
         scheduled_end: start + 2 * 60 * 60 * 1000,
         actual_start: done ? start : null,
         actual_end: done ? start + 90 * 60 * 1000 : null,
-        location: c.id === 'cl1' ? '线上会议室' : '社区教室',
-        delivery_mode: c.id === 'cl1' ? 'online' : 'offline',
+        location: c.location,
+        delivery_mode: c.mode,
         status: done ? 'done' : 'scheduled',
         created_at: BASE,
         updated_at: BASE,
@@ -306,7 +322,7 @@ export function buildSeed(): DBShape {
   });
 
   // —— 出勤 / 作业提交 / 作品版本 / 学习记录 / 能力 ——
-  const enrolledByClass: Record<string, string[]> = { cl1: [], cl2: [] };
+  const enrolledByClass: Record<string, string[]> = Object.fromEntries(classDefs.map((c) => [c.id, []]));
   enrollments.forEach((e) => enrolledByClass[e.class_id].push(e.student_id));
 
   const classStudents = (cls: string) => enrolledByClass[cls];
@@ -315,7 +331,7 @@ export function buildSeed(): DBShape {
     if (cs.status !== 'done') return; // 仅已上场次产生记录
     const stuList = classStudents(cs.class_id);
     stuList.forEach((sid) => {
-      const cat = CATEGORIES[Number(sid.slice(1)) - 1];
+      const cat = inferCat(sid);
       // 出勤（独立维度，仅由 attendance 表判定，与作业提交无关）
       let attStatus: AttendanceStatus = 'present';
       if (cat === 'behind') {
@@ -453,7 +469,7 @@ export function buildSeed(): DBShape {
 
   // —— 能力评估快照 ——
   students.forEach((st) => {
-    const cat = CATEGORIES[Number(st.id.slice(1)) - 1];
+    const cat = inferCat(st.id);
     DIMENSIONS.forEach((dim) => {
       // 基线
       const baseLevel: AbilityLevel =
@@ -501,14 +517,14 @@ export function buildSeed(): DBShape {
 
   // —— 教师评价（已确认，针对进步/较强） ——
   students
-    .filter((_, i) => CATEGORIES[i] === 'progress' || CATEGORIES[i] === 'strong')
+    .filter((s) => inferCat(s.id) === 'progress' || inferCat(s.id) === 'strong')
     .slice(0, 4)
     .forEach((st) => {
       teacherReviews.push({
         id: nid('tr'),
         student_id: st.id,
         ref_lesson_id: 'ls08',
-        teacher_id: st.id < 's11' ? 't1' : 't2',
+        teacher_id: studentTeacher[st.id],
         tags: '{"态度":"积极","熟练度":"良好","提示词":"进步明显"}',
         ai_draft: '【演示版 AI 建议】该学员进步明显，建议进入综合项目。',
         teacher_text: '该学员进步明显，建议进入综合项目。',
@@ -522,7 +538,7 @@ export function buildSeed(): DBShape {
 
   // —— 关注事项（落后学员） ——
   students
-    .filter((_, i) => CATEGORIES[i] === 'behind')
+    .filter((s) => inferCat(s.id) === 'behind')
     .forEach((st, idx) => {
       concerns.push({
         id: nid('cn'),
@@ -531,7 +547,7 @@ export function buildSeed(): DBShape {
         trigger_reason: idx % 2 === 0 ? '连续两次缺课' : '两次以上未交作业',
         evidence: 'attendance + submissions 记录',
         suggested_action: '课后一对一辅导',
-        owner: 't1',
+        owner: studentTeacher[st.id],
         due: '2026-02-10',
         status: idx % 2 === 0 ? 'pending' : 'confirmed',
         confirmed_by: idx % 2 === 0 ? null : 't1',
@@ -549,11 +565,11 @@ export function buildSeed(): DBShape {
       id: nid('cm'),
       type: 'after_class',
       student_id: st.id,
-      teacher_id: st.id < 's11' ? 't1' : 't2',
+      teacher_id: studentTeacher[st.id],
       time: now - DAY,
       content: '沟通了本周学习难点',
       follow_up: '下周跟进',
-      owner: 't1',
+      owner: studentTeacher[st.id],
       attachment_id: null,
       created_at: now - DAY,
       updated_at: now - DAY,
@@ -579,7 +595,7 @@ export function buildSeed(): DBShape {
       owner_type: 'system',
       owner_id: 'sys',
       title: '关注落后学员学习情况',
-      related_student_id: students.find((_, i) => CATEGORIES[i] === 'behind')?.id ?? null,
+      related_student_id: students.find((s) => inferCat(s.id) === 'behind')?.id ?? null,
       due: null,
       status: 'todo',
       created_at: now,
