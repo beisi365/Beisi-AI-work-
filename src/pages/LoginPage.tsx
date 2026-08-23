@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../data/repository';
 import { useAuth } from '../auth/AuthContext';
@@ -15,6 +15,7 @@ import { roleHome } from '../lib/routeHome';
 interface StuView extends Student {
   user?: User;
   category: StudentCategory;
+  class_id?: string;
 }
 
 /** 演示用登录：仅做「教师 / 学员」角色切换，不实现真实账号认证 */
@@ -23,6 +24,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [students, setStudents] = useState<StuView[]>([]);
+  const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
   const [blocked, setBlocked] = useState<string | null>(null);
   const [editTeacher, setEditTeacher] = useState<Teacher | null>(null);
   const studentPortalEnabled = isStudentPortalEnabled();
@@ -38,21 +40,36 @@ export default function LoginPage() {
 
   useEffect(() => {
     (async () => {
-      const [ts, sts, us] = await Promise.all([
+      const [ts, sts, us, cls, ens] = await Promise.all([
         db.teachers.list(),
         db.students.list(),
         db.users.list(),
+        db.classes.list(),
+        db.enrollments.list(),
       ]);
       setTeachers(ts);
+      setClasses(cls.map((c) => ({ id: c.id, name: c.name })));
       setStudents(
         sts.map((s) => ({
           ...s,
+          class_id: ens.find((e) => e.student_id === s.id)?.class_id,
           user: us.find((u) => u.id === s.user_id),
           category: inferCategory(s.id),
         })),
       );
     })();
   }, []);
+
+  // 按 5 个班将学员分 5 段渲染（每段标题=班级专长名，下含该班 25 名学员卡片）
+  const studentsByClass = useMemo(() => {
+    const order = ['cl1', 'cl2', 'cl3', 'cl4', 'cl5'];
+    const nameOf = (cid: string) => classes.find((c) => c.id === cid)?.name ?? cid;
+    return order.map((cid) => ({
+      id: cid,
+      name: nameOf(cid),
+      students: students.filter((s) => s.class_id === cid),
+    }));
+  }, [students, classes]);
 
   // 只读演示模式：登录页直接跳过（上方 useEffect 已导航至工作台），这里不渲染任何可交互内容
   if (isDemoMode()) return null;
@@ -217,19 +234,29 @@ export default function LoginPage() {
                 <p className="hero-login-hint">
                   学员端仅能看到本人数据，看不到其他学员与教师内部备注
                 </p>
-                <div className="hero-role-grid">
-                  {students.map((s) => (
-                    <button
-                      key={s.id}
-                      className="hero-role-opt"
-                      onClick={() => enterAsStudent(s)}
-                    >
-                      <Avatar name={s.nickname} size={36} />
-                      <div>
-                        <div className="hero-role-name">{s.nickname}</div>
-                        <div className="hero-role-sub">{CATEGORY_LABEL[s.category]}</div>
+                <div className="class-groups">
+                  {studentsByClass.map((g) => (
+                    <div key={g.id} className="class-group">
+                      <div className="class-group-head">
+                        <span className="class-group-name">{g.name}</span>
+                        <span className="class-group-count">{g.students.length} 名</span>
                       </div>
-                    </button>
+                      <div className="hero-role-grid">
+                        {g.students.map((s) => (
+                          <button
+                            key={s.id}
+                            className="hero-role-opt"
+                            onClick={() => enterAsStudent(s)}
+                          >
+                            <Avatar name={s.nickname} size={36} />
+                            <div>
+                              <div className="hero-role-name">{s.nickname}</div>
+                              <div className="hero-role-sub">{CATEGORY_LABEL[s.category]}</div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>

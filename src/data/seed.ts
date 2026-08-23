@@ -220,7 +220,7 @@ export function buildSeed(): DBShape {
   const studentTeacher: Record<string, string> = {};
   const TOTAL_STUDENTS = 125;
   for (let i = 0; i < TOTAL_STUDENTS; i++) {
-    const clsDef = classDefs[i % classDefs.length];
+    const clsDef = classDefs[Math.min(Math.floor(i / 25), classDefs.length - 1)];
     const cls = clsDef.id;
     const tid = clsDef.teacher_id;
     const sid = `s${(i + 1).toString().padStart(2, '0')}`;
