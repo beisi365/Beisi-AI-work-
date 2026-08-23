@@ -192,11 +192,11 @@ export function buildSeed(): DBShape {
 
   // —— 班级（5 个，分别对应 t1–t5 五位教师） ——
   const classDefs: { id: string; name: string; teacher_id: string; schedule: string; location: string; mode: 'online' | 'offline' }[] = [
-    { id: 'cl1', name: '夜校一班', teacher_id: 't1', schedule: '每周一晚', location: '线上会议室', mode: 'online' },
-    { id: 'cl2', name: '周末二班', teacher_id: 't2', schedule: '每周六', location: '社区教室', mode: 'offline' },
-    { id: 'cl3', name: '进阶三班', teacher_id: 't3', schedule: '每周三晚', location: '线上会议室', mode: 'online' },
-    { id: 'cl4', name: '智能体四班', teacher_id: 't4', schedule: '每周五晚', location: '线上会议室', mode: 'online' },
-    { id: 'cl5', name: '教研五班', teacher_id: 't5', schedule: '每周日', location: '社区教室', mode: 'offline' },
+    { id: 'cl1', name: 'AI写作/提示词', teacher_id: 't1', schedule: '每周一晚', location: '线上会议室', mode: 'online' },
+    { id: 'cl2', name: 'AI图像/视频', teacher_id: 't2', schedule: '每周六', location: '社区教室', mode: 'offline' },
+    { id: 'cl3', name: 'AI办公/PPT', teacher_id: 't3', schedule: '每周三晚', location: '线上会议室', mode: 'online' },
+    { id: 'cl4', name: 'AI智能体/工作流', teacher_id: 't4', schedule: '每周五晚', location: '线上会议室', mode: 'online' },
+    { id: 'cl5', name: '课程统筹/学员成长', teacher_id: 't5', schedule: '每周日', location: '社区教室', mode: 'offline' },
   ];
   classDefs.forEach((c) => {
     classes.push({
@@ -583,7 +583,7 @@ export function buildSeed(): DBShape {
       id: nid('td'),
       owner_type: 'teacher',
       owner_id: 't1',
-      title: '批改夜校一班第 8 节作业',
+      title: `批改${classDefs[0].name}第 8 节作业`,
       related_student_id: null,
       due: '2026-02-01',
       status: 'todo',

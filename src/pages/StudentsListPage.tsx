@@ -84,12 +84,26 @@ export default function StudentsListPage() {
     ).map((c) => ({ id: c.id, name: c.name }));
   }, [data]);
 
+  // 默认选中第一个班（一次只展示一个班的 25 名学员，而非全部 125 人）
+  const activeClass = classFilter || classOptions[0]?.id || '';
+
+  // 各班级在读/总学员数（用于 Tab 角标）
+  const classStudentCounts = useMemo(() => {
+    const m: Record<string, number> = {};
+    if (!data) return m;
+    for (const d of data) {
+      const cid = d.classRow?.id;
+      if (cid) m[cid] = (m[cid] ?? 0) + 1;
+    }
+    return m;
+  }, [data]);
+
   const filtered = useMemo(() => {
     if (!data) return [];
     const kw = nameSearch.trim().toLowerCase();
     return data
       .filter((d) => {
-        if (classFilter && d.classRow?.id !== classFilter) return false;
+        if (activeClass && d.classRow?.id !== activeClass) return false;
         if (catFilter && d.category !== catFilter) return false;
         if (statusFilter === 'active' && d.student.archived_at) return false;
         if (statusFilter === 'archived' && !d.student.archived_at) return false;
@@ -126,6 +140,21 @@ export default function StudentsListPage() {
         }
       />
 
+      {/* 分班切换：一次只展示一个班的 25 名学员 */}
+      <div className="class-tabs">
+        {classOptions.map((o) => (
+          <button
+            key={o.id}
+            type="button"
+            className={`class-tab${activeClass === o.id ? ' class-tab--active' : ''}`}
+            onClick={() => updateFilter('class', o.id)}
+          >
+            {o.name}
+            <span className="tab-count">{classStudentCounts[o.id] ?? 0}</span>
+          </button>
+        ))}
+      </div>
+
       <div className="filters">
         <select
           className="select"
@@ -135,14 +164,6 @@ export default function StudentsListPage() {
           {STATUS_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
-            </option>
-          ))}
-        </select>
-        <select className="select" value={classFilter} onChange={(e) => updateFilter('class', e.target.value)}>
-          <option value="">全部班级</option>
-          {classOptions.map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.name}
             </option>
           ))}
         </select>
@@ -163,7 +184,7 @@ export default function StudentsListPage() {
         />
       </div>
 
-      <Card title={`学员列表（${filtered.length}）`}>
+      <Card title={`学员列表 · ${classOptions.find((c) => c.id === activeClass)?.name ?? ''}（${filtered.length}）`}>
         {filtered.length === 0 ? (
           <EmptyState title="没有符合条件的学员" hint="试试调整上面的筛选条件，或新增一名学员" />
         ) : (

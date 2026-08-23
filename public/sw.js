@@ -3,7 +3,7 @@
 //  - 安装时预缓存应用外壳（首页 / manifest / 图标）
 //  - 静态资源（JS/CSS/图片）：stale-while-revalidate，首次访问后即离线可用
 //  - 导航请求（页面跳转）：优先网络，失败回退到缓存首页，支持离线打开任意子路由
-const CACHE = 'awb-cache-v1';
+const CACHE = 'awb-cache-v2';
 const PRECACHE = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg'];
 
 self.addEventListener('install', (event) => {
