@@ -30,7 +30,9 @@ describe('旧数据兼容（20 名 seed 学员缺新字段不报错）', () => {
     expect(s.teacher_tags).toEqual([]);
     expect(s.ai_baseline).toBeNull();
     expect(s.archived_at).toBeNull();
-    expect(s.self_intro).toBe('');
+    // self_intro 是基础公开字段，可能为空字符串，也可能被资料库桥接覆盖为真实自我介绍；
+    // 此处只断言类型安全（旧数据不报错），不强制为空。
+    expect(typeof s.self_intro).toBe('string');
     expect(s.learning_suggestion).toBeNull();
     expect(s.teacher_observation).toBeNull();
   });

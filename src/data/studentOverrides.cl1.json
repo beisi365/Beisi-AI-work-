@@ -3,378 +3,378 @@
   "students": [
     {
       "student_id": "s01",
-      "nickname": "学员1",
+      "nickname": "林婉清",
       "loginName": "stu_s01",
       "age_range": "35-44",
-      "occupation": "在职",
-      "self_intro": "",
+      "occupation": "市场品牌经理",
+      "self_intro": "十年快消品牌经验，想把 AI 写作用于提案与社媒文案提效，日常需兼顾团队管理与内容产出。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "提示词基础薄弱，但文案语感好；擅长发散创意，不擅长结构化拆解任务。",
       "teacher_tags": [
         "正常"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "前两周作业提交积极，但提示词常一次写满需求、缺乏分层，后续需练『角色+约束+样例』框架。",
+      "learning_suggestion": "先掌握提示词四要素模板，再练分镜式长文拆解；每周产 1 篇可复用提示词卡片。"
     },
     {
       "student_id": "s02",
-      "nickname": "学员2",
+      "nickname": "陈志远",
       "loginName": "stu_s02",
       "age_range": "35-44",
-      "occupation": "在职",
-      "self_intro": "",
+      "occupation": "中小企业主",
+      "self_intro": "经营一家本地生活服务公司，想用 AI 写招商文案和朋友圈带货，时间碎片化、追求即学即用。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "零基础但目标极强，偏好『给模板直接抄』，对抽象方法论耐心有限。",
       "teacher_tags": [
         "正常"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "模板套用上手快，自主改写能力待提升；第三周开始能改出符合品牌调性的文案。",
+      "learning_suggestion": "提供行业提示词模板库，重点练『替换变量+微调语气』，避免逐字照搬。"
     },
     {
       "student_id": "s03",
-      "nickname": "学员3",
+      "nickname": "赵敏",
       "loginName": "stu_s03",
-      "age_range": "35-44",
-      "occupation": "在职",
-      "self_intro": "",
+      "age_range": "25-34",
+      "occupation": "新媒体运营",
+      "self_intro": "负责公众号与小红书账号，日更压力大，希望 AI 帮写标题、提纲和评论区互动话术。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "网感好、会追热点，提示词已会加『语气/平台/字数』约束，缺系统化沉淀。",
       "teacher_tags": [
         "正常"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "产出稳定，但爆款方法论说不清；适合引导她把成功经验反推成可复用提示词。",
+      "learning_suggestion": "让她整理『3 类爆款标题提示词』作业，训练从结果反推模板的能力。"
     },
     {
       "student_id": "s04",
-      "nickname": "学员4",
+      "nickname": "孙浩然",
       "loginName": "stu_s04",
       "age_range": "35-44",
-      "occupation": "在职",
-      "self_intro": "",
+      "occupation": "培训讲师",
+      "self_intro": "线下课程讲师，想用 AI 批量生成课件大纲与学员答疑话术，提升备课效率。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "知识结构清晰，擅长把内容拆模块，但提示词写法偏口语、不稳定。",
       "teacher_tags": [
         "正常"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "模块拆解作业质量高，提示词稳定性随练习明显提升，可委以小组互评。",
+      "learning_suggestion": "重点练『角色设定+输出格式约束』，把口头需求转成机器可执行的提示词。"
     },
     {
       "student_id": "s05",
-      "nickname": "学员5",
+      "nickname": "周雨桐",
       "loginName": "stu_s05",
-      "age_range": "35-44",
-      "occupation": "在职",
-      "self_intro": "",
+      "age_range": "25-34",
+      "occupation": "自由撰稿人",
+      "self_intro": "给多家媒体供稿，题材杂，想用 AI 做选题发散和初稿，再自己精修保风格。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "文字功底强，对 AI 初稿『同质化』敏感，需要教她用约束保个人 voice。",
       "teacher_tags": [
         "正常"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "能指出 AI 稿问题但改不动提示词；第四周起学会用『风格样例』约束保调性。",
+      "learning_suggestion": "教『给范文+抽特征+写风格提示词』三步法，让她保留个人文风。"
     },
     {
       "student_id": "s06",
-      "nickname": "学员6",
+      "nickname": "吴建国",
       "loginName": "stu_s06",
-      "age_range": "35-44",
-      "occupation": "在职",
-      "self_intro": "",
+      "age_range": "45-54",
+      "occupation": "传统制造业主管",
+      "self_intro": "工厂生产主管，想用 AI 写汇报、制度和培训材料，电脑操作一般、学习慢热。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "逻辑踏实但表达偏口语，提示词几乎不会写，需要极简模板+手把手。",
       "teacher_tags": [
         "正常"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "进度慢但每次作业都认真，适合给『填空式提示词』降低门槛。",
+      "learning_suggestion": "提供填空模板（我要写___，对象___，语气___），先求完成再求优化。"
     },
     {
       "student_id": "s07",
-      "nickname": "学员7",
+      "nickname": "郑晓岚",
       "loginName": "stu_s07",
       "age_range": "35-44",
-      "occupation": "在职",
-      "self_intro": "",
+      "occupation": "电商运营",
+      "self_intro": "淘宝店运营，想批量写商品详情页和催付短信，关注转化而非文采。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "目标导向强，提示词已会加『卖点+人群』，缺 A/B 多版本意识。",
       "teacher_tags": [
         "正常"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "详情页作业转化词用得好，建议引导她做一卖点多写法对照。",
+      "learning_suggestion": "练『同一卖点写 3 版不同角度』，建立文案 A/B 测试习惯。"
     },
     {
       "student_id": "s08",
-      "nickname": "学员8",
+      "nickname": "黄诗涵",
       "loginName": "stu_s08",
-      "age_range": "35-44",
-      "occupation": "在职",
-      "self_intro": "",
+      "age_range": "25-34",
+      "occupation": "文案策划",
+      "self_intro": "广告公司文案，想用 AI 做头脑风暴和 Slogan，担心被替代、想学得更深。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "专业底子好，提示词会玩『反向约束』，是班里可树为标杆的学员。",
       "teacher_tags": [
         "正常"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "作业常有惊喜，适合让她分享提示词思路，带动小组氛围。",
+      "learning_suggestion": "挑战高阶：多角色辩论提示词、约束冲突下的取舍，往『提示词工程』带。"
     },
     {
       "student_id": "s09",
-      "nickname": "学员9",
+      "nickname": "徐立民",
       "loginName": "stu_s09",
       "age_range": "45-54",
-      "occupation": "退休/自由职业",
-      "self_intro": "",
+      "occupation": "退休教师",
+      "self_intro": "刚退休的语文老师，想用 AI 写回忆录和社区投稿，打字慢、怕出错。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "文字修养高但工具陌生，提示词零基础，易因一次失败放弃。",
       "teacher_tags": [
         "需关注"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "前两周缺勤两次、作业迟交；需多鼓励，降低单次任务量。",
+      "learning_suggestion": "一对一陪跑前 3 次，任务拆到 10 分钟可完成，先建立信心。"
     },
     {
       "student_id": "s10",
-      "nickname": "学员10",
+      "nickname": "马秀英",
       "loginName": "stu_s10",
       "age_range": "45-54",
-      "occupation": "退休/自由职业",
-      "self_intro": "",
+      "occupation": "自由职业",
+      "self_intro": "退休后做社区团购，想写产品介绍和微信群文案，手机操作为主。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "生活经验丰富但表达随意，提示词不会写，需要大字号+语音友好指引。",
       "teacher_tags": [
         "需关注"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "手机端操作卡顿多，作业完成度低；建议改用语音输入+极简模板。",
+      "learning_suggestion": "提供手机端语音转提示词流程，作业以短文案为主，保参与感。"
     },
     {
       "student_id": "s11",
-      "nickname": "学员11",
+      "nickname": "何文博",
       "loginName": "stu_s11",
       "age_range": "45-54",
-      "occupation": "退休/自由职业",
-      "self_intro": "",
+      "occupation": "个体户",
+      "self_intro": "开小吃店，想写外卖平台和抖音文案，文化水平有限、表达朴素。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "真实感强但书面表达弱，提示词完全不会，需口语化模板。",
       "teacher_tags": [
         "需关注"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "能口述需求但写不出，建议让他『说给 AI 听』再让 AI 整理成稿。",
+      "learning_suggestion": "用语音口述→AI 整理的工作流，绕过打字短板，先有产出再练写。"
     },
     {
       "student_id": "s12",
-      "nickname": "学员12",
+      "nickname": "罗桂芳",
       "loginName": "stu_s12",
       "age_range": "45-54",
-      "occupation": "退休/自由职业",
-      "self_intro": "",
+      "occupation": "退休人员",
+      "self_intro": "爱好写作的退休阿姨，想用 AI 辅助写家风故事，发给子孙看。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "情感真挚、内容有温度，但结构散，提示词零基础。",
       "teacher_tags": [
         "需关注"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "作业真情实感好，结构乱；适合教『时间线/主题』两种骨架。",
+      "learning_suggestion": "给『口述家史→AI 排版』模板，重点练结构而非文采。"
     },
     {
       "student_id": "s13",
-      "nickname": "学员13",
+      "nickname": "高建军",
       "loginName": "stu_s13",
       "age_range": "45-54",
-      "occupation": "退休/自由职业",
-      "self_intro": "",
+      "occupation": "出租车司机",
+      "self_intro": "想写跑车见闻发短视频文案，识字量一般，全靠语音。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "素材鲜活但书面弱，提示词不会，适合纯语音工作流。",
       "teacher_tags": [
         "需关注"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "语音产出稳定，打字作业几乎为零；建议考核以语音稿为准。",
+      "learning_suggestion": "固定『语音口述 3 件事→AI 成稿』流程，降低书写门槛。"
     },
     {
       "student_id": "s14",
-      "nickname": "学员14",
+      "nickname": "冯雅雯",
       "loginName": "stu_s14",
       "age_range": "35-44",
-      "occupation": "在职",
-      "self_intro": "",
+      "occupation": "HR 经理",
+      "self_intro": "负责招聘与对内通知，想用 AI 写 JD、邮件和员工关怀文案。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "格式意识强，提示词会加『正式/亲切』语气，进步明显。",
       "teacher_tags": [
         "进步中"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "从套模板到能改语气，第 4 周 JD 作业被组内评为范本。",
+      "learning_suggestion": "进阶练『同内容多场景改写』，强化语气切换能力。"
     },
     {
       "student_id": "s15",
-      "nickname": "学员15",
+      "nickname": "董明轩",
       "loginName": "stu_s15",
       "age_range": "35-44",
-      "occupation": "在职",
-      "self_intro": "",
+      "occupation": "销售总监",
+      "self_intro": "带销售团队，想用 AI 写客户跟进邮件和朋友圈人设内容。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "沟通老练，提示词从空白到能写『目标+对象+期望动作』，跨越大。",
       "teacher_tags": [
         "进步中"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "前两月几乎零产出，第三周突然开窍，邮件作业质量跃升。",
+      "learning_suggestion": "固化『邮件四段式提示词』，让他带团队复用。"
     },
     {
       "student_id": "s16",
-      "nickname": "学员16",
+      "nickname": "萧子涵",
       "loginName": "stu_s16",
-      "age_range": "35-44",
-      "occupation": "在职",
-      "self_intro": "",
+      "age_range": "25-34",
+      "occupation": "短视频编导",
+      "self_intro": "做剧情号，想用 AI 写分镜脚本和口播稿，追求节奏感。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "镜头感好，提示词会加『时长+节奏+钩子』，进步快。",
       "teacher_tags": [
         "进步中"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "分镜作业结构清晰，建议引导她把脚本提示词模块化复用。",
+      "learning_suggestion": "练『钩子-铺垫-反转』提示词模板，提升完播率导向写作。"
     },
     {
       "student_id": "s17",
-      "nickname": "学员17",
+      "nickname": "唐悦",
       "loginName": "stu_s17",
-      "age_range": "35-44",
-      "occupation": "在职",
-      "self_intro": "",
+      "age_range": "25-34",
+      "occupation": "社群运营",
+      "self_intro": "管多个付费社群，想用 AI 写每日早报、话题引导和促活话术。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "运营 sence 强，提示词从短句到带『人设+场景』，提升明显。",
       "teacher_tags": [
         "进步中"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "早报作业从流水账到有人设，第 5 周被当作范例分享。",
+      "learning_suggestion": "固化『人设早报提示词』，并练话题引导的多轮对话写法。"
     },
     {
       "student_id": "s18",
-      "nickname": "学员18",
+      "nickname": "许辰逸",
       "loginName": "stu_s18",
       "age_range": "25-34",
-      "occupation": "在职",
-      "self_intro": "",
+      "occupation": "产品经理",
+      "self_intro": "互联网 PM，想用 AI 写 PRD、需求文档和汇报，逻辑要求高。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "结构化能力极强，提示词已用『角色+约束+输出格式+示例』完整范式。",
       "teacher_tags": [
         "强"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "作业常为满分范本，可委以『提示词小助教』带动同伴。",
+      "learning_suggestion": "往『复杂多文档提示词链』发展，挑战自动化工作流。"
     },
     {
       "student_id": "s19",
-      "nickname": "学员19",
+      "nickname": "沈嘉怡",
       "loginName": "stu_s19",
       "age_range": "25-34",
-      "occupation": "在职",
-      "self_intro": "",
+      "occupation": "内容主编",
+      "self_intro": "杂志主编，想用 AI 做选题策划和栏目录制稿，审美要求高。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "审美与结构俱佳，提示词会控制『风格+篇幅+禁区』，产出稳定高分。",
       "teacher_tags": [
         "强"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "选题策划作业常被组内传阅，适合做质量标杆。",
+      "learning_suggestion": "挑战『多栏目风格一致性提示词』，往主编级工作流走。"
     },
     {
       "student_id": "s20",
-      "nickname": "学员20",
+      "nickname": "陆天宇",
       "loginName": "stu_s20",
       "age_range": "25-34",
-      "occupation": "在职",
-      "self_intro": "",
+      "occupation": "技术写作者",
+      "self_intro": "写技术博客和文档，想用 AI 提速并保持准确，反感胡编。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "严谨型，提示词必加『基于给定资料、禁止臆造』约束，工程化思维强。",
       "teacher_tags": [
         "强"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "技术文档作业零幻觉，适合示范『防幻觉提示词』写法。",
+      "learning_suggestion": "深挖『引用约束+校验步骤』提示词，做准确性标杆。"
     },
     {
       "student_id": "s21",
-      "nickname": "学员21",
+      "nickname": "蒋雯丽",
       "loginName": "stu_s21",
       "age_range": "35-44",
-      "occupation": "在职",
-      "self_intro": "",
+      "occupation": "幼儿园老师",
+      "self_intro": "想用 AI 写家园共育通知和绘本活动方案，亲切易懂是刚需。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "表达亲切但偏口语，提示词会加『家长视角+温暖语气』，稳步提升。",
       "teacher_tags": [
         "正常"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "通知类作业成熟度够，活动方案结构待练；整体跟上节奏。",
+      "learning_suggestion": "练『活动方案五要素提示词』，强化结构完整性。"
     },
     {
       "student_id": "s22",
-      "nickname": "学员22",
+      "nickname": "韩雪松",
       "loginName": "stu_s22",
       "age_range": "35-44",
-      "occupation": "在职",
-      "self_intro": "",
+      "occupation": "财务人员",
+      "self_intro": "会计师事务所，想用 AI 写审计说明和管理建议书，严谨第一。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "数字敏感、措辞谨慎，提示词会加『基于数据、不延伸结论』约束。",
       "teacher_tags": [
         "正常"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "建议书作业逻辑稳，文采一般但够用；节奏正常。",
+      "learning_suggestion": "练『数据→结论』提示词模板，提升表述专业度。"
     },
     {
       "student_id": "s23",
-      "nickname": "学员23",
+      "nickname": "邓佳琪",
       "loginName": "stu_s23",
       "age_range": "35-44",
-      "occupation": "在职",
-      "self_intro": "",
+      "occupation": "心理咨询师",
+      "self_intro": "私域咨询，想用 AI 写科普短文和社群暖文，重视共情与边界。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "共情表达天然强，提示词会加『不越界、给资源而非诊断』约束。",
       "teacher_tags": [
         "正常"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "科普短文质量高，边界意识好；节奏正常偏优。",
+      "learning_suggestion": "固化『共情+资源导向』提示词，并练平台合规表述。"
     },
     {
       "student_id": "s24",
-      "nickname": "学员24",
+      "nickname": "曹立成",
       "loginName": "stu_s24",
       "age_range": "35-44",
-      "occupation": "在职",
-      "self_intro": "",
+      "occupation": "创业者",
+      "self_intro": "连续创业者，想用 AI 写融资邮件和商业计划书摘要，时间紧。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "商业嗅觉好，提示词会加『投资人视角+一句话亮点』，表达利落。",
       "teacher_tags": [
         "正常"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "BP 摘要作业抓重点准，细节待打磨；整体正常推进。",
+      "learning_suggestion": "练『电梯演讲式提示词』，强化一句话价值主张。"
     },
     {
       "student_id": "s25",
-      "nickname": "学员25",
+      "nickname": "袁梦琪",
       "loginName": "stu_s25",
       "age_range": "35-44",
-      "occupation": "在职",
-      "self_intro": "",
+      "occupation": "家居博主",
+      "self_intro": "小红书家居博主，想用 AI 写种草文案和直播话术，重氛围感。",
       "class_id": "cl1·AI写作-提示词",
-      "ai_baseline": null,
+      "ai_baseline": "氛围描写好，提示词会加『画面感+情绪词』，产出有辨识度。",
       "teacher_tags": [
         "正常"
       ],
-      "teacher_observation": null,
-      "learning_suggestion": null
+      "teacher_observation": "种草文案有个人味道，话术结构待系统练；节奏正常。",
+      "learning_suggestion": "练『场景化种草提示词』，把氛围感转成可复用模板。"
     }
   ]
 }
