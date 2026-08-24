@@ -29,4 +29,5 @@ docs/cp2-plan/accept_cp21.mjs
 # 本地工作区记忆与验收截图（保留本地，不入版本库）
 .workbuddy/
 /screenshots/
-/screenshots-p*/
+/screenshots-*/
+/shot-*.mjs
