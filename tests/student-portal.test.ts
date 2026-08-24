@@ -17,8 +17,8 @@ describe('学员端开关：computeStudentPortalEnabled 真值表', () => {
     expect(computeStudentPortalEnabled(true, null)).toBe(true);
     expect(computeStudentPortalEnabled(true, undefined)).toBe(true);
   });
-  it('生产环境、无覆盖 → 关闭（正式模式只显示教师）', () => {
-    expect(computeStudentPortalEnabled(false, null)).toBe(false);
+  it('生产环境、无覆盖 → 开放（师生双端默认可用）', () => {
+    expect(computeStudentPortalEnabled(false, null)).toBe(true);
   });
   it('显式覆盖 "0" → 强制关闭（即便开发环境）', () => {
     expect(computeStudentPortalEnabled(true, '0')).toBe(false);
@@ -28,9 +28,9 @@ describe('学员端开关：computeStudentPortalEnabled 真值表', () => {
     expect(computeStudentPortalEnabled(false, '1')).toBe(true);
     expect(computeStudentPortalEnabled(true, '1')).toBe(true);
   });
-  it('非 "0"/"1" 的覆盖值视为无效，回退到环境默认', () => {
+  it('非 "0"/"1" 的覆盖值视为无效，回退到默认开放', () => {
     expect(computeStudentPortalEnabled(true, 'x')).toBe(true);
-    expect(computeStudentPortalEnabled(false, 'x')).toBe(false);
+    expect(computeStudentPortalEnabled(false, 'x')).toBe(true);
   });
 });
 

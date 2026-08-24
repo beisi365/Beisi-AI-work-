@@ -29,11 +29,11 @@ export function isCp2Enabled(module: Cp2Module): boolean {
   return CP2_FLAGS[module] === true;
 }
 
-// —— 学员端功能开关（教师主导模式）——
+// —— 学员端功能开关（师生双端模式）——
 //
-// 产品定位：当前版本以教师平台为主，学员端默认不开放。
+// 产品定位：师生双端平台，学员端默认开放（仍可由 override '0' 强制关闭）。
 // - 开发/测试环境（import.meta.env.DEV）：默认开放，便于本地联调学员端。
-// - 生产环境（非 DEV）：默认关闭，登录页只显示教师身份、直接访问 /s/* 被拦截。
+// - 生产环境（非 DEV）：默认开放，登录页显示学员身份入口、/s/* 可直接访问。
 // - 显式覆盖：本地存储键 'studentPortal' 设为 '1' 强制开启、'0' 强制关闭，
 //   用于在生产预览或特殊场景下临时启用/禁用学员端，无需改代码或重新构建。
 // 注意：学员端页面、数据结构、路由与权限守卫均保留（不删除），仅通过开关控制可达性。
@@ -45,12 +45,12 @@ export const STUDENT_PORTAL_OVERRIDE_KEY = 'studentPortal';
  * 便于单元测试覆盖全部分支，避免依赖浏览器全局。
  */
 export function computeStudentPortalEnabled(
-  dev: boolean,
+  _dev: boolean,
   override: string | null | undefined,
 ): boolean {
   if (override === '0') return false;
   if (override === '1') return true;
-  return dev;
+  return true; // 生产环境默认开放学员端（师生双端可访问）
 }
 
 /** 读取学员端是否开放（真实运行环境）。覆盖值统一经 LocalDataLayer 存储抽象读取，
