@@ -41,7 +41,7 @@ import {
   STUDENT_PRODUCED_TABLES,
 } from '../../lib/studentFieldGuard';
 import { canRead, canWrite, type PermContext } from './permissions';
-import { buildSeed, SEED_TABLE_NAMES, levelToNum } from '../seed';
+import { buildSeedWithOverrides, SEED_TABLE_NAMES, levelToNum } from '../seed';
 
 const STORAGE_KEY = 'aiwb_db_v1';
 
@@ -93,7 +93,7 @@ export class LocalDataLayer implements DataLayer {
     if (raw) {
       this.cache = JSON.parse(raw) as Record<TableName, any[]>;
     } else {
-      this.cache = buildSeed() as unknown as Record<TableName, any[]>;
+      this.cache = buildSeedWithOverrides() as unknown as Record<TableName, any[]>;
       this.persist();
     }
   }
@@ -315,7 +315,7 @@ export class LocalDataLayer implements DataLayer {
     if (typeof window !== 'undefined' && window.localStorage) {
       window.localStorage.removeItem('aiwb_db_v1');
     }
-    this.cache = buildSeed() as unknown as Record<TableName, any[]>;
+    this.cache = buildSeedWithOverrides() as unknown as Record<TableName, any[]>;
     this.persist();
     this.emit([...SEED_TABLE_NAMES]);
   }

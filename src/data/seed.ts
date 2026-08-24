@@ -639,6 +639,86 @@ export function buildSeed(): DBShape {
   return db;
 }
 
+/**
+ * 资料库桥接覆盖层
+ * -----------------
+ * 学员信息可在「资料库在线表格」集中维护（见 README 的同步说明）。
+ * 同步脚本 scripts/sync-library-students.mjs 会把资料库该表导出为
+ * studentOverrides.cl1.json，这里在种子生成时按学号覆盖 students 表字段，
+ * 并按「所属班级」调整 enrollments 的 class_id 映射（从而切换老师）。
+ *
+ * 设计约束：
+ * - 纯前端、无 token 暴露：中控只 import 这个本地 JSON，不直连资料库 API；
+ * - 离线/文件缺失时静默跳过，回落种子默认值，不影响启动；
+ * - 本桥接层不读写浏览器本地存储（唯一访问点见 LocalDataLayer）。
+ */
+import studentOverrides from './studentOverrides.cl1.json';
+
+type StudentOverride = {
+  student_id: string;
+  nickname?: string;
+  loginName?: string;
+  age_range?: string;
+  occupation?: string;
+  self_intro?: string;
+  class_id?: string; // 资料库「所属班级」解析后：cl1-cl5
+  ai_baseline?: string | null;
+  teacher_tags?: string[];
+  teacher_observation?: string | null;
+  learning_suggestion?: string | null;
+};
+
+function classFromLabel(label?: string): string | undefined {
+  if (!label) return undefined;
+  const m = /^cl([1-5])/.exec(label.trim());
+  return m ? `cl${m[1]}` : undefined;
+}
+
+function applyStudentOverrides(db: DBShape): DBShape {
+  const overrides = (studentOverrides?.students ?? []) as StudentOverride[];
+  if (!overrides.length) return db;
+
+  const byId = new Map<string, StudentOverride>();
+  for (const o of overrides) {
+    if (o?.student_id) byId.set(o.student_id, o);
+  }
+  if (!byId.size) return db;
+
+  for (const s of db.students as Student[]) {
+    const o = byId.get(s.id);
+    if (!o) continue;
+    if (o.nickname !== undefined) s.nickname = o.nickname;
+    if (o.loginName !== undefined) {
+      const u = (db.users as User[]).find((x) => x.id === s.user_id);
+      if (u) {
+        u.name = o.loginName;
+        u.account = o.loginName;
+      }
+    }
+    if (o.age_range !== undefined) s.age_range = o.age_range;
+    if (o.occupation !== undefined) s.occupation = o.occupation;
+    if (o.self_intro !== undefined) s.self_intro = o.self_intro;
+
+    // 班级归属切换：更新 enrollments 对应记录的 class_id
+    const cls = classFromLabel(o.class_id);
+    if (cls) {
+      const enr = (db.enrollments as Enrollment[]).find((e) => e.student_id === s.id);
+      if (enr) enr.class_id = cls;
+    }
+    // 注：teacher_tags / ai_baseline / teacher_observation / learning_suggestion
+    // 属教师内部字段，不通过资料库桥接覆盖，仍由中控种子默认 + 中控内编辑维护，
+    // 避免外部表批量编辑污染内部判定与既有测试前提。
+  }
+  return db;
+}
+
+// 重新包一层：在 buildSeed 返回的 db 上应用覆盖
+const _buildSeed = buildSeed;
+export function buildSeedWithOverrides(): DBShape {
+  return applyStudentOverrides(_buildSeed());
+}
+
+
 export const SEED_TABLE_NAMES: TableName[] = [
   'users',
   'students',

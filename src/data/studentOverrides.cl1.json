@@ -1,0 +1,380 @@
+{
+  "_comment": "由 scripts/sync-library-students.mjs 从资料库自动生成，请勿手改。",
+  "students": [
+    {
+      "student_id": "s01",
+      "nickname": "学员1",
+      "loginName": "stu_s01",
+      "age_range": "35-44",
+      "occupation": "在职",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "正常"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s02",
+      "nickname": "学员2",
+      "loginName": "stu_s02",
+      "age_range": "35-44",
+      "occupation": "在职",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "正常"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s03",
+      "nickname": "学员3",
+      "loginName": "stu_s03",
+      "age_range": "35-44",
+      "occupation": "在职",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "正常"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s04",
+      "nickname": "学员4",
+      "loginName": "stu_s04",
+      "age_range": "35-44",
+      "occupation": "在职",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "正常"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s05",
+      "nickname": "学员5",
+      "loginName": "stu_s05",
+      "age_range": "35-44",
+      "occupation": "在职",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "正常"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s06",
+      "nickname": "学员6",
+      "loginName": "stu_s06",
+      "age_range": "35-44",
+      "occupation": "在职",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "正常"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s07",
+      "nickname": "学员7",
+      "loginName": "stu_s07",
+      "age_range": "35-44",
+      "occupation": "在职",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "正常"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s08",
+      "nickname": "学员8",
+      "loginName": "stu_s08",
+      "age_range": "35-44",
+      "occupation": "在职",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "正常"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s09",
+      "nickname": "学员9",
+      "loginName": "stu_s09",
+      "age_range": "45-54",
+      "occupation": "退休/自由职业",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "需关注"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s10",
+      "nickname": "学员10",
+      "loginName": "stu_s10",
+      "age_range": "45-54",
+      "occupation": "退休/自由职业",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "需关注"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s11",
+      "nickname": "学员11",
+      "loginName": "stu_s11",
+      "age_range": "45-54",
+      "occupation": "退休/自由职业",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "需关注"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s12",
+      "nickname": "学员12",
+      "loginName": "stu_s12",
+      "age_range": "45-54",
+      "occupation": "退休/自由职业",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "需关注"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s13",
+      "nickname": "学员13",
+      "loginName": "stu_s13",
+      "age_range": "45-54",
+      "occupation": "退休/自由职业",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "需关注"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s14",
+      "nickname": "学员14",
+      "loginName": "stu_s14",
+      "age_range": "35-44",
+      "occupation": "在职",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "进步中"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s15",
+      "nickname": "学员15",
+      "loginName": "stu_s15",
+      "age_range": "35-44",
+      "occupation": "在职",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "进步中"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s16",
+      "nickname": "学员16",
+      "loginName": "stu_s16",
+      "age_range": "35-44",
+      "occupation": "在职",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "进步中"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s17",
+      "nickname": "学员17",
+      "loginName": "stu_s17",
+      "age_range": "35-44",
+      "occupation": "在职",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "进步中"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s18",
+      "nickname": "学员18",
+      "loginName": "stu_s18",
+      "age_range": "25-34",
+      "occupation": "在职",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "强"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s19",
+      "nickname": "学员19",
+      "loginName": "stu_s19",
+      "age_range": "25-34",
+      "occupation": "在职",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "强"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s20",
+      "nickname": "学员20",
+      "loginName": "stu_s20",
+      "age_range": "25-34",
+      "occupation": "在职",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "强"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s21",
+      "nickname": "学员21",
+      "loginName": "stu_s21",
+      "age_range": "35-44",
+      "occupation": "在职",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "正常"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s22",
+      "nickname": "学员22",
+      "loginName": "stu_s22",
+      "age_range": "35-44",
+      "occupation": "在职",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "正常"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s23",
+      "nickname": "学员23",
+      "loginName": "stu_s23",
+      "age_range": "35-44",
+      "occupation": "在职",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "正常"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s24",
+      "nickname": "学员24",
+      "loginName": "stu_s24",
+      "age_range": "35-44",
+      "occupation": "在职",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "正常"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    },
+    {
+      "student_id": "s25",
+      "nickname": "学员25",
+      "loginName": "stu_s25",
+      "age_range": "35-44",
+      "occupation": "在职",
+      "self_intro": "",
+      "class_id": "cl1·AI写作-提示词",
+      "ai_baseline": null,
+      "teacher_tags": [
+        "正常"
+      ],
+      "teacher_observation": null,
+      "learning_suggestion": null
+    }
+  ]
+}
