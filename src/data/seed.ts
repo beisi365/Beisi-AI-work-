@@ -653,6 +653,7 @@ export function buildSeed(): DBShape {
  * - 本桥接层不读写浏览器本地存储（唯一访问点见 LocalDataLayer）。
  */
 import studentOverrides from './studentOverrides.cl1.json';
+import studentOverridesCl25 from './studentOverrides.cl2-cl5.json';
 
 type StudentOverride = {
   student_id: string;
@@ -675,7 +676,11 @@ function classFromLabel(label?: string): string | undefined {
 }
 
 function applyStudentOverrides(db: DBShape): DBShape {
-  const overrides = (studentOverrides?.students ?? []) as StudentOverride[];
+  // cl1 为资料库真实桥接数据；cl2-cl5 当前为示例占位（待资料库填写真实数据后由同步脚本覆盖）
+  const overrides = [
+    ...(studentOverrides?.students ?? []),
+    ...(studentOverridesCl25?.students ?? []),
+  ] as StudentOverride[];
   if (!overrides.length) return db;
 
   const byId = new Map<string, StudentOverride>();

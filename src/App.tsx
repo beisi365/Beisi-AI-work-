@@ -8,6 +8,7 @@ import StudentHomePage from './pages/StudentHomePage';
 import StudentProfilePage from './pages/StudentProfilePage';
 import ClassesCoursesPage from './pages/ClassesCoursesPage';
 import StudentsListPage from './pages/StudentsListPage';
+import SettingsPage from './pages/SettingsPage';
 import WorksPage from './pages/WorksPage';
 import TimelinePage from './pages/TimelinePage';
 import CourseMapPage from './pages/CourseMapPage';
@@ -157,7 +158,7 @@ export default function App() {
             {import.meta.env.DEV && <Route path="dev/assessments" element={<AssessmentsDevPage />} />}
             {/* P2.1 规划中模块：进入一级导航但内容为「规划中」占位，阶段验收后替换真实实现 */}
             <Route path="reports" element={<Cp2Placeholder title="成长报告" phase="P2.3 之后" />} />
-            <Route path="settings" element={<Cp2Placeholder title="系统设置" phase="P2.4 之后" />} />
+            <Route path="settings" element={<SettingsPage />} />
           </Route>
 
           {/* 学员端：教师主导模式下默认关闭。StudentPortalGuard 置于路由最外层，

@@ -31,3 +31,4 @@ docs/cp2-plan/accept_cp21.mjs
 /screenshots/
 /screenshots-*/
 /shot-*.mjs
+.vercel

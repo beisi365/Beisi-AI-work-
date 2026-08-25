@@ -1,0 +1,805 @@
+{
+  "_comment": "【示例占位数据】由 scripts/gen-cl2-cl5-examples.mjs 生成，非真实学员。待资料库填写 cl2-cl5 真实学员后，扩展 sync-library-students.mjs 支持多班即可覆盖本文件（字段兼容）。",
+  "students": [
+    {
+      "student_id": "s26",
+      "nickname": "韩梓",
+      "age_range": "25-34",
+      "occupation": "电商美工",
+      "self_intro": "日常做电商美工，想用 AI 提升图像与视频创作效率，并希望向团队推广。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s27",
+      "nickname": "冯瑞颖",
+      "age_range": "25-34",
+      "occupation": "影视后期",
+      "self_intro": "日常做影视后期，想用 AI 提升图像与视频创作效率，并希望向团队推广。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s28",
+      "nickname": "邓乐",
+      "age_range": "25-34",
+      "occupation": "动画设计师",
+      "self_intro": "日常做动画设计师，想用 AI 提升图像与视频创作效率，并希望向团队推广。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s29",
+      "nickname": "曹敏",
+      "age_range": "35-44",
+      "occupation": "视觉设计师",
+      "self_intro": "日常做视觉设计师，想用 AI 提升图像与视频创作效率，真正用起来提效。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s30",
+      "nickname": "彭勇露",
+      "age_range": "35-44",
+      "occupation": "摄影师",
+      "self_intro": "日常做摄影师，想用 AI 提升图像与视频创作效率，真正用起来提效。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s31",
+      "nickname": "曾霞",
+      "age_range": "35-44",
+      "occupation": "视频剪辑师",
+      "self_intro": "日常做视频剪辑师，想用 AI 提升图像与视频创作效率，真正用起来提效。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s32",
+      "nickname": "萧雪",
+      "age_range": "45-54",
+      "occupation": "平面设计师",
+      "self_intro": "日常做平面设计师，想用 AI 提升图像与视频创作效率，先掌握基础操作。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s33",
+      "nickname": "田悦萌",
+      "age_range": "35-44",
+      "occupation": "短视频创作者",
+      "self_intro": "日常做短视频创作者，想用 AI 提升图像与视频创作效率，真正用起来提效。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s34",
+      "nickname": "董轩",
+      "age_range": "25-34",
+      "occupation": "自媒体博主",
+      "self_intro": "日常做自媒体博主，想用 AI 提升图像与视频创作效率，并希望向团队推广。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s35",
+      "nickname": "袁宸",
+      "age_range": "25-34",
+      "occupation": "插画师",
+      "self_intro": "日常做插画师，想用 AI 提升图像与视频创作效率，并希望向团队推广。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s36",
+      "nickname": "潘娜蕊",
+      "age_range": "25-34",
+      "occupation": "电商美工",
+      "self_intro": "日常做电商美工，想用 AI 提升图像与视频创作效率，并希望向团队推广。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s37",
+      "nickname": "于洋",
+      "age_range": "35-44",
+      "occupation": "影视后期",
+      "self_intro": "日常做影视后期，想用 AI 提升图像与视频创作效率，真正用起来提效。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s38",
+      "nickname": "蒋超",
+      "age_range": "35-44",
+      "occupation": "动画设计师",
+      "self_intro": "日常做动画设计师，想用 AI 提升图像与视频创作效率，真正用起来提效。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s39",
+      "nickname": "蔡婷蕾",
+      "age_range": "35-44",
+      "occupation": "视觉设计师",
+      "self_intro": "日常做视觉设计师，想用 AI 提升图像与视频创作效率，真正用起来提效。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s40",
+      "nickname": "余欣",
+      "age_range": "45-54",
+      "occupation": "摄影师",
+      "self_intro": "日常做摄影师，想用 AI 提升图像与视频创作效率，先掌握基础操作。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s41",
+      "nickname": "杜航",
+      "age_range": "35-44",
+      "occupation": "视频剪辑师",
+      "self_intro": "日常做视频剪辑师，想用 AI 提升图像与视频创作效率，真正用起来提效。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s42",
+      "nickname": "叶泽菲",
+      "age_range": "25-34",
+      "occupation": "平面设计师",
+      "self_intro": "日常做平面设计师，想用 AI 提升图像与视频创作效率，并希望向团队推广。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s43",
+      "nickname": "程芳",
+      "age_range": "25-34",
+      "occupation": "短视频创作者",
+      "self_intro": "日常做短视频创作者，想用 AI 提升图像与视频创作效率，并希望向团队推广。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s44",
+      "nickname": "苏军",
+      "age_range": "25-34",
+      "occupation": "自媒体博主",
+      "self_intro": "日常做自媒体博主，想用 AI 提升图像与视频创作效率，并希望向团队推广。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s45",
+      "nickname": "魏明怡",
+      "age_range": "35-44",
+      "occupation": "插画师",
+      "self_intro": "日常做插画师，想用 AI 提升图像与视频创作效率，真正用起来提效。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s46",
+      "nickname": "吕俊",
+      "age_range": "35-44",
+      "occupation": "电商美工",
+      "self_intro": "日常做电商美工，想用 AI 提升图像与视频创作效率，真正用起来提效。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s47",
+      "nickname": "丁浩",
+      "age_range": "35-44",
+      "occupation": "影视后期",
+      "self_intro": "日常做影视后期，想用 AI 提升图像与视频创作效率，真正用起来提效。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s48",
+      "nickname": "任诺彤",
+      "age_range": "45-54",
+      "occupation": "动画设计师",
+      "self_intro": "日常做动画设计师，想用 AI 提升图像与视频创作效率，先掌握基础操作。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s49",
+      "nickname": "沈熙",
+      "age_range": "35-44",
+      "occupation": "视觉设计师",
+      "self_intro": "日常做视觉设计师，想用 AI 提升图像与视频创作效率，真正用起来提效。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s50",
+      "nickname": "姚伟",
+      "age_range": "25-34",
+      "occupation": "摄影师",
+      "self_intro": "日常做摄影师，想用 AI 提升图像与视频创作效率，并希望向团队推广。",
+      "class_id": "cl2"
+    },
+    {
+      "student_id": "s51",
+      "nickname": "卢磊瑶",
+      "age_range": "25-34",
+      "occupation": "办公室文员",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，并希望向团队推广。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s52",
+      "nickname": "傅涛",
+      "age_range": "25-34",
+      "occupation": "企业培训师",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，并希望向团队推广。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s53",
+      "nickname": "钟辉",
+      "age_range": "35-44",
+      "occupation": "项目经理",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，真正用起来提效。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s54",
+      "nickname": "姜宇琳",
+      "age_range": "35-44",
+      "occupation": "销售经理",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，真正用起来提效。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s55",
+      "nickname": "崔萱",
+      "age_range": "35-44",
+      "occupation": "HR 专员",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，真正用起来提效。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s56",
+      "nickname": "谭然",
+      "age_range": "45-54",
+      "occupation": "财务专员",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，先掌握基础操作。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s57",
+      "nickname": "廖知瑶",
+      "age_range": "35-44",
+      "occupation": "市场专员",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，真正用起来提效。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s58",
+      "nickname": "范强",
+      "age_range": "25-34",
+      "occupation": "总裁助理",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，并希望向团队推广。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s59",
+      "nickname": "汪娟",
+      "age_range": "25-34",
+      "occupation": "运营助理",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，并希望向团队推广。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s60",
+      "nickname": "陆文琪",
+      "age_range": "25-34",
+      "occupation": "行政主管",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，并希望向团队推广。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s61",
+      "nickname": "金晨",
+      "age_range": "35-44",
+      "occupation": "办公室文员",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，真正用起来提效。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s62",
+      "nickname": "石睿",
+      "age_range": "35-44",
+      "occupation": "企业培训师",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，真正用起来提效。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s63",
+      "nickname": "戴宁瑾",
+      "age_range": "35-44",
+      "occupation": "项目经理",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，真正用起来提效。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s64",
+      "nickname": "贾予",
+      "age_range": "45-54",
+      "occupation": "销售经理",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，先掌握基础操作。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s65",
+      "nickname": "韦丽",
+      "age_range": "35-44",
+      "occupation": "HR 专员",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，真正用起来提效。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s66",
+      "nickname": "夏杰琼",
+      "age_range": "25-34",
+      "occupation": "财务专员",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，并希望向团队推广。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s67",
+      "nickname": "邱刚",
+      "age_range": "25-34",
+      "occupation": "市场专员",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，并希望向团队推广。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s68",
+      "nickname": "方璐",
+      "age_range": "25-34",
+      "occupation": "总裁助理",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，并希望向团队推广。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s69",
+      "nickname": "侯涵琳",
+      "age_range": "35-44",
+      "occupation": "运营助理",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，真正用起来提效。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s70",
+      "nickname": "邹嘉",
+      "age_range": "35-44",
+      "occupation": "行政主管",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，真正用起来提效。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s71",
+      "nickname": "熊可",
+      "age_range": "35-44",
+      "occupation": "办公室文员",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，真正用起来提效。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s72",
+      "nickname": "孟静珊",
+      "age_range": "45-54",
+      "occupation": "企业培训师",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，先掌握基础操作。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s73",
+      "nickname": "秦艳",
+      "age_range": "35-44",
+      "occupation": "项目经理",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，真正用起来提效。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s74",
+      "nickname": "白平",
+      "age_range": "25-34",
+      "occupation": "销售经理",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，并希望向团队推广。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s75",
+      "nickname": "江倩璇",
+      "age_range": "25-34",
+      "occupation": "HR 专员",
+      "self_intro": "日常工作大量使用 Office，想用 AI 提速 PPT 与数据处理，并希望向团队推广。",
+      "class_id": "cl3"
+    },
+    {
+      "student_id": "s76",
+      "nickname": "阎梓",
+      "age_range": "25-34",
+      "occupation": "电商运营",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，并希望向团队推广。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s77",
+      "nickname": "薛瑞",
+      "age_range": "35-44",
+      "occupation": "内容运营",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，真正用起来提效。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s78",
+      "nickname": "尹乐婷",
+      "age_range": "35-44",
+      "occupation": "流程优化师",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，真正用起来提效。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s79",
+      "nickname": "段敏",
+      "age_range": "35-44",
+      "occupation": "IT 支持",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，真正用起来提效。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s80",
+      "nickname": "王勇",
+      "age_range": "45-54",
+      "occupation": "运营经理",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，先掌握基础操作。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s81",
+      "nickname": "李霞雯",
+      "age_range": "35-44",
+      "occupation": "产品经理",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，真正用起来提效。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s82",
+      "nickname": "张雪",
+      "age_range": "25-34",
+      "occupation": "连续创业者",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，并希望向团队推广。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s83",
+      "nickname": "刘悦",
+      "age_range": "25-34",
+      "occupation": "独立开发者",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，并希望向团队推广。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s84",
+      "nickname": "陈轩彤",
+      "age_range": "25-34",
+      "occupation": "数据分析师",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，并希望向团队推广。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s85",
+      "nickname": "杨宸",
+      "age_range": "35-44",
+      "occupation": "自动化工程师",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，真正用起来提效。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s86",
+      "nickname": "赵娜",
+      "age_range": "35-44",
+      "occupation": "电商运营",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，真正用起来提效。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s87",
+      "nickname": "黄洋颖",
+      "age_range": "35-44",
+      "occupation": "内容运营",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，真正用起来提效。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s88",
+      "nickname": "周超",
+      "age_range": "45-54",
+      "occupation": "流程优化师",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，先掌握基础操作。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s89",
+      "nickname": "吴婷",
+      "age_range": "35-44",
+      "occupation": "IT 支持",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，真正用起来提效。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s90",
+      "nickname": "徐欣露",
+      "age_range": "25-34",
+      "occupation": "运营经理",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，并希望向团队推广。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s91",
+      "nickname": "孙航",
+      "age_range": "25-34",
+      "occupation": "产品经理",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，并希望向团队推广。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s92",
+      "nickname": "马泽",
+      "age_range": "25-34",
+      "occupation": "连续创业者",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，并希望向团队推广。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s93",
+      "nickname": "朱芳萌",
+      "age_range": "35-44",
+      "occupation": "独立开发者",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，真正用起来提效。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s94",
+      "nickname": "胡军",
+      "age_range": "35-44",
+      "occupation": "数据分析师",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，真正用起来提效。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s95",
+      "nickname": "林明",
+      "age_range": "35-44",
+      "occupation": "自动化工程师",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，真正用起来提效。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s96",
+      "nickname": "郭俊蕊",
+      "age_range": "45-54",
+      "occupation": "电商运营",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，先掌握基础操作。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s97",
+      "nickname": "何浩",
+      "age_range": "35-44",
+      "occupation": "内容运营",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，真正用起来提效。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s98",
+      "nickname": "高诺",
+      "age_range": "25-34",
+      "occupation": "流程优化师",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，并希望向团队推广。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s99",
+      "nickname": "罗熙蕾",
+      "age_range": "25-34",
+      "occupation": "IT 支持",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，并希望向团队推广。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s100",
+      "nickname": "郑伟",
+      "age_range": "25-34",
+      "occupation": "运营经理",
+      "self_intro": "对智能体与自动化工作流感兴趣，想用 AI 搭建自动化流程提效，并希望向团队推广。",
+      "class_id": "cl4"
+    },
+    {
+      "student_id": "s101",
+      "nickname": "梁磊",
+      "age_range": "35-44",
+      "occupation": "职业规划师",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，真正用起来提效。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s102",
+      "nickname": "谢涛菲",
+      "age_range": "35-44",
+      "occupation": "教育咨询师",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，真正用起来提效。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s103",
+      "nickname": "宋辉",
+      "age_range": "35-44",
+      "occupation": "学员家长",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，真正用起来提效。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s104",
+      "nickname": "唐宇",
+      "age_range": "45-54",
+      "occupation": "课程设计师",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，先掌握基础操作。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s105",
+      "nickname": "许萱怡",
+      "age_range": "35-44",
+      "occupation": "学习教练",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，真正用起来提效。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s106",
+      "nickname": "韩然",
+      "age_range": "25-34",
+      "occupation": "社区运营",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，并希望向团队推广。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s107",
+      "nickname": "冯知",
+      "age_range": "25-34",
+      "occupation": "公益组织者",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，并希望向团队推广。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s108",
+      "nickname": "邓强彤",
+      "age_range": "25-34",
+      "occupation": "心理咨询师",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，并希望向团队推广。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s109",
+      "nickname": "曹娟",
+      "age_range": "35-44",
+      "occupation": "生涯顾问",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，真正用起来提效。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s110",
+      "nickname": "彭文",
+      "age_range": "35-44",
+      "occupation": "教研员",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，真正用起来提效。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s111",
+      "nickname": "曾晨瑶",
+      "age_range": "35-44",
+      "occupation": "职业规划师",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，真正用起来提效。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s112",
+      "nickname": "萧睿",
+      "age_range": "45-54",
+      "occupation": "教育咨询师",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，先掌握基础操作。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s113",
+      "nickname": "田宁",
+      "age_range": "35-44",
+      "occupation": "学员家长",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，真正用起来提效。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s114",
+      "nickname": "董予琳",
+      "age_range": "25-34",
+      "occupation": "课程设计师",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，并希望向团队推广。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s115",
+      "nickname": "袁丽",
+      "age_range": "25-34",
+      "occupation": "学习教练",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，并希望向团队推广。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s116",
+      "nickname": "潘杰",
+      "age_range": "25-34",
+      "occupation": "社区运营",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，并希望向团队推广。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s117",
+      "nickname": "于刚瑶",
+      "age_range": "35-44",
+      "occupation": "公益组织者",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，真正用起来提效。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s118",
+      "nickname": "蒋璐",
+      "age_range": "35-44",
+      "occupation": "心理咨询师",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，真正用起来提效。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s119",
+      "nickname": "蔡涵",
+      "age_range": "35-44",
+      "occupation": "生涯顾问",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，真正用起来提效。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s120",
+      "nickname": "余嘉琪",
+      "age_range": "45-54",
+      "occupation": "教研员",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，先掌握基础操作。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s121",
+      "nickname": "杜可",
+      "age_range": "35-44",
+      "occupation": "职业规划师",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，真正用起来提效。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s122",
+      "nickname": "叶静",
+      "age_range": "25-34",
+      "occupation": "教育咨询师",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，并希望向团队推广。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s123",
+      "nickname": "程艳瑾",
+      "age_range": "25-34",
+      "occupation": "学员家长",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，并希望向团队推广。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s124",
+      "nickname": "苏平",
+      "age_range": "25-34",
+      "occupation": "课程设计师",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，并希望向团队推广。",
+      "class_id": "cl5"
+    },
+    {
+      "student_id": "s125",
+      "nickname": "魏倩",
+      "age_range": "35-44",
+      "occupation": "学习教练",
+      "self_intro": "关注学习路径与成长规划，想用 AI 辅助教研与学员陪伴，真正用起来提效。",
+      "class_id": "cl5"
+    }
+  ]
+}
