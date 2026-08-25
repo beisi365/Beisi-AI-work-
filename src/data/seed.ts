@@ -676,7 +676,8 @@ function classFromLabel(label?: string): string | undefined {
 }
 
 function applyStudentOverrides(db: DBShape): DBShape {
-  // cl1 为资料库真实桥接数据；cl2-cl5 当前为示例占位（待资料库填写真实数据后由同步脚本覆盖）
+  // cl1-cl5 均可经资料库桥接：cl1 为真实表；cl2-cl5 已支持多班同步
+  // （scripts/sync-library-students.mjs 多班版，按 LIBRARY_DB_ID_CL2..CL5 配置后同步覆盖示例）
   const overrides = [
     ...(studentOverrides?.students ?? []),
     ...(studentOverridesCl25?.students ?? []),
