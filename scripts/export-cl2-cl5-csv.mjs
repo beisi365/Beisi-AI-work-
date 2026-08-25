@@ -26,16 +26,21 @@ const SRC = resolve(__dirname, '../src/data/studentOverrides.cl2-cl5.json');
 const OUT_DIR = resolve(__dirname, 'lib-csv');
 
 // 班级 → 资料库「所属班级」标签（前缀 cl1-cl5 必须保留，供同步映射）
+// ⚠️ 必须与 cl1 表 select 选项严格一致（dash 分隔），否则资料库写入匹配不上
 const CLASS_LABEL = {
-  cl2: 'cl2·AI图像/视频',
-  cl3: 'cl3·AI办公/PPT',
-  cl4: 'cl4·AI智能体/工作流',
-  cl5: 'cl5·课程统筹/学员成长',
+  cl2: 'cl2·AI图像-视频',
+  cl3: 'cl3·AI办公-PPT',
+  cl4: 'cl4·AI智能体-工作流',
+  cl5: 'cl5·课程统筹-学员成长',
+};
+// 班级 → 对应老师（与 cl1 表「对应老师」select 选项一致：王老师=cl1/李老师=cl2/陈老师=cl3/赵老师=cl4/林老师=cl5）
+const TEACHER_BY_CLASS = {
+  cl2: '李老师', cl3: '陈老师', cl4: '赵老师', cl5: '林老师',
 };
 
 const HEADER = [
   '学号', '姓名', '登录名', '年龄段', '职业', '自我介绍',
-  '所属班级', 'AI基线分析', '教师标签', '长期观察', '学习建议',
+  '所属班级', '对应老师', 'AI基线分析', '教师标签', '长期观察', '学习建议',
 ];
 
 // 半角逗号 → 全角，避免 CSV 列错位
@@ -43,6 +48,7 @@ const safe = (v) => String(v ?? '').replace(/,/g, '，');
 
 function toRow(s) {
   const cls = CLASS_LABEL[s.class_id] || s.class_id || '';
+  const teacher = TEACHER_BY_CLASS[s.class_id] || '';
   return [
     safe(s.student_id),
     safe(s.nickname),
@@ -51,6 +57,7 @@ function toRow(s) {
     safe(s.occupation),
     safe(s.self_intro),
     safe(cls),
+    safe(teacher), // 对应老师（对齐 cl1 结构）
     '', // AI基线分析（不桥接）
     '', // 教师标签（不桥接）
     '', // 长期观察（不桥接）

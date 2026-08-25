@@ -49,13 +49,23 @@ const SKILL_ROOT =
   '/Users/beisi-peter/.workbuddy/plugins/cache/workbuddy-builtin/skill-library/0.5.9';
 
 const CL1_DEFAULT = '1bgEQBWo4vOXnHD21foeSQ';
+// 读取 scripts/lib-db-ids.json（建表时自动生成的 4 个 database_id），作为 cl2-cl5 默认来源；
+// 环境变量 LIBRARY_DB_ID_CLx 优先级更高，两者皆无则该班跳过。
+function readIdsFile() {
+  try {
+    return JSON.parse(readFileSync(resolve(__dirname, 'lib-db-ids.json'), 'utf-8')) || {};
+  } catch {
+    return {};
+  }
+}
+const IDS_FILE = readIdsFile();
 // 每班：id / 环境变量名 / dbId（空=跳过）/ 输出文件
 const CLASSES = [
   { id: 'cl1', dbEnv: 'LIBRARY_DB_ID_CL1', dbId: process.env.LIBRARY_DB_ID_CL1 || CL1_DEFAULT, out: 'studentOverrides.cl1.json' },
-  { id: 'cl2', dbEnv: 'LIBRARY_DB_ID_CL2', dbId: process.env.LIBRARY_DB_ID_CL2 || '', out: 'studentOverrides.cl2-cl5.json' },
-  { id: 'cl3', dbEnv: 'LIBRARY_DB_ID_CL3', dbId: process.env.LIBRARY_DB_ID_CL3 || '', out: 'studentOverrides.cl2-cl5.json' },
-  { id: 'cl4', dbEnv: 'LIBRARY_DB_ID_CL4', dbId: process.env.LIBRARY_DB_ID_CL4 || '', out: 'studentOverrides.cl2-cl5.json' },
-  { id: 'cl5', dbEnv: 'LIBRARY_DB_ID_CL5', dbId: process.env.LIBRARY_DB_ID_CL5 || '', out: 'studentOverrides.cl2-cl5.json' },
+  { id: 'cl2', dbEnv: 'LIBRARY_DB_ID_CL2', dbId: process.env.LIBRARY_DB_ID_CL2 || IDS_FILE.cl2 || '', out: 'studentOverrides.cl2-cl5.json' },
+  { id: 'cl3', dbEnv: 'LIBRARY_DB_ID_CL3', dbId: process.env.LIBRARY_DB_ID_CL3 || IDS_FILE.cl3 || '', out: 'studentOverrides.cl2-cl5.json' },
+  { id: 'cl4', dbEnv: 'LIBRARY_DB_ID_CL4', dbId: process.env.LIBRARY_DB_ID_CL4 || IDS_FILE.cl4 || '', out: 'studentOverrides.cl2-cl5.json' },
+  { id: 'cl5', dbEnv: 'LIBRARY_DB_ID_CL5', dbId: process.env.LIBRARY_DB_ID_CL5 || IDS_FILE.cl5 || '', out: 'studentOverrides.cl2-cl5.json' },
 ];
 
 if (!TOKEN) {
