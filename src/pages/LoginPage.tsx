@@ -10,6 +10,8 @@ import type { Principal, Student, Teacher, User } from '../data/types';
 import { CATEGORY_LABEL, type StudentCategory } from '../lib/format';
 import { isStudentPortalEnabled } from '../lib/featureFlags';
 import { isDemoMode, getDemoPrincipal } from '../lib/demoMode';
+import { isSupabaseEnabled } from '../lib/supabaseClient';
+import { signIn, signUp } from '../auth/supabaseAuth';
 import { roleHome } from '../lib/routeHome';
 
 interface StuView extends Student {
@@ -31,6 +33,68 @@ export default function LoginPage() {
   const studentPortalEnabled = isStudentPortalEnabled();
   const rolesRef = useRef<HTMLDivElement | null>(null);
 
+  // —— Supabase 真实账号登录/注册面板状态（仅 Supabase 启用时显示） ——
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authRole, setAuthRole] = useState<'teacher' | 'student'>('teacher');
+  const [authBindId, setAuthBindId] = useState('');
+  const [authName, setAuthName] = useState('');
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authInfo, setAuthInfo] = useState<string | null>(null);
+
+  const handleSignIn = async () => {
+    setAuthError(null);
+    setAuthInfo(null);
+    if (!authEmail || !authPassword) {
+      setAuthError('请输入邮箱和密码');
+      return;
+    }
+    setAuthBusy(true);
+    try {
+      const p = await signIn(authEmail, authPassword);
+      login(p);
+      navigate(roleHome(p.role));
+    } catch (e) {
+      setAuthError((e as Error).message);
+    } finally {
+      setAuthBusy(false);
+    }
+  };
+
+  const handleSignUp = async () => {
+    setAuthError(null);
+    setAuthInfo(null);
+    if (!authEmail || !authPassword) {
+      setAuthError('请输入邮箱和密码');
+      return;
+    }
+    setAuthBusy(true);
+    try {
+      const p = await signUp({
+        email: authEmail,
+        password: authPassword,
+        role: authRole,
+        bindId: authBindId.trim() || undefined,
+        displayName: authName.trim() || undefined,
+      });
+      // 注册后无 session（邮箱确认未过）：提示去查收邮件，不进入系统
+      if (!p.studentId && !p.teacherId) {
+        setAuthInfo('注册成功！请查收确认邮件完成验证，然后返回登录。');
+        setAuthMode('signin');
+        setAuthPassword('');
+      } else {
+        login(p);
+        navigate(roleHome(p.role));
+      }
+    } catch (e) {
+      setAuthError((e as Error).message);
+    } finally {
+      setAuthBusy(false);
+    }
+  };
+
   // 只读演示模式：登录页直接跳过，按演示身份（教师/学员）进入对应首页，并保留 demo 参数
   useEffect(() => {
     if (isDemoMode()) {
@@ -40,6 +104,8 @@ export default function LoginPage() {
   }, [navigate]);
 
   useEffect(() => {
+    // Supabase 多用户模式：登录页不预载本地角色数据（登录后由会话决定可见范围）
+    if (isSupabaseEnabled) return;
     (async () => {
       const [ts, sts, us, cls, ens] = await Promise.all([
         db.teachers.list(),
@@ -135,7 +201,7 @@ export default function LoginPage() {
       {/* —— 顶部品牌导航 —— */}
       <header className="hero-nav">
         <div className="hero-brand">AI 培训学习工作台</div>
-        <div className="hero-tagline">演示版 · 教师主导模式</div>
+        <div className="hero-tagline">{isSupabaseEnabled ? '多用户协作版' : '演示版 · 教师主导模式'}</div>
       </header>
 
       {/* —— Hero 分栏：文案 + 旋转球 —— */}
@@ -184,7 +250,109 @@ export default function LoginPage() {
         </div>
       </section>
 
-      {/* —— 角色入口区（实际登录入口） —— */}
+      {/* —— Supabase 真实账号登录/注册面板（仅多用户模式显示） —— */}
+      {isSupabaseEnabled ? (
+        <section className="hero-login-section" id="login-roles">
+          <div className="auth-panel">
+            <div className="auth-tabs">
+              <button
+                type="button"
+                className={`auth-tab${authMode === 'signin' ? ' auth-tab--active' : ''}`}
+                onClick={() => { setAuthMode('signin'); setAuthError(null); setAuthInfo(null); }}
+              >
+                登录
+              </button>
+              <button
+                type="button"
+                className={`auth-tab${authMode === 'signup' ? ' auth-tab--active' : ''}`}
+                onClick={() => { setAuthMode('signup'); setAuthError(null); setAuthInfo(null); }}
+              >
+                注册
+              </button>
+            </div>
+
+            {authInfo && <div className="alert-info auth-info">{authInfo}</div>}
+            {authError && <div className="alert-warn auth-error">{authError}</div>}
+
+            <label className="auth-field">
+              <span>邮箱</span>
+              <input
+                className="auth-input"
+                type="email"
+                value={authEmail}
+                placeholder="you@example.com"
+                onChange={(e) => setAuthEmail(e.target.value)}
+              />
+            </label>
+            <label className="auth-field">
+              <span>密码</span>
+              <input
+                className="auth-input"
+                type="password"
+                value={authPassword}
+                placeholder="至少 6 位"
+                onChange={(e) => setAuthPassword(e.target.value)}
+              />
+            </label>
+
+            {authMode === 'signup' && (
+              <>
+                <div className="auth-field">
+                  <span>身份</span>
+                  <div className="auth-role-row">
+                    <button
+                      type="button"
+                      className={`auth-role${authRole === 'teacher' ? ' auth-role--active' : ''}`}
+                      onClick={() => setAuthRole('teacher')}
+                    >
+                      教师
+                    </button>
+                    <button
+                      type="button"
+                      className={`auth-role${authRole === 'student' ? ' auth-role--active' : ''}`}
+                      onClick={() => setAuthRole('student')}
+                    >
+                      学员
+                    </button>
+                  </div>
+                </div>
+                <label className="auth-field">
+                  <span>昵称（可选）</span>
+                  <input
+                    className="auth-input"
+                    type="text"
+                    value={authName}
+                    placeholder="显示在系统中的名字"
+                    onChange={(e) => setAuthName(e.target.value)}
+                  />
+                </label>
+                <label className="auth-field">
+                  <span>认领账号（可选·仅演示数据）</span>
+                  <input
+                    className="auth-input"
+                    type="text"
+                    value={authBindId}
+                    placeholder="学员填 s01，教师填 t1"
+                    onChange={(e) => setAuthBindId(e.target.value)}
+                  />
+                </label>
+                <p className="auth-hint">
+                  留空则创建你自己的全新账号；填写已存在的 sXX / tX 可认领演示数据（仅限尚未认领的记录，先到先得）。
+                </p>
+              </>
+            )}
+
+            <button
+              type="button"
+              className="auth-submit"
+              disabled={authBusy}
+              onClick={authMode === 'signin' ? handleSignIn : handleSignUp}
+            >
+              {authBusy ? '处理中…' : authMode === 'signin' ? '登录' : '注册并进入'}
+            </button>
+          </div>
+        </section>
+      ) : (
       <section className="hero-login-section" id="login-roles" ref={rolesRef}>
         {blocked ? (
           <div className="hero-blocked">
@@ -300,6 +468,7 @@ export default function LoginPage() {
           </>
         )}
       </section>
+      )}
 
       {/* —— 教师编辑弹窗（演示用） —— */}
       <TeacherEditModal

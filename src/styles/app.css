@@ -2080,6 +2080,116 @@
   padding: 36px 0 0;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
+
+/* —— Supabase 真实账号登录/注册面板（多用户模式） —— */
+.auth-panel {
+  max-width: 420px;
+  margin: 0 auto;
+  background: rgba(20, 18, 24, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 16px;
+  padding: 28px 26px 30px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+}
+.auth-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.auth-tab {
+  flex: 1;
+  padding: 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(232, 230, 227, 0.6);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.auth-tab--active {
+  color: #fff;
+  background: rgba(255, 122, 26, 0.16);
+  border-color: #ff7a1a;
+}
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.auth-field > span {
+  font-size: 12px;
+  color: rgba(232, 230, 227, 0.7);
+}
+.auth-input {
+  height: 44px;
+  padding: 0 14px;
+  font-size: 14px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.auth-input:focus {
+  border-color: #ff7a1a;
+}
+.auth-input::placeholder {
+  color: rgba(232, 230, 227, 0.35);
+}
+.auth-role-row {
+  display: flex;
+  gap: 8px;
+}
+.auth-role {
+  flex: 1;
+  padding: 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(232, 230, 227, 0.6);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.auth-role--active {
+  color: #fff;
+  background: rgba(255, 122, 26, 0.16);
+  border-color: #ff7a1a;
+}
+.auth-hint {
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(232, 230, 227, 0.5);
+  margin: 4px 0 16px;
+}
+.auth-submit {
+  width: 100%;
+  height: 46px;
+  margin-top: 6px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #ff7a1a, #ff9a3d);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+.auth-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.auth-info,
+.auth-error {
+  margin-bottom: 14px;
+  font-size: 13px;
+  line-height: 1.6;
+}
 .hero-login-title {
   font-size: 16px;
   color: #fff;

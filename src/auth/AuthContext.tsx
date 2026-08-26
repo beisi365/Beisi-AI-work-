@@ -1,9 +1,13 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Principal } from '../data/types';
 import { isDemoMode, getDemoPrincipal } from '../lib/demoMode';
+import { isSupabaseEnabled } from '../lib/supabaseClient';
+import { getCurrentPrincipal, onAuthChange, signOut } from './supabaseAuth';
 
 interface AuthValue {
   principal: Principal | null;
+  /** 当前认证模式：supabase（真实多用户）/ demo（只读演示）/ local（纯前端单机角色选择） */
+  mode: 'supabase' | 'demo' | 'local';
   login: (p: Principal) => void;
   logout: () => void;
 }
@@ -11,18 +15,39 @@ interface AuthValue {
 const AuthCtx = createContext<AuthValue | null>(null);
 
 /**
- * 演示用身份上下文：仅做「角色切换」，不实现真实账号认证。
- * 状态保存在内存中（刷新回到登录页），刻意不写入浏览器本地存储，
- * 以遵守架构约束（页面/组件一律不引用本地存储，唯一访问点在 LocalDataLayer）。
+ * 身份上下文，三模式共存：
+ * - demo：只读演示，初始即以演示身份进入（?demo 决定教师/学员视角），刷新保持。
+ * - supabase：已配置 Supabase 且非演示，初始从会话恢复 Principal，并订阅登录态变化。
+ * - local：纯前端单机，初始为 null，由登录页选择角色后 login()。
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // 只读演示模式：初始即以演示身份进入（教师/学员视角由 ?demo=student 决定），避免首屏闪烁与空白
   const [principal, setPrincipal] = useState<Principal | null>(isDemoMode() ? getDemoPrincipal() : null);
+  const [mode] = useState<'supabase' | 'demo' | 'local'>(
+    isDemoMode() ? 'demo' : isSupabaseEnabled ? 'supabase' : 'local',
+  );
+
+  useEffect(() => {
+    if (isDemoMode() || !isSupabaseEnabled) return;
+    let active = true;
+    getCurrentPrincipal().then((p) => {
+      if (active) setPrincipal(p);
+    });
+    const unsub = onAuthChange((p) => {
+      if (active) setPrincipal(p);
+    });
+    return () => {
+      active = false;
+      unsub();
+    };
+  }, []);
 
   const login = useCallback((p: Principal) => setPrincipal(p), []);
-  const logout = useCallback(() => setPrincipal(null), []);
+  const logout = useCallback(() => {
+    if (isSupabaseEnabled) void signOut();
+    setPrincipal(null);
+  }, []);
 
-  const value = useMemo<AuthValue>(() => ({ principal, login, logout }), [principal, login, logout]);
+  const value = useMemo<AuthValue>(() => ({ principal, login, logout, mode }), [principal, login, logout, mode]);
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }
 
