@@ -134,7 +134,9 @@ for (const o of overrides) {
   enrollments.push({
     id: `en_${id}`,
     student_id: id,
-    class_id: o.class_id,
+    // studentOverrides JSON 里 class_id 是「cl1·AI写作-提示词」这种「短id·类别名」格式；
+    // Supabase classes.id 是短id（如 cl1），必须拆分避免 ts 算成 NaN + FK 失效
+    class_id: (o.class_id || '').split('·')[0] || 'cl1',
     enroll_date: '2026-01-05',
     status: '在读',
     created_at: BASE,
@@ -203,8 +205,8 @@ const DAY = 86400000;
 const dateStr = (n) => new Date(BASE + n * DAY + 8 * 3600000).toISOString().slice(0, 10);
 // 各班级首课相对 BASE 的天偏移（匹配 schedule 周几；BASE=2026-01-05 为周一）
 const classStartOffset = { cl1: 0, cl2: 5, cl3: 2, cl4: 4, cl5: 6 };
-// 取学员所属班级
-const classOf = (sid) => enrollments.find((e) => e.student_id === sid)?.class_id || 'cl1';
+// 取学员所属班级（拆分「cl1·AI写作-提示词」取短 id，避免 classStartOffset 漏查找）
+const classOf = (sid) => (enrollments.find((e) => e.student_id === sid)?.class_id || 'cl1').split('·')[0] || 'cl1';
 
 const classSessions = [];
 const assignments = [];
@@ -290,11 +292,6 @@ if (SEED_BUSINESS) {
         created_by: 'u_migrate',
       });
     }
-  }
-  // 调试：打第一个 submission 的 JSON，确认 ts 是否为 NaN
-  if (submissions.length) {
-    console.log('[debug] first submission JSON:', JSON.stringify(submissions[0]));
-    console.log('[debug] typeof created_at:', typeof submissions[0].created_at, 'value:', submissions[0].created_at);
   }
 
   // —— 出勤：每场次为在读学员登记（大部分出勤，少量迟到/缺勤） ——
