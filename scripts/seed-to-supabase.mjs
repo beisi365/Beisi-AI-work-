@@ -17,12 +17,14 @@ import https from 'node:https';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SRC = resolve(__dirname, '../src/data');
 
-const BASE_URL = process.env.SUPABASE_URL;
-const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const BASE_URL = process.env.SUPABASE_URL?.replace(/[\s\r\n]+/g, '');
+const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/[\s\r\n]+/g, '');
 if (!BASE_URL || !KEY) {
   console.error('缺少 SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY');
   process.exit(1);
 }
+// 调试：打印 key 头尾片段+长度，便于排查「非法字符」类 header 报错
+console.log(`[debug] BASE_URL=${BASE_URL} KEY.length=${KEY.length} head=${KEY.slice(0, 6)} tail=${KEY.slice(-4)}`);
 
 const BASE = Date.parse('2026-01-05T00:00:00+08:00');
 const now = () => BASE;
