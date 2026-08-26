@@ -419,11 +419,23 @@ if (SEED_BUSINESS) {
 async function insert(table, rows, label) {
   if (!rows.length) return;
   // 分批 100 条，避免单次请求过大
+  // 注：直接调 PostgREST REST 接口，绕开 supabase-js 2.112.4 对中文 display_name
+  //     的 btoa 编码 bug（Cannot convert argument to a ByteString）。
   for (let i = 0; i < rows.length; i += 100) {
     const batch = rows.slice(i, i + 100);
-    const { error } = await sb.from(table).upsert(batch, { onConflict: 'id' });
-    if (error) {
-      console.error(`[${label}] 插入失败:`, error.message);
+    const res = await fetch(`${URL}/rest/v1/${table}`, {
+      method: 'POST',
+      headers: {
+        apikey: KEY,
+        Authorization: `Bearer ${KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates',
+      },
+      body: JSON.stringify(batch),
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      console.error(`[${label}] 插入失败:`, err);
       process.exit(1);
     }
   }
