@@ -291,6 +291,11 @@ if (SEED_BUSINESS) {
       });
     }
   }
+  // 调试：打第一个 submission 的 JSON，确认 ts 是否为 NaN
+  if (submissions.length) {
+    console.log('[debug] first submission JSON:', JSON.stringify(submissions[0]));
+    console.log('[debug] typeof created_at:', typeof submissions[0].created_at, 'value:', submissions[0].created_at);
+  }
 
   // —— 出勤：每场次为在读学员登记（大部分出勤，少量迟到/缺勤） ——
   let attIdx = 0;
