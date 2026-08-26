@@ -51,7 +51,7 @@ create table if not exists public.students (
 -- 3. teachers 教师表
 create table if not exists public.teachers (
   id text primary key,
-  user_id text not null,
+  user_id text,
   name text not null default '',
   title text,
   bio text not null default '',
@@ -436,28 +436,29 @@ grant execute on function public.claim_identity(text, text) to authenticated;
 -- RLS 辅助函数（stable，避免每行动态重算）
 -- ============================================================
 create or replace function public.auth_user_id() returns text
-language sql stable as $$
+language sql stable security definer set search_path = public as $$
   select nullif(auth.uid()::text, '')::text
 $$;
 
 create or replace function public.my_role() returns text
-language sql stable as $$
+language sql stable security definer set search_path = public as $$
   select p.role from public.profiles p where p.id = auth.uid()
 $$;
 
 create or replace function public.my_student_id() returns text
-language sql stable as $$
+language sql stable security definer set search_path = public as $$
   select p.student_id from public.profiles p where p.id = auth.uid()
 $$;
 
 create or replace function public.my_teacher_id() returns text
-language sql stable as $$
+language sql stable security definer set search_path = public as $$
   select p.teacher_id from public.profiles p where p.id = auth.uid()
 $$;
 
 -- 教师是否教该学员（经 enrollments + classes.teacher_id）
+-- 注意：SECURITY DEFINER 使内部查询绕过 RLS，避免「策略调用本函数 → 再触发策略」的递归爆栈
 create or replace function public.teaches_student(sid text) returns boolean
-language sql stable as $$
+language sql stable security definer set search_path = public as $$
   select exists (
     select 1 from public.enrollments e
     join public.classes c on c.id = e.class_id
@@ -467,7 +468,7 @@ $$;
 
 -- 教师是否负责该班级
 create or replace function public.teaches_class(cid text) returns boolean
-language sql stable as $$
+language sql stable security definer set search_path = public as $$
   select exists (
     select 1 from public.classes c where c.id = cid and c.teacher_id = public.my_teacher_id()
   )
@@ -475,7 +476,7 @@ $$;
 
 -- 学员是否在该班级
 create or replace function public.enrolled_in_class(cid text) returns boolean
-language sql stable as $$
+language sql stable security definer set search_path = public as $$
   select exists (
     select 1 from public.enrollments e
     where e.class_id = cid and e.student_id = public.my_student_id()
