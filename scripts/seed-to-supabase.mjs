@@ -83,6 +83,13 @@ const overrides = [...ov1, ...ov25];
 const students = [];
 const users = [];
 const enrollments = [];
+// P2 业务数据容器（脚本内收集，末尾统一 upsert）
+const submissions = [];
+const workVersions = [];
+const attendance = [];
+const abilityAssessments = [];
+const teacherReviews = [];
+const learningRecords = [];
 for (const o of overrides) {
   const id = o.student_id;
   students.push({
@@ -171,6 +178,244 @@ const classes = classDefs.map((c) => ({
   created_by: 'u_migrate',
 }));
 
+// ============================================================
+// P2 业务动态数据（演示填充）
+// 说明：真实生产环境动态数据初始为空。此处仅为「多用户地基已激活」后
+//       让四模块（课时/考勤/考核/作品）有可演示的真实数据。
+// 保留 user_id 留空 → 真实用户登录后仍可 claim_identity 认领，不影响隔离。
+// 用 service_role 绕过 RLS 灌入；所有外键以 id 关联（schema 未建物理 FK）。
+// 可通过 `SEED_BUSINESS=0` 跳过本段，只灌静态骨架。
+// ============================================================
+const SEED_BUSINESS = process.env.SEED_BUSINESS !== '0';
+
+// 班级 → 学员列表
+const studentsByClass = {};
+for (const e of enrollments) {
+  (studentsByClass[e.class_id] ||= []).push(e.student_id);
+}
+const teacherByClass = {};
+for (const c of classDefs) teacherByClass[c.id] = c.teacher_id;
+
+const DAY = 86400000;
+// 日期字符串按 +08 解释（BASE 为 +08 零点），避免 UTC 漂移
+const dateStr = (n) => new Date(BASE + n * DAY + 8 * 3600000).toISOString().slice(0, 10);
+// 各班级首课相对 BASE 的天偏移（匹配 schedule 周几；BASE=2026-01-05 为周一）
+const classStartOffset = { cl1: 0, cl2: 5, cl3: 2, cl4: 4, cl5: 6 };
+// 取学员所属班级
+const classOf = (sid) => enrollments.find((e) => e.student_id === sid)?.class_id || 'cl1';
+
+const classSessions = [];
+const assignments = [];
+if (SEED_BUSINESS) {
+  // —— 授课场次：每班 8 次，对应 le1~le8，全部已结束 ——
+  for (const c of classDefs) {
+    for (let i = 0; i < 8; i++) {
+      const sid = `se_${c.id}_${i + 1}`;
+      const start = BASE + (classStartOffset[c.id] + i * 7) * DAY + 19 * 3600000 + 30 * 60000; // 19:30
+      classSessions.push({
+        id: sid,
+        class_id: c.id,
+        lesson_id: `le${i + 1}`,
+        teacher_id: c.teacher_id,
+        scheduled_start: start,
+        scheduled_end: start + 90 * 60000,
+        actual_start: start,
+        actual_end: start + 90 * 60000,
+        location: c.location,
+        delivery_mode: c.mode,
+        status: '已结束',
+        created_at: BASE,
+        updated_at: BASE,
+      });
+      assignments.push({
+        id: `as_${c.id}_${i + 1}`,
+        lesson_id: `le${i + 1}`,
+        class_id: c.id,
+        class_session_id: sid,
+        title: `第 ${i + 1} 讲 · 实战作业`,
+        requirements: '根据本课主题完成一份可展示的实战作品，并简述所用工具与提示词思路。',
+        due_date: dateStr(classStartOffset[c.id] + i * 7 + 7),
+        rubric: '1) 完成度 2) 工具运用 3) 提示词质量 4) 表达清晰度',
+        created_at: BASE,
+        updated_at: BASE,
+        created_by: c.teacher_id,
+      });
+    }
+  }
+
+  // —— 作业提交 + 作品版本：每学员前 6 讲各 1 份（状态分布） ——
+  const SUB_STATUSES = ['completed', 'excellent', 'to_review', 'need_revise', 'pending'];
+  for (const s of students) {
+    const cls = classOf(s.id);
+    for (let i = 0; i < 6; i++) {
+      const status = SUB_STATUSES[(i + Number(s.id.replace(/\D/g, '')) % 5 + 5) % 5];
+      const subId = `su_${s.id}_${i + 1}`;
+      const asId = `as_${cls}_${i + 1}`;
+      const ts = BASE + (classStartOffset[cls] + i * 7 + 2) * DAY;
+      const vcount = status === 'need_revise' ? 2 : 1;
+      let finalVid = null;
+      for (let v = 1; v <= vcount; v++) {
+        const vid = `${subId}_v${v}`;
+        const isFinal = v === vcount;
+        workVersions.push({
+          id: vid,
+          submission_id: subId,
+          student_id: s.id,
+          version_no: v,
+          content: isFinal
+            ? `第 ${i + 1} 讲定稿作品（v${v}）：${status === 'excellent' ? '高质量完成，结构清晰' : '已完成基础要求'}。`
+            : `第 ${i + 1} 讲初稿（v${v}），待优化。`,
+          snapshot_file_id: null,
+          is_final: isFinal,
+          created_at: ts + v * 3600000,
+          updated_at: ts + v * 3600000,
+        });
+        if (isFinal) finalVid = vid;
+      }
+      submissions.push({
+        id: subId,
+        assignment_id: asId,
+        student_id: s.id,
+        status,
+        tools: 'ChatGPT / Midjourney / 即梦',
+        prompts: '围绕本课主题设计提示词，迭代 2 次后定稿。',
+        public_allowed: status === 'excellent',
+        final_version_id: finalVid,
+        ai_review_id: null,
+        teacher_review_id: null,
+        created_at: ts,
+        updated_at: ts,
+        created_by: 'u_migrate',
+      });
+    }
+  }
+
+  // —— 出勤：每场次为在读学员登记（大部分出勤，少量迟到/缺勤） ——
+  let attIdx = 0;
+  const attStatus = (k) => {
+    const r = (k * 7 + 3) % 20;
+    if (r < 1) return 'absent';
+    if (r < 3) return 'late';
+    return 'present';
+  };
+  for (const c of classDefs) {
+    const sess = classSessions.filter((s) => s.class_id === c.id);
+    const clsStudents = studentsByClass[c.id] || [];
+    for (const se of sess) {
+      for (const stuId of clsStudents) {
+        const status = attStatus(attIdx++);
+        attendance.push({
+          id: `at_${se.id}_${stuId}`,
+          class_session_id: se.id,
+          student_id: stuId,
+          status,
+          time: status === 'absent' ? 0 : se.scheduled_start,
+          note: status === 'late' ? '迟到约 10 分钟' : '',
+          created_at: se.scheduled_start,
+          updated_at: se.scheduled_start,
+          created_by: c.teacher_id,
+        });
+      }
+    }
+  }
+
+  // —— 能力评估：每学员 1 条（六维轮转，教师已确认） ——
+  const DIMS = ['basics', 'requirement', 'prompt', 'operation', 'judgement', 'application'];
+  const LEVELS = ['L1', 'L2', 'L3', 'L4'];
+  students.forEach((s, idx) => {
+    const cls = classOf(s.id);
+    const dim = DIMS[idx % 6];
+    const level = LEVELS[(idx * 3) % 4];
+    abilityAssessments.push({
+      id: `aa_${s.id}`,
+      student_id: s.id,
+      dimension: dim,
+      level,
+      source: 'teacher',
+      evidence_id: null,
+      ai_suggested_level: level,
+      teacher_confirmed_level: level,
+      status: 'confirmed',
+      evidence_text: '期初测评 + 前 6 次课表现综合判断。',
+      assessment_group_id: null,
+      assessed_at: BASE + (classStartOffset[cls] + 3 * 7) * DAY,
+      created_at: BASE,
+      updated_at: BASE,
+      created_by: teacherByClass[cls],
+    });
+  });
+
+  // —— 教师评语：completed/excellent/need_revise 的提交配评语，并回写 submission ——
+  const reviewMap = {};
+  submissions.forEach((sub) => {
+    if (!['completed', 'excellent', 'need_revise'].includes(sub.status)) return;
+    const cls = classOf(sub.student_id);
+    const li = Number(sub.id.split('_').pop());
+    const rid = `tr_${sub.id}`;
+    const tags =
+      sub.status === 'excellent'
+        ? '作品完整,表达清晰,主动性强'
+        : sub.status === 'completed'
+          ? '完成度好,工具运用熟练'
+          : '需优化提示词,细节待打磨';
+    const text =
+      sub.status === 'excellent'
+        ? '作品质量很高，提示词设计有章法，继续保持。'
+        : sub.status === 'completed'
+          ? '整体完成良好，可在细节上再打磨。'
+          : '方向正确，但提示词与细节还需优化，建议重做一版。';
+    teacherReviews.push({
+      id: rid,
+      student_id: sub.student_id,
+      ref_lesson_id: `le${li}`,
+      teacher_id: teacherByClass[cls],
+      tags,
+      ai_draft: '',
+      teacher_text: text,
+      status: 'confirmed',
+      created_by: teacherByClass[cls],
+      confirmed_at: sub.updated_at,
+      created_at: sub.updated_at,
+      updated_at: sub.updated_at,
+    });
+    reviewMap[sub.id] = rid;
+  });
+  submissions.forEach((sub) => {
+    if (reviewMap[sub.id]) sub.teacher_review_id = reviewMap[sub.id];
+  });
+
+  // —— 学习记录：出勤（非缺勤）且前 6 讲配套 1 条 ——
+  for (const a of attendance) {
+    if (a.status === 'absent') continue;
+    const se = classSessions.find((s) => s.id === a.class_session_id);
+    if (!se) continue;
+    const li = Number(se.lesson_id.replace('le', ''));
+    if (li > 6) continue;
+    const cls = se.class_id;
+    const sub = submissions.find(
+      (su) => su.student_id === a.student_id && su.assignment_id === `as_${cls}_${li}`,
+    );
+    learningRecords.push({
+      id: `lr_${a.id}`,
+      student_id: a.student_id,
+      class_session_id: a.class_session_id,
+      submission_id: sub ? sub.id : null,
+      prep: '课前预习了本课提纲与示例。',
+      exercise_completion: a.status === 'late' ? '基本完成' : '全部完成',
+      tools: 'ChatGPT / Midjourney',
+      key_prompts: '围绕主题迭代提示词，重点在结构清晰。',
+      problems: a.status === 'late' ? '时间紧张，部分步骤略快。' : '无明显问题。',
+      need_help: false,
+      teacher_observation: '课堂参与积极。',
+      ai_analysis_ref: null,
+      next_suggestion: '下一讲可尝试更复杂的组合任务。',
+      created_at: a.time || a.created_at,
+      updated_at: a.time || a.created_at,
+      created_by: teacherByClass[cls],
+    });
+  }
+}
+
 async function insert(table, rows, label) {
   if (!rows.length) return;
   // 分批 100 条，避免单次请求过大
@@ -192,4 +437,21 @@ await insert('courses', courses, 'courses');
 await insert('lessons', lessons, 'lessons');
 await insert('students', students, 'students');
 await insert('enrollments', enrollments, 'enrollments');
+
+// —— P2 业务动态数据（SEED_BUSINESS !== '0' 时） ——
+if (SEED_BUSINESS) {
+  await insert('class_sessions', classSessions, 'class_sessions');
+  await insert('assignments', assignments, 'assignments');
+  await insert('submissions', submissions, 'submissions');
+  await insert('work_versions', workVersions, 'work_versions');
+  await insert('attendance', attendance, 'attendance');
+  await insert('ability_assessments', abilityAssessments, 'ability_assessments');
+  await insert('teacher_reviews', teacherReviews, 'teacher_reviews');
+  await insert('learning_records', learningRecords, 'learning_records');
+  console.log(
+    `业务数据概览 → 场次:${classSessions.length} 作业:${assignments.length} ` +
+      `提交:${submissions.length} 版本:${workVersions.length} 出勤:${attendance.length} ` +
+      `评估:${abilityAssessments.length} 评语:${teacherReviews.length} 学习记录:${learningRecords.length}`,
+  );
+}
 console.log('种子迁移完成 ✅');

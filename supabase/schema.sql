@@ -483,6 +483,17 @@ language sql stable security definer set search_path = public as $$
   )
 $$;
 
+-- 教师是否负责该授课场次（经 class_sessions → classes.teacher_id）
+-- SECURITY DEFINER 使内部查询绕过 RLS，避免「策略调用本函数 → 再触发策略」的递归爆栈
+create or replace function public.teaches_session(sid text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.class_sessions cs
+    join public.classes c on c.id = cs.class_id
+    where cs.id = sid and c.teacher_id = public.my_teacher_id()
+  )
+$$;
+
 -- ============================================================
 -- 开启 RLS（默认拒绝，必须显式授权）
 -- ============================================================
@@ -518,6 +529,23 @@ create policy profiles_select_self on public.profiles
 drop policy if exists profiles_update_self on public.profiles;
 create policy profiles_update_self on public.profiles
   for update using (id = auth.uid()) with check (id = auth.uid());
+
+-- ============================================================
+-- 策略：users / teachers —— 教师目录（含姓名/头像，无敏感字段）
+--   所有登录用户可读；仅本人（教师）或管理员可写
+-- ============================================================
+drop policy if exists users_read on public.users;
+create policy users_read on public.users for select using (auth.role() is not null);
+drop policy if exists users_write on public.users;
+create policy users_write on public.users for all
+  using (public.my_role() = 'admin') with check (public.my_role() = 'admin');
+
+drop policy if exists teachers_read on public.teachers;
+create policy teachers_read on public.teachers for select using (auth.role() is not null);
+drop policy if exists teachers_write on public.teachers;
+create policy teachers_write on public.teachers for all
+  using (id = public.my_teacher_id() or public.my_role() = 'admin')
+  with check (id = public.my_teacher_id() or public.my_role() = 'admin');
 
 -- ============================================================
 -- 策略：参考/基础数据（courses, lessons）—— 所有登录用户可读；教师/管理员可写
@@ -588,6 +616,18 @@ drop policy if exists assignments_write on public.assignments;
 create policy assignments_write on public.assignments for all
   using (public.teaches_class(class_id) or public.my_role() = 'admin')
   with check (public.teaches_class(class_id) or public.my_role() = 'admin');
+
+-- ============================================================
+-- 策略：attendance —— 经授课场次归属判断
+--   教师读/写自己班的出勤；学员读自己的；管理员全权
+-- ============================================================
+drop policy if exists attendance_read on public.attendance;
+create policy attendance_read on public.attendance for select
+  using (public.teaches_session(class_session_id) or student_id = public.my_student_id() or public.my_role() = 'admin');
+drop policy if exists attendance_write on public.attendance;
+create policy attendance_write on public.attendance for all
+  using (public.teaches_session(class_session_id) or public.my_role() = 'admin')
+  with check (public.teaches_session(class_session_id) or public.my_role() = 'admin');
 
 -- ============================================================
 -- 策略：submissions —— 学员读/写自己的；教师读自己班学员的
