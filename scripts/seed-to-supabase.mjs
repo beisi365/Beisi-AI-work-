@@ -8,7 +8,6 @@
 // 初始为空，符合全新生产环境。
 // ⚠️ service_role key 拥有完全权限，切勿提交或暴露给前端；仅本地迁移使用。
 // ============================================================
-import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -18,13 +17,12 @@ import https from 'node:https';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SRC = resolve(__dirname, '../src/data');
 
-const URL = process.env.SUPABASE_URL;
+const BASE_URL = process.env.SUPABASE_URL;
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!URL || !KEY) {
+if (!BASE_URL || !KEY) {
   console.error('缺少 SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY');
   process.exit(1);
 }
-const sb = createClient(URL, KEY, { auth: { persistSession: false } });
 
 const BASE = Date.parse('2026-01-05T00:00:00+08:00');
 const now = () => BASE;
@@ -424,8 +422,8 @@ async function insert(table, rows, label) {
   // 注：直接用 node:http/https 调 PostgREST，绕开 Node 22 fetch(undici) 对含
   //     中文字符串的 btoa 校验 bug（'Cannot convert argument to a ByteString'）。
   //     行为等价：仍 upsert onConflict=id，分批 100。body 用 Buffer.from 显式 UTF-8。
-  const lib = URL.startsWith('https:') ? https : http;
-  const u = new URL(`${URL}/rest/v1/${table}`);
+  const lib = BASE_URL.startsWith('https:') ? https : http;
+  const u = new URL(`${BASE_URL}/rest/v1/${table}`);
   for (let i = 0; i < rows.length; i += 100) {
     const batch = rows.slice(i, i + 100);
     const body = Buffer.from(JSON.stringify(batch), 'utf-8');
