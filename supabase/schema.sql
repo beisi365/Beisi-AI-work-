@@ -804,3 +804,29 @@ create index if not exists idx_teacher_reviews_student_id on public.teacher_revi
 create index if not exists idx_communications_student_id on public.communications(student_id);
 create index if not exists idx_concerns_student_id on public.concerns(student_id);
 create index if not exists idx_todos_owner on public.todos(owner_type, owner_id);
+
+-- ============================================================
+-- 匿名只读策略（A 演示身份入口）
+-- 仅「未登录匿名访问（auth.uid() IS NULL）」可读；登录用户仍走
+-- 各自 RLS 隔离策略，多用户隔离不受影响。幂等可重复运行。
+-- ============================================================
+do $$
+declare t text;
+begin
+  foreach t in array array[
+    'users','teachers','classes','courses','lessons','students',
+    'enrollments','class_sessions','attendance','assignments',
+    'submissions','work_versions','learning_records',
+    'ability_assessments','teacher_reviews','files','ai_analysis','concerns'
+  ]
+  loop
+    execute format(
+      'drop policy if exists %I on public.%I',
+      'anon_select_' || t, t
+    );
+    execute format(
+      'create policy %I on public.%I for select using (auth.uid() IS NULL)',
+      'anon_select_' || t, t
+    );
+  end loop;
+end $$;
