@@ -235,8 +235,12 @@ export class SupabaseDataLayer implements DataLayer {
     }
     if (isSupabaseEnabled) {
       const client = getSupabase();
+      // channel 名必须唯一：supabase-js 不允许「subscribe 之后」再往同一 channel 加
+      // postgres_changes 回调（会抛 "cannot add postgres_changes callbacks ... after
+      // subscribe()"，导致 React 整树崩溃白屏）。多页面/多 useRepository 并发订阅时
+      // 各自独立 channel，卸载时 removeChannel 释放。
       const channel = client
-        .channel('aiwb-realtime')
+        .channel(`aiwb-realtime-${++this.idc}`)
         .on('postgres_changes', { event: '*', schema: 'public' }, () => {
           listener();
         })
