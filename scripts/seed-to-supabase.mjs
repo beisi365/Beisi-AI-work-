@@ -12,6 +12,8 @@ import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import http from 'node:http';
+import https from 'node:https';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SRC = resolve(__dirname, '../src/data');
@@ -419,23 +421,43 @@ if (SEED_BUSINESS) {
 async function insert(table, rows, label) {
   if (!rows.length) return;
   // 分批 100 条，避免单次请求过大
-  // 注：直接调 PostgREST REST 接口，绕开 supabase-js 2.112.4 对中文 display_name
-  //     的 btoa 编码 bug（Cannot convert argument to a ByteString）。
+  // 注：直接用 node:http/https 调 PostgREST，绕开 Node 22 fetch(undici) 对含
+  //     中文字符串的 btoa 校验 bug（'Cannot convert argument to a ByteString'）。
+  //     行为等价：仍 upsert onConflict=id，分批 100。body 用 Buffer.from 显式 UTF-8。
+  const lib = URL.startsWith('https:') ? https : http;
+  const u = new URL(`${URL}/rest/v1/${table}`);
   for (let i = 0; i < rows.length; i += 100) {
     const batch = rows.slice(i, i + 100);
-    const res = await fetch(`${URL}/rest/v1/${table}`, {
-      method: 'POST',
-      headers: {
-        apikey: KEY,
-        Authorization: `Bearer ${KEY}`,
-        'Content-Type': 'application/json',
-        Prefer: 'resolution=merge-duplicates',
-      },
-      body: JSON.stringify(batch),
+    const body = Buffer.from(JSON.stringify(batch), 'utf-8');
+    const result = await new Promise((resolve, reject) => {
+      const req = lib.request(
+        {
+          method: 'POST',
+          hostname: u.hostname,
+          port: u.port || undefined,
+          path: u.pathname,
+          headers: {
+            apikey: KEY,
+            Authorization: `Bearer ${KEY}`,
+            'Content-Type': 'application/json',
+            'Content-Length': body.length,
+            Prefer: 'resolution=merge-duplicates',
+          },
+        },
+        (res) => {
+          let data = '';
+          res.on('data', (chunk) => (data += chunk));
+          res.on('end', () =>
+            resolve({ ok: res.statusCode >= 200 && res.statusCode < 300, status: res.statusCode, text: data }),
+          );
+        },
+      );
+      req.on('error', reject);
+      req.write(body);
+      req.end();
     });
-    if (!res.ok) {
-      const err = await res.text();
-      console.error(`[${label}] 插入失败:`, err);
+    if (!result.ok) {
+      console.error(`[${label}] 插入失败 [HTTP ${result.status}]:`, result.text);
       process.exit(1);
     }
   }
