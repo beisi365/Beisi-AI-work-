@@ -12,7 +12,7 @@ export default function TodosPage() {
   const navigate = useNavigate();
   const { principal } = useAuth();
   const { readOnly } = useDemoMode();
-  const actor: AlertActor = { actorId: principal?.teacherId ?? '', actorRole: 'teacher' };
+  const actor: AlertActor = { actorId: principal?.teacherId ?? principal?.userId ?? '', actorRole: 'teacher' };
 
   const [toast, setToast] = useState('');
   const [createOpen, setCreateOpen] = useState(false);

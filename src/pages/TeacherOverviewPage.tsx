@@ -28,7 +28,7 @@ export default function TeacherOverviewPage() {
   const navigate = useNavigate();
   const { principal } = useAuth();
   const { readOnly } = useDemoMode();
-  const actor = { actorId: principal?.teacherId ?? '', actorRole: 'teacher' as const };
+  const actor = { actorId: principal?.teacherId ?? principal?.userId ?? '', actorRole: 'teacher' as const };
 
   // P2.4 补充（消除「总览预警盲区」）：
   // 教师首次进入总览时做一次幂等预警扫描，使「需要关注」Tile 不再依赖先访问 /t/alerts。

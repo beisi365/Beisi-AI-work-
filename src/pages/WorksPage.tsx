@@ -71,7 +71,7 @@ const PAGE_SIZE = 20;
 
 export default function WorksPage() {
   const { principal } = useAuth();
-  const isTeacher = principal?.role === 'teacher';
+  const isTeacher = principal?.role === 'teacher' || principal?.role === 'admin';
   const myStudentId = principal?.studentId ?? '';
   const { readOnly } = useDemoMode();
 
@@ -374,7 +374,7 @@ export default function WorksPage() {
                 disabled={!teacherCanGrade(s.status)}
                 onClick={async (e) => {
                   e.stopPropagation();
-                  const actorId = principal?.teacherId ?? '';
+                  const actorId = principal?.teacherId ?? principal?.userId ?? '';
                   if (a.to === 'need_revise') await teacherReturn(db, s.id, actorId);
                   else if (a.to === 'completed') await teacherComplete(db, s.id, actorId);
                   else if (a.to === 'excellent') await teacherMarkExcellent(db, s.id, actorId);
@@ -433,7 +433,7 @@ export default function WorksPage() {
                         const created = await db.teacherReviews.insert({
                           student_id: s.student_id,
                           ref_lesson_id: lessonId ?? null,
-                          teacher_id: principal?.teacherId ?? '',
+                          teacher_id: principal?.teacherId ?? principal?.userId ?? '',
                           tags: serializeReviewTags(commentTags),
                           ai_draft: '',
                           teacher_text: commentText.trim(),
@@ -443,7 +443,7 @@ export default function WorksPage() {
                         } as never);
                         reviewId = created.id;
                       }
-                      if (reviewId) await db.submissions.update(s.id, { teacher_review_id: reviewId }, { actorId: principal?.teacherId ?? '', actorRole: 'teacher' });
+                      if (reviewId) await db.submissions.update(s.id, { teacher_review_id: reviewId }, { actorId: principal?.teacherId ?? principal?.userId ?? '', actorRole: 'teacher' });
                       setCommentText('');
                       setCommentTags({});
                       setCommentFor(null);

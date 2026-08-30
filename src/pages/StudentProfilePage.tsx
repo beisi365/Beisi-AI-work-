@@ -63,7 +63,7 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
   const { id: paramId } = useParams();
   const navigate = useNavigate();
   const sid = propId ?? paramId ?? principal?.studentId ?? '';
-  const isTeacher = principal?.role === 'teacher';
+  const isTeacher = principal?.role === 'teacher' || principal?.role === 'admin';
   const [tab, setTab] = useState<TabKey>('overview');
 
   // —— P1 交互弹窗状态 ——
@@ -73,7 +73,7 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
   const [toast, setToast] = useState('');
   const [toastTone, setToastTone] = useState<'success' | 'danger'>('success');
   const actor = isTeacher
-    ? ({ actorId: principal?.teacherId ?? '', actorRole: 'teacher' } as const)
+    ? ({ actorId: principal?.teacherId ?? principal?.userId ?? '', actorRole: 'teacher' } as const)
     : ({ actorId: principal?.studentId ?? '', actorRole: 'student' } as const);
   const flash = (m: string, tone: 'success' | 'danger' = 'success') => {
     setToastTone(tone);
@@ -443,7 +443,7 @@ function WorksTab({
                       disabled={!teacherCanGrade(s.status)}
                       onClick={async (e) => {
                         e.stopPropagation();
-                        const actorId = principal?.teacherId ?? '';
+                        const actorId = principal?.teacherId ?? principal?.userId ?? '';
                         if (a.to === 'need_revise') await teacherReturn(db, s.id, actorId);
                         else if (a.to === 'completed') await teacherComplete(db, s.id, actorId);
                         else if (a.to === 'excellent') await teacherMarkExcellent(db, s.id, actorId);

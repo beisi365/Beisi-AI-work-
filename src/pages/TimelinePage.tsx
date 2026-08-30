@@ -21,7 +21,7 @@ interface TimelineEntry {
 
 export default function TimelinePage() {
   const { principal } = useAuth();
-  const isTeacher = principal?.role === 'teacher';
+  const isTeacher = principal?.role === 'teacher' || principal?.role === 'admin';
   const studentId = principal?.studentId;
 
   const [classFilter, setClassFilter] = useState('all');

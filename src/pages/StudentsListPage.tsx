@@ -52,7 +52,7 @@ export default function StudentsListPage() {
   const [transferTarget, setTransferTarget] = useState<Student | null>(null);
   const [archiveTarget, setArchiveTarget] = useState<Student | null>(null);
 
-  const actor: ChangeActor = { actorId: principal?.teacherId ?? '', actorRole: 'teacher' };
+  const actor: ChangeActor = { actorId: principal?.teacherId ?? principal?.userId ?? '', actorRole: 'teacher' };
 
   const updateFilter = (key: 'class' | 'cat', value: string) => {
     const next = new URLSearchParams(searchParams);
