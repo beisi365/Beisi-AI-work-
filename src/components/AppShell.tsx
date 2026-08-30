@@ -150,6 +150,7 @@ const TEACHER_NAV: NavItem[] = [
 
 const STUDENT_NAV: NavItem[] = [
   { to: '/s/home', label: '学习首页', icon: 'home' },
+  { to: '/s/schedule', label: '我的课表', icon: 'schedule' },
   { to: '/s/course-map', label: '课程地图', icon: 'course-map' },
   { to: '/s/works', label: '我的作业', icon: 'works' },
   { to: '/s/timeline', label: '我的时间线', icon: 'timeline' },

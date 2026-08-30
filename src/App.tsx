@@ -21,6 +21,7 @@ import AlertsPage from './pages/cp2/AlertsPage';
 import TodosPage from './pages/cp2/TodosPage';
 import TeacherScheduleListPage from './pages/TeacherScheduleListPage';
 import TeacherScheduleDetailPage from './pages/TeacherScheduleDetailPage';
+import StudentSchedulePage from './pages/StudentSchedulePage';
 import StudentAssessmentsPage from './pages/cp2/StudentAssessmentsPage';
 import { isCp2Enabled, isStudentPortalEnabled } from './lib/featureFlags';
 // CP2.1 内部开发页：仅 import.meta.env.DEV 下注册，不进入正式导航、不向用户开放
@@ -205,6 +206,7 @@ export default function App() {
             }
           >
             <Route path="home" element={<StudentHomePage />} />
+            <Route path="schedule" element={<StudentSchedulePage />} />
             <Route path="course-map" element={<CourseMapPage />} />
             <Route path="course-map/:lessonId" element={<PracticeRoomPage />} />
             <Route path="works" element={<WorksPage />} />
