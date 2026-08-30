@@ -24,6 +24,7 @@ type IconKey =
   | 'todos'
   | 'reports'
   | 'settings'
+  | 'schedule'
   | 'more';
 
 function Icon({ k }: { k: IconKey }) {
@@ -108,6 +109,12 @@ function Icon({ k }: { k: IconKey }) {
         <path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" />
       </>
     ),
+    schedule: (
+      <>
+        <rect x="3" y="4" width="18" height="17" rx="2" />
+        <path d="M3 9h18M8 2v4M16 2v4" />
+      </>
+    ),
     more: (
       <>
         <circle cx="6" cy="12" r="1.4" />
@@ -136,6 +143,7 @@ const TEACHER_NAV: NavItem[] = [
   { to: '/t/classes', label: '课程与出勤', icon: 'classes' },
   { to: '/t/works', label: '作业与作品', icon: 'works' },
   { to: '/t/assessments', label: '考核中心', icon: 'assessments' },
+  { to: '/t/schedule', label: '教师排班', icon: 'schedule' },
   { to: '/t/reports', label: '成长报告', icon: 'reports' },
   { to: '/t/settings', label: '系统设置', icon: 'settings' },
 ];
@@ -162,6 +170,7 @@ export const MOBILE_TEACHER_NAV: NavItem[] = [
 type MoreItem = NavItem & { flag?: Cp2Module };
 const MOBILE_TEACHER_MORE: MoreItem[] = [
   { to: '/t/classes', label: '课程与出勤', icon: 'classes' },
+  { to: '/t/schedule', label: '教师排班', icon: 'schedule' },
   { to: '/t/alerts', label: '学习预警', icon: 'alerts', flag: 'alerts' },
   { to: '/t/todos', label: '教师待办', icon: 'todos', flag: 'todos' },
   { to: '/t/reports', label: '成长报告', icon: 'reports' },
@@ -213,9 +222,15 @@ export function AppShell() {
     navigate(roleHome(role) + (role === 'teacher' ? '?demo=1' : '?demo=student'));
   };
 
-  const isTeacher = principal.role === 'teacher';
+  // 运营管理员归入教师端（统管全部教师与排班），仅学员落学员端导航
+  const isTeacher = principal.role === 'teacher' || principal.role === 'admin';
   const nav = getNav(isTeacher);
-  const name = isTeacher ? `教师 ${principal.teacherId}` : `学员 ${principal.studentId}`;
+  const name =
+    principal.role === 'admin'
+      ? '运营管理员'
+      : isTeacher
+        ? `教师 ${principal.teacherId}`
+        : `学员 ${principal.studentId}`;
 
   const onReset = () => {
     if (window.confirm('确定要重置为初始演示数据吗？所有在本演示中的新增/修改都会丢失。')) {
@@ -276,10 +291,17 @@ export function AppShell() {
         )}
         <header className="topbar">
           <div className="topbar-role">
-            <Avatar name={principal.role === 'teacher' ? '师' : '学'} size={32} />
+            <Avatar
+              name={principal.role === 'admin' ? '管' : principal.role === 'teacher' ? '师' : '学'}
+              size={32}
+            />
             <div>
               <div className="topbar-name">{name}</div>
-              <div className="topbar-sub">{ROLE_LABEL[principal.role]} · 演示角色</div>
+              {/* 真实登录（运营管理员等）不应标注「演示角色」，仅演示态标注 */}
+              <div className="topbar-sub">
+                {ROLE_LABEL[principal.role]}
+                {readOnly ? ' · 演示角色' : ''}
+              </div>
             </div>
           </div>
           {!readOnly && (

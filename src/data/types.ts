@@ -4,7 +4,8 @@
 // 通用字段：id / created_at / updated_at；业务表含 created_by。
 // ============================================================
 
-export type Role = 'teacher' | 'student';
+/** 角色：教师 / 学员 / 运营管理员（admin 统管全部教师与排班；云端 profiles.role 已支持 admin） */
+export type Role = 'teacher' | 'student' | 'admin';
 
 // —— 枚举 ——
 export type AttendanceStatus = 'present' | 'late' | 'leave' | 'absent';
@@ -98,6 +99,24 @@ export interface Teacher {
   subjects: string;
   created_at: number;
   updated_at: number;
+}
+
+// ============================================================
+// 3.1 teacher_schedules 教师排班表（时间排版表）
+// 按「具体日期 + 起止时段」录入单次排课；每位老师各管各的，后台可见全部 5 位。
+// ============================================================
+export interface TeacherSchedule {
+  id: string;
+  teacher_id: string; // t1–t5，归属教师；写权限锁本人（或 admin）
+  schedule_date: string; // 'YYYY-MM-DD' 具体日期
+  start_time: string; // 'HH:MM' 起
+  end_time: string; // 'HH:MM' 止
+  title: string; // 排课标题，如「AI写作第3讲」
+  location: string; // 地点
+  note: string; // 备注
+  created_at: number;
+  updated_at: number;
+  created_by: string;
 }
 
 // ============================================================
@@ -419,6 +438,7 @@ export interface DBShape {
   users: User[];
   students: Student[];
   teachers: Teacher[];
+  teacher_schedules: TeacherSchedule[];
   classes: ClassRow[];
   enrollments: Enrollment[];
   courses: Course[];

@@ -6,6 +6,7 @@ import type {
   User,
   Student,
   Teacher,
+  TeacherSchedule,
   ClassRow,
   Enrollment,
   Course,
@@ -92,6 +93,11 @@ export class LocalDataLayer implements DataLayer {
     const raw = storage.getItem(STORAGE_KEY);
     if (raw) {
       this.cache = JSON.parse(raw) as Record<TableName, any[]>;
+      // 前向迁移：已运行旧版 localStorage 可能缺新表，补空数组避免订阅/读取 undefined
+      if (!Array.isArray((this.cache as Record<string, unknown>).teacher_schedules)) {
+        (this.cache as Record<string, unknown>).teacher_schedules = [];
+        this.persist();
+      }
     } else {
       this.cache = buildSeedWithOverrides() as unknown as Record<TableName, any[]>;
       this.persist();
@@ -253,6 +259,7 @@ export class LocalDataLayer implements DataLayer {
   users = this.makeRepo<User>('users');
   students = this.makeRepo<Student>('students');
   teachers = this.makeRepo<Teacher>('teachers');
+  teacherSchedules = this.makeRepo<TeacherSchedule>('teacher_schedules');
   classes = this.makeRepo<ClassRow>('classes');
   enrollments = this.makeRepo<Enrollment>('enrollments');
   courses = this.makeRepo<Course>('courses');

@@ -60,6 +60,23 @@ create table if not exists public.teachers (
   updated_at bigint not null default 0
 );
 
+-- 3.1 teacher_schedules 教师排班表（时间排版表）
+-- 按「具体日期(date) + 起止时段(text HH:MM)」录入单次排课；每位老师各管各的。
+-- 后台（教师控制中枢 / admin）可见全部 5 位，但每位老师仅能改自己的排班。
+create table if not exists public.teacher_schedules (
+  id text primary key,
+  teacher_id text not null,
+  schedule_date date not null,
+  start_time text not null,   -- 'HH:MM'
+  end_time text not null,     -- 'HH:MM'
+  title text not null default '',
+  location text not null default '',
+  note text not null default '',
+  created_at bigint not null default 0,
+  updated_at bigint not null default 0,
+  created_by text not null default ''
+);
+
 -- 4. classes 班级表
 create table if not exists public.classes (
   id text primary key,
@@ -353,11 +370,18 @@ create table if not exists public.profiles (
 -- ============================================================
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  v_role text := coalesce(new.raw_user_meta_data->>'role', 'student');
 begin
+  -- 安全管理员（admin）仅允许由运营通过 promote-to-admin.sql 显式授予，
+  -- 任何自助注册携带 role=admin 一律降级为 student，杜绝自助提权。
+  if v_role = 'admin' then
+    v_role := 'student';
+  end if;
   insert into public.profiles (id, role, display_name, created_at)
   values (
     new.id,
-    coalesce(new.raw_user_meta_data->>'role', 'student'),
+    v_role,
     coalesce(new.raw_user_meta_data->>'display_name', split_part(new.email, '@', 1)),
     extract(epoch from now())::bigint * 1000
   )
@@ -804,6 +828,22 @@ create index if not exists idx_teacher_reviews_student_id on public.teacher_revi
 create index if not exists idx_communications_student_id on public.communications(student_id);
 create index if not exists idx_concerns_student_id on public.concerns(student_id);
 create index if not exists idx_todos_owner on public.todos(owner_type, owner_id);
+create index if not exists idx_teacher_schedules_teacher_id on public.teacher_schedules(teacher_id);
+create index if not exists idx_teacher_schedules_date on public.teacher_schedules(schedule_date);
+
+-- ============================================================
+-- 策略：teacher_schedules —— 教师排班（时间排版表）
+-- 读：已登录教师/管理员可见全部 5 位（用于总表总览）；匿名演示入口经下方 anon_select 可读。
+-- 写：仅本人（teacher_id = my_teacher_id()）或管理员；保证「老师各管各的」。
+-- ============================================================
+alter table public.teacher_schedules enable row level security;
+drop policy if exists teacher_schedules_read on public.teacher_schedules;
+create policy teacher_schedules_read on public.teacher_schedules for select
+  using (public.my_role() in ('teacher','admin'));
+drop policy if exists teacher_schedules_write on public.teacher_schedules;
+create policy teacher_schedules_write on public.teacher_schedules for all
+  using (teacher_id = public.my_teacher_id() or public.my_role() = 'admin')
+  with check (teacher_id = public.my_teacher_id() or public.my_role() = 'admin');
 
 -- ============================================================
 -- 匿名只读策略（A 演示身份入口）
@@ -817,7 +857,8 @@ begin
     'users','teachers','classes','courses','lessons','students',
     'enrollments','class_sessions','attendance','assignments',
     'submissions','work_versions','learning_records',
-    'ability_assessments','teacher_reviews','files','ai_analysis','concerns'
+    'ability_assessments','teacher_reviews','files','ai_analysis','concerns',
+    'teacher_schedules'
   ]
   loop
     execute format(

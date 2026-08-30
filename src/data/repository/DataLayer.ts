@@ -80,6 +80,7 @@ export interface DataLayer {
   users: Repository<RowOf<'users'>>;
   students: Repository<RowOf<'students'>>;
   teachers: Repository<RowOf<'teachers'>>;
+  teacherSchedules: Repository<RowOf<'teacher_schedules'>>;
   classes: Repository<RowOf<'classes'>>;
   enrollments: Repository<RowOf<'enrollments'>>;
   courses: Repository<RowOf<'courses'>>;

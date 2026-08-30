@@ -4,6 +4,7 @@ import type {
   Student,
   User,
   Teacher,
+  TeacherSchedule,
   ClassRow,
   Course,
   Lesson,
@@ -87,6 +88,7 @@ export function buildSeed(): DBShape {
   counter = 0;
   const users: User[] = [];
   const teachers: Teacher[] = [];
+  const teacherSchedules: TeacherSchedule[] = [];
   const students: Student[] = [];
   const classes: ClassRow[] = [];
   const courses: Course[] = [];
@@ -613,10 +615,44 @@ export function buildSeed(): DBShape {
     created_at: now,
   });
 
+  // —— 教师排班（时间排版表）：每位老师按各自班级的周常日，在「演示现在」前后各 2 周生成示例排课 ——
+  const scheduleMeta: Record<string, { day: number; start: string; end: string }> = {
+    t1: { day: 1, start: '19:00', end: '21:00' }, // 每周一晚
+    t2: { day: 6, start: '14:00', end: '16:00' }, // 每周六
+    t3: { day: 3, start: '19:00', end: '21:00' }, // 每周三晚
+    t4: { day: 5, start: '19:00', end: '21:00' }, // 每周五晚
+    t5: { day: 0, start: '10:00', end: '12:00' }, // 每周日
+  };
+  const ymd = (ts: number) => new Date(ts).toISOString().slice(0, 10);
+  teacherDefs.forEach((t) => {
+    const meta = scheduleMeta[t.id];
+    const cls = classDefs.find((c) => c.teacher_id === t.id);
+    if (!meta || !cls) return;
+    // 以 now 为锚，向前 14 天、向后 14 天，逐日扫描匹配周常日 → 每位老师约 5 条
+    for (let off = -14; off <= 14; off++) {
+      const ts = now + off * DAY;
+      if (new Date(ts).getUTCDay() !== meta.day) continue;
+      teacherSchedules.push({
+        id: nid('ts'),
+        teacher_id: t.id,
+        schedule_date: ymd(ts),
+        start_time: meta.start,
+        end_time: meta.end,
+        title: `${cls.name} 常规课`,
+        location: cls.location,
+        note: '',
+        created_at: BASE,
+        updated_at: now,
+        created_by: `u_${t.id}`,
+      });
+    }
+  });
+
   const db: DBShape = {
     users,
     students,
     teachers,
+    teacher_schedules: teacherSchedules,
     classes,
     enrollments,
     courses,
@@ -729,6 +765,7 @@ export const SEED_TABLE_NAMES: TableName[] = [
   'users',
   'students',
   'teachers',
+  'teacher_schedules',
   'classes',
   'enrollments',
   'courses',

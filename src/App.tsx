@@ -19,6 +19,8 @@ import ReviewsPage from './pages/cp2/ReviewsPage';
 import CommunicationsPage from './pages/cp2/CommunicationsPage';
 import AlertsPage from './pages/cp2/AlertsPage';
 import TodosPage from './pages/cp2/TodosPage';
+import TeacherScheduleListPage from './pages/TeacherScheduleListPage';
+import TeacherScheduleDetailPage from './pages/TeacherScheduleDetailPage';
 import StudentAssessmentsPage from './pages/cp2/StudentAssessmentsPage';
 import { isCp2Enabled, isStudentPortalEnabled } from './lib/featureFlags';
 // CP2.1 内部开发页：仅 import.meta.env.DEV 下注册，不进入正式导航、不向用户开放
@@ -40,8 +42,9 @@ function RoleOnly({ role, children }: { role: 'teacher' | 'student'; children: R
   // 只读演示模式：放行所有角色守卫（演示身份恒为教师）
   if (!isDemoMode()) {
     if (!principal) return <Navigate to="/login" replace />;
-    if (principal.role !== role) {
-      // 越权访问：按当前 principal.role 返回本人首页（学员→/s/home，教师→/t/overview）
+    // 运营管理员视同该端角色放行（admin 统管教师端与学员端）
+    if (principal.role !== role && principal.role !== 'admin') {
+      // 越权访问：按当前 principal.role 返回本人首页（学员→/s/home，教师/运营→/t/overview）
       return <Navigate to={roleHome(principal.role)} replace />;
     }
   }
@@ -154,6 +157,9 @@ export default function App() {
             <Route path="communications" element={<CommunicationsPage />} />
             <Route path="alerts" element={<AlertsPage />} />
             <Route path="todos" element={<TodosPage />} />
+            {/* 教师排班（时间排版表）：总表总览 + 单老师下钻编辑 */}
+            <Route path="schedule" element={<TeacherScheduleListPage />} />
+            <Route path="schedule/:teacherId" element={<TeacherScheduleDetailPage />} />
             {/* 仅开发环境：CP2.1 能力评估内部测试路由（featureFlags.assessments 仍为 false，不进正式导航） */}
             {import.meta.env.DEV && <Route path="dev/assessments" element={<AssessmentsDevPage />} />}
             {/* P2.1 规划中模块：进入一级导航但内容为「规划中」占位，阶段验收后替换真实实现 */}

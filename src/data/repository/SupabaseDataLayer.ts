@@ -5,6 +5,7 @@ import type {
   OperationLog,
   Principal,
   TableName,
+  TeacherSchedule,
 } from '../types';
 import type {
   DataLayer,
@@ -32,6 +33,7 @@ const TABLE_OF: Record<string, string> = {
   users: 'users',
   students: 'students',
   teachers: 'teachers',
+  teacherSchedules: 'teacher_schedules',
   classes: 'classes',
   enrollments: 'enrollments',
   courses: 'courses',
@@ -208,6 +210,7 @@ export class SupabaseDataLayer implements DataLayer {
   users = this.makeRepo<RowOf<'users'>>('users');
   students = this.makeRepo<RowOf<'students'>>('students');
   teachers = this.makeRepo<RowOf<'teachers'>>('teachers');
+  teacherSchedules = this.makeRepo<TeacherSchedule>('teacherSchedules');
   classes = this.makeRepo<RowOf<'classes'>>('classes');
   enrollments = this.makeRepo<RowOf<'enrollments'>>('enrollments');
   courses = this.makeRepo<RowOf<'courses'>>('courses');

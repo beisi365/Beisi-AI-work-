@@ -6,7 +6,7 @@ import { Avatar } from '../components/ui';
 import { HeroSphere } from '../components/HeroSphere';
 import { CosmicBackground } from '../components/CosmicBackground';
 import { TeacherEditModal } from '../components/TeacherEditModal';
-import type { Principal, Student, Teacher, User } from '../data/types';
+import type { Principal, Role, Student, Teacher, User } from '../data/types';
 import { CATEGORY_LABEL, type StudentCategory } from '../lib/format';
 import { isStudentPortalEnabled } from '../lib/featureFlags';
 import { isDemoMode, getDemoPrincipal } from '../lib/demoMode';
@@ -37,7 +37,7 @@ export default function LoginPage() {
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
-  const [authRole, setAuthRole] = useState<'teacher' | 'student'>('teacher');
+  const [authRole, setAuthRole] = useState<Role>('teacher');
   const [authBindId, setAuthBindId] = useState('');
   const [authName, setAuthName] = useState('');
   const [authBusy, setAuthBusy] = useState(false);
@@ -154,6 +154,13 @@ export default function LoginPage() {
       role: 'teacher',
       teacherId: t.id,
     };
+    login(p);
+    navigate('/t/overview');
+  };
+
+  /** 运营/管理员：不绑定具体教师，可统管全部 5 位老师的排班与全部班级数据 */
+  const enterAsAdmin = () => {
+    const p: Principal = { userId: 'admin', role: 'admin' };
     login(p);
     navigate('/t/overview');
   };
@@ -315,6 +322,9 @@ export default function LoginPage() {
                       学员
                     </button>
                   </div>
+                  <p className="auth-hint">
+                    运营 / 管理员账号由平台运营统一授予，不从这里自助注册。
+                  </p>
                 </div>
                 <label className="auth-field">
                   <span>昵称（可选）</span>
@@ -401,6 +411,23 @@ export default function LoginPage() {
                     </button>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            <div id="role-admin" className="hero-role-block">
+              <h3 className="hero-login-title">以运营/管理员身份进入</h3>
+              <p className="hero-login-hint">
+                可查看并统管全部 5 位老师的排班；教师账号仅能修改自己的排班
+              </p>
+              <div className="hero-role-grid">
+                <button type="button" className="hero-role-opt" onClick={enterAsAdmin}>
+                  <Avatar name="运营管理员" size={36} />
+                  <div className="hero-role-text">
+                    <div className="hero-role-name">运营管理员</div>
+                    <div className="hero-role-title">运营 / 管理者</div>
+                    <div className="hero-role-sub">统管全部教师与排班</div>
+                  </div>
+                </button>
               </div>
             </div>
 

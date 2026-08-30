@@ -58,6 +58,10 @@ export interface SignUpArgs {
 /** 注册：Supabase Auth 建账号 → 触发器自动建 profile →（若已自动登录）认领/创建身份记录 */
 export async function signUp(args: SignUpArgs): Promise<Principal> {
   if (!isSupabaseEnabled) throw new Error('Supabase 未配置，无法注册');
+  // 管理员账号仅由运营通过 promote-to-admin.sql 显式授予，不支持自助注册（与云端触发器双重保险）
+  if (args.role === 'admin') {
+    throw new Error('管理员账号仅由平台运营统一授予，不支持自助注册');
+  }
   const client = getSupabase();
   const { data, error } = await client.auth.signUp({
     email: args.email,
@@ -75,6 +79,8 @@ export async function signUp(args: SignUpArgs): Promise<Principal> {
   // 若开启邮箱确认，此时无 session：profile 已由触发器建好，待用户点确认邮件后登录再认领。
   // 若关闭邮箱确认（开发/演示），注册即登录，可直接认领。
   if (data.session) {
+    // 注册即登录（未开启邮箱确认）：认领/创建自己的 teacher/student 记录
+    // （admin 已在函数开头被拒绝，此处 role 仅为 teacher/student）
     return claimIdentity(args.role, args.bindId);
   }
   // 无 session（等邮件确认）：返回占位 principal，UI 提示去查收邮件；登录后再补认领。
@@ -90,7 +96,8 @@ export async function signIn(email: string, password: string): Promise<Principal
   if (!data.user) throw new Error('登录失败');
   const principal = await getCurrentPrincipal();
   if (!principal) throw new Error('用户档案不存在，请先注册');
-  if (!principal.studentId && !principal.teacherId) {
+  // 运营管理员不绑定教师/学员记录，跳过认领（其余角色首次登录需认领一次）
+  if (!principal.studentId && !principal.teacherId && principal.role !== 'admin') {
     return claimIdentity(principal.role, undefined);
   }
   return principal;

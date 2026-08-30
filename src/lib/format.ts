@@ -155,6 +155,7 @@ export const CONCERN_LABEL: Record<ConcernStatus, string> = {
 export const ROLE_LABEL: Record<Role, string> = {
   teacher: '教师',
   student: '学员',
+  admin: '运营管理员',
 };
 
 /** 出勤率中文描述 */

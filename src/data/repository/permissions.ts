@@ -22,7 +22,8 @@ export function canRead(
   row: Record<string, unknown>,
   ctx: PermContext,
 ): boolean {
-  if (p.role === 'teacher') return true; // 教师可读所负责班级全部（演示环境全量）
+  // 教师可读所负责班级全部（演示环境全量）；运营管理员可读全部
+  if (p.role === 'teacher' || p.role === 'admin') return true;
   if (p.role !== 'student') return false;
 
   // 内部/敏感数据：学员不可见
@@ -68,7 +69,8 @@ export function canWrite(
   row: Record<string, unknown>,
   _ctx: PermContext,
 ): boolean {
-  if (p.role === 'teacher') return true;
+  // 教师可写所负责范围；运营管理员可写全部
+  if (p.role === 'teacher' || p.role === 'admin') return true;
   if (p.role !== 'student') return false;
   // 学员可写本人学员档案行（字段级允许范围由 studentService 强制；禁止改班级/归档/内部字段）
   if (table === 'students') {
