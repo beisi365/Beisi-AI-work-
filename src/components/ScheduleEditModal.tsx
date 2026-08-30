@@ -3,12 +3,14 @@ import { db } from '../data/repository';
 import type { ChangeActor } from '../lib/submissionStatusGuards';
 import type { Teacher, TeacherSchedule } from '../data/types';
 import { Modal, FormField, Button } from './ui';
-import { teacherColor, teacherName } from '../lib/schedule';
+import { teacherColor, teacherName, findConflicts } from '../lib/schedule';
 
 interface Props {
   open: boolean;
   onClose: () => void;
   existing: TeacherSchedule | null;
+  /** 全量排班（用于保存前的同老师同天时间冲突检测） */
+  allSchedules: TeacherSchedule[];
   /** 新建时默认归属老师；不可自选时为锁定值 */
   defaultTeacherId: string;
   /** 是否允许自选老师（admin/后台运营场景）；普通老师锁定本人 */
@@ -28,6 +30,7 @@ export function ScheduleEditModal({
   open,
   onClose,
   existing,
+  allSchedules,
   defaultTeacherId,
   canPickTeacher,
   teachers,
@@ -45,11 +48,13 @@ export function ScheduleEditModal({
   const [location, setLocation] = useState('');
   const [note, setNote] = useState('');
   const [error, setError] = useState('');
+  const [conflictWarn, setConflictWarn] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setError('');
+    setConflictWarn('');
     if (existing) {
       setTeacherId(existing.teacher_id);
       setDate(existing.schedule_date);
@@ -69,11 +74,28 @@ export function ScheduleEditModal({
     }
   }, [open, existing, defaultTeacherId]);
 
-  async function handleSave() {
+  async function handleSave(force = false) {
     setError('');
     if (!date) return setError('请选择日期');
     if (!title.trim()) return setError('请填写排课标题');
     if (start >= end) return setError('结束时间需晚于开始时间');
+
+    // 时间冲突检测：同老师同天且时段重叠（与既有排班比较，排除自身）
+    const conflicts = findConflicts(
+      { teacher_id: teacherId, schedule_date: date, start_time: start, end_time: end },
+      allSchedules,
+      existing?.id,
+    );
+    if (conflicts.length > 0 && !force) {
+      setConflictWarn(
+        `该老师当天已有 ${conflicts.length} 条排班时间重叠：${conflicts
+          .map((c) => `${c.start_time}–${c.end_time} ${c.title}`)
+          .join('；')}。如确属连续课程或不同地点，可点「仍要保存」。`,
+      );
+      setSaving(false);
+      return;
+    }
+
     setSaving(true);
     try {
       const actor: ChangeActor = {
@@ -144,7 +166,7 @@ export function ScheduleEditModal({
             <Button onClick={onClose} disabled={saving}>
               取消
             </Button>
-            <Button variant="primary" onClick={handleSave} disabled={saving}>
+            <Button variant="primary" onClick={() => void handleSave()} disabled={saving}>
               {saving ? '保存中…' : '保存'}
             </Button>
           </>
@@ -239,6 +261,29 @@ export function ScheduleEditModal({
         />
       </FormField>
 
+      {conflictWarn && (
+        <div
+          style={{
+            marginTop: 8,
+            padding: 12,
+            borderRadius: 8,
+            background: '#FFF7ED',
+            border: '1px solid #FDBA74',
+            color: '#9A3412',
+          }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: 6 }}>⚠ 时间冲突提醒</div>
+          <div style={{ fontSize: 13, marginBottom: 8 }}>{conflictWarn}</div>
+          <Button
+            variant="danger"
+            size="sm"
+            disabled={saving}
+            onClick={() => void handleSave(true)}
+          >
+            仍要保存
+          </Button>
+        </div>
+      )}
       {error && <div className="form-error" style={{ marginTop: 8 }}>{error}</div>}
     </Modal>
   );

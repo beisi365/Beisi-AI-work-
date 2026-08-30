@@ -86,3 +86,43 @@ export function eachDayInRange(startStr: string, endStr: string): string[] {
   }
   return out;
 }
+
+/** 两个 [start,end) 时段是否重叠（端点相接不算重叠：10:00-12:00 与 12:00-14:00 视为不冲突） */
+export function timeOverlap(aStart: string, aEnd: string, bStart: string, bEnd: string): boolean {
+  return aStart < bEnd && bStart < aEnd;
+}
+
+/** 候选排班与既有集合里「同老师 + 同日期 + 时段重叠」的条目（排除自身 id） */
+export function findConflicts(
+  candidate: { teacher_id: string; schedule_date: string; start_time: string; end_time: string },
+  existing: TeacherSchedule[],
+  excludeId?: string,
+): TeacherSchedule[] {
+  return existing.filter(
+    (s) =>
+      s.id !== excludeId &&
+      s.teacher_id === candidate.teacher_id &&
+      s.schedule_date === candidate.schedule_date &&
+      timeOverlap(candidate.start_time, candidate.end_time, s.start_time, s.end_time),
+  );
+}
+
+/** 全量检测：返回所有「处于时间冲突」的排班 id（同老师同天至少两条时段重叠） */
+export function conflictedIds(all: TeacherSchedule[]): Set<string> {
+  const set = new Set<string>();
+  for (let i = 0; i < all.length; i++) {
+    for (let j = i + 1; j < all.length; j++) {
+      const a = all[i];
+      const b = all[j];
+      if (
+        a.teacher_id === b.teacher_id &&
+        a.schedule_date === b.schedule_date &&
+        timeOverlap(a.start_time, a.end_time, b.start_time, b.end_time)
+      ) {
+        set.add(a.id);
+        set.add(b.id);
+      }
+    }
+  }
+  return set;
+}

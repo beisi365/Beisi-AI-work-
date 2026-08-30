@@ -13,6 +13,7 @@ import {
   sortByDateTime,
   teacherColor,
   timeRange,
+  conflictedIds,
 } from '../lib/schedule';
 
 interface Loaded {
@@ -50,6 +51,9 @@ export default function TeacherScheduleDetailPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<TeacherSchedule | null>(null);
   const [toast, setToast] = useState('');
+
+  // 时间冲突集合（同老师同天至少两条时段重叠），用于高亮提醒
+  const conflictSet = useMemo(() => conflictedIds(schedules), [schedules]);
 
   const groups = useMemo(() => {
     const m = new Map<string, TeacherSchedule[]>();
@@ -143,7 +147,9 @@ export default function TeacherScheduleDetailPage() {
                     {isPast && <span style={{ fontSize: 12, color: '#B0B0B0' }}>已结束</span>}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {items.map((s) => (
+                    {items.map((s) => {
+                      const isConflict = conflictSet.has(s.id);
+                      return (
                       <div
                         key={s.id}
                         style={{
@@ -151,9 +157,9 @@ export default function TeacherScheduleDetailPage() {
                           gap: 12,
                           alignItems: 'flex-start',
                           padding: 12,
-                          border: '1px solid #EEE',
+                          border: isConflict ? '1px solid #F87171' : '1px solid #EEE',
                           borderRadius: 10,
-                          background: '#fff',
+                          background: isConflict ? '#FEF2F2' : '#fff',
                         }}
                       >
                         <div
@@ -166,7 +172,24 @@ export default function TeacherScheduleDetailPage() {
                           }}
                         />
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontWeight: 600 }}>{s.title}</div>
+                          <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                            {s.title}
+                            {isConflict && (
+                              <span
+                                style={{
+                                  fontSize: 11,
+                                  fontWeight: 600,
+                                  color: '#B91C1C',
+                                  background: '#FEE2E2',
+                                  border: '1px solid #FCA5A5',
+                                  borderRadius: 4,
+                                  padding: '1px 6px',
+                                }}
+                              >
+                                ⚠ 时间冲突
+                              </span>
+                            )}
+                          </div>
                           <div style={{ fontSize: 13, color: '#555', marginTop: 2 }}>
                             {timeRange(s)}
                             {s.location ? ` · ${s.location}` : ''}
@@ -183,7 +206,8 @@ export default function TeacherScheduleDetailPage() {
                           </div>
                         )}
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               );
@@ -196,6 +220,7 @@ export default function TeacherScheduleDetailPage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         existing={editing}
+        allSchedules={schedules}
         defaultTeacherId={teacherId}
         canPickTeacher={isAdmin}
         teachers={teachers}

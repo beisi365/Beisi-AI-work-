@@ -14,6 +14,7 @@ import {
   formatDate,
   sortByDateTime,
   teacherColor,
+  conflictedIds,
 } from '../lib/schedule';
 
 interface Loaded {
@@ -57,6 +58,8 @@ export default function TeacherScheduleListPage() {
 
   const schedules = data?.schedules ?? [];
   const teachers = data?.teachers ?? [];
+  // 时间冲突集合（同老师同天至少两条时段重叠），用于月历高亮
+  const conflictSet = useMemo(() => conflictedIds(schedules), [schedules]);
 
   const visible = useMemo(
     () => (filter === 'all' ? schedules : schedules.filter((s) => s.teacher_id === filter)),
@@ -218,6 +221,7 @@ export default function TeacherScheduleListPage() {
                       </div>
                       {items.slice(0, 3).map((s) => {
                         const editable = canEdit(s.teacher_id);
+                        const conflict = conflictSet.has(s.id);
                         return (
                           <div
                             key={s.id}
@@ -225,14 +229,18 @@ export default function TeacherScheduleListPage() {
                               e.stopPropagation();
                               openEdit(s);
                             }}
-                            title={`${s.start_time}–${s.end_time} ${s.title}`}
+                            title={`${s.start_time}–${s.end_time} ${s.title}${conflict ? '（时间冲突）' : ''}`}
                             style={{
                               fontSize: 11,
                               lineHeight: 1.25,
                               padding: '2px 4px',
                               borderRadius: 4,
-                              background: editable ? 'rgba(0,0,0,0.04)' : 'rgba(0,0,0,0.02)',
-                              borderLeft: `3px solid ${teacherColor(s.teacher_id)}`,
+                              background: conflict
+                                ? 'rgba(248,113,113,0.12)'
+                                : editable
+                                  ? 'rgba(0,0,0,0.04)'
+                                  : 'rgba(0,0,0,0.02)',
+                              borderLeft: `3px solid ${conflict ? '#F87171' : teacherColor(s.teacher_id)}`,
                               whiteSpace: 'nowrap',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
@@ -307,6 +315,7 @@ export default function TeacherScheduleListPage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         existing={editing}
+        allSchedules={schedules}
         defaultTeacherId={
           editing
             ? editing.teacher_id
