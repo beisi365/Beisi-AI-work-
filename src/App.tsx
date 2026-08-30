@@ -30,17 +30,38 @@ import type { ReactNode } from 'react';
 import { roleHome } from './lib/routeHome';
 import { DemoModeProvider, isDemoMode, useDemoMode } from './lib/demoMode';
 
+/** 登录态恢复中的占位（supabase 异步恢复会话期间），避免守卫在恢复完成前误判未登录 */
+function AuthRestoring() {
+  return (
+    <div
+      style={{
+        minHeight: '60vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#8A8F98',
+      }}
+    >
+      正在恢复登录…
+    </div>
+  );
+}
+
 function RequireAuth({ children }: { children: ReactNode }) {
-  const { principal } = useAuth();
+  const { principal, ready } = useAuth();
   // 只读演示模式：跳过登录校验，直接使用演示身份渲染
-  if (!isDemoMode() && !principal) return <Navigate to="/login" replace />;
+  if (isDemoMode()) return <>{children}</>;
+  // 会话恢复中：先占位，等 ready 后再判定，否则刷新页面会被误踢回登录页
+  if (!ready) return <AuthRestoring />;
+  if (!principal) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
 function RoleOnly({ role, children }: { role: 'teacher' | 'student'; children: ReactNode }) {
-  const { principal } = useAuth();
+  const { principal, ready } = useAuth();
   // 只读演示模式：放行所有角色守卫（演示身份恒为教师）
   if (!isDemoMode()) {
+    if (!ready) return <AuthRestoring />;
     if (!principal) return <Navigate to="/login" replace />;
     // 运营管理员视同该端角色放行（admin 统管教师端与学员端）
     if (principal.role !== role && principal.role !== 'admin') {
@@ -52,7 +73,8 @@ function RoleOnly({ role, children }: { role: 'teacher' | 'student'; children: R
 }
 
 function HomeRedirect() {
-  const { principal } = useAuth();
+  const { principal, ready } = useAuth();
+  if (!ready) return <AuthRestoring />;
   if (!principal) return <Navigate to="/login" replace />;
   // 演示态：跳转时保留 demo 参数，避免 SPA 跳转丢失只读身份（教师 → ?demo=1，学员 → ?demo=student）
   const demoQ = isDemoMode()
