@@ -320,7 +320,7 @@ export default function LoginPage() {
       {isSupabaseEnabled ? (
         <section className="hero-login-section" id="login-roles">
           <div className="auth-panel">
-            {/* —— 入口角色：管理员 / 教师 / 学员，URL ?role= 可直达，便于分人群发链接 —— */}
+            {/* —— 入口角色：管理员 / 教师 / 学员，横向大卡片三选一 —— */}
             <div className="entry-roles" role="tablist" aria-label="选择登录入口">
               {ENTRY_ROLES.map((r) => (
                 <button
@@ -328,10 +328,14 @@ export default function LoginPage() {
                   type="button"
                   role="tab"
                   aria-selected={entryRole === r}
-                  className={`entry-role${entryRole === r ? ' entry-role--active' : ''}`}
+                  className={`entry-card${entryRole === r ? ' entry-card--active' : ''}`}
                   onClick={() => switchEntryRole(r)}
                 >
-                  {ENTRY_ROLE_META[r].label}入口
+                  <Avatar name={ENTRY_ROLE_META[r].label} size={40} />
+                  <span className="entry-card-text">
+                    <span className="entry-card-label">{ENTRY_ROLE_META[r].label}</span>
+                    <span className="entry-card-short">{ENTRY_ROLE_META[r].short}</span>
+                  </span>
                 </button>
               ))}
             </div>
@@ -436,7 +440,9 @@ export default function LoginPage() {
                     还没账号？<strong>立即注册</strong>
                   </button>
                 ) : (
-                  <span className="auth-switch-hint">管理员账号由平台运营统一授予，不开放自助注册</span>
+                  <span className="auth-switch-hint">
+                    {entryMeta.label}账号由运营统一创建发放，不开放自助注册。如未收到账号，请联系班主任。
+                  </span>
                 )
               ) : (
                 <button

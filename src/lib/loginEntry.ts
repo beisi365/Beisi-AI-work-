@@ -9,6 +9,11 @@
 // - 角色只影响「入口文案 / 注册时的默认身份 / 注册是否可见」，**不影响实际权限**。
 //   真正的权限始终由服务端 profiles.role + RLS 决定，URL 参数改不了权限。
 // - 管理员入口不提供自助注册（与 supabaseAuth.signUp 的 admin 拦截一致，双重保险）。
+// - ⚠️ 安全决策（2026-09-02）：教师 / 学员入口也已关闭自助注册，三类角色一律
+//   allowSignUp: false。原因：站点发布为公网链接后，开放注册等于任何人拿到链接
+//   都能自建账号进入系统。账号改由运营在 Supabase 后台统一创建分发。
+//   如需重新开放（例如学员量大不想手动建号），把对应角色的 allowSignUp 改回 true，
+//   并建议同时加「站点口令」或「邀请码」做二次门槛。
 // - 纯函数 computeEntryRole 便于单元测试覆盖全部分支，不依赖浏览器全局。
 
 import type { Role } from '../data/types';
@@ -47,24 +52,27 @@ export function buildEntryUrl(origin: string, role: EntryRole): string {
 
 export const ENTRY_ROLE_META: Record<
   EntryRole,
-  { label: string; title: string; hint: string; allowSignUp: boolean }
+  { label: string; title: string; hint: string; short: string; allowSignUp: boolean }
 > = {
   admin: {
     label: '管理员',
     title: '管理员入口',
     hint: '统管全部教师、学员与排班。账号由平台运营统一授予，不开放自助注册。',
+    short: '统管全部数据',
     allowSignUp: false,
   },
   teacher: {
     label: '教师',
     title: '教师入口',
-    hint: '查看所带班级的学员、出勤、作业与评估，并维护本人排班与资料。',
-    allowSignUp: true,
+    hint: '查看所带班级的学员、出勤、作业与评估，并维护本人排班与资料。账号由运营统一创建。',
+    short: '带班与教学管理',
+    allowSignUp: false,
   },
   student: {
     label: '学员',
     title: '学员入口',
-    hint: '查看本人的课表、作业、作品与能力评估，仅能看到自己的数据。',
-    allowSignUp: true,
+    hint: '查看本人的课表、作业、作品与能力评估，仅能看到自己的数据。账号由运营统一创建。',
+    short: '仅看本人数据',
+    allowSignUp: false,
   },
 };

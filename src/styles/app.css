@@ -2516,7 +2516,7 @@
 }
 .entry-roles {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   margin-bottom: 18px;
 }
 .entry-role {
@@ -2539,6 +2539,62 @@
   color: #fff;
   background: rgba(255, 122, 26, 0.18);
   border-color: #ff7a1a;
+}
+
+/* —— 入口角色：横向大卡片三选一（管理员 / 教师 / 学员） ——
+   视觉沿用下方 demo 角色卡片（.hero-role-opt）的语言：头像 + 名称 + 一行说明，
+   选中态用橙色描边 + 橙色底，避免和登录表单抢视觉重心。 */
+.entry-card {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  padding: 13px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #e8e6e3;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+.entry-card:hover {
+  border-color: rgba(255, 122, 26, 0.55);
+  background: rgba(255, 255, 255, 0.055);
+  transform: translateY(-1px);
+}
+.entry-card--active {
+  border-color: #ff7a1a;
+  background: rgba(255, 122, 26, 0.14);
+}
+.entry-card-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* 让 flex 子项能收缩，长文案用省略号而不是撑破卡片 */
+}
+.entry-card-label {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.2px;
+}
+.entry-card-short {
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: #9a9691;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.entry-card--active .entry-card-short {
+  color: #ff9a3d;
+}
+/* 窄屏（手机）三张卡片横排会挤成一团，改为纵向堆叠 */
+@media (max-width: 560px) {
+  .entry-roles {
+    flex-direction: column;
+  }
 }
 .entry-title {
   margin: 0 0 6px;
