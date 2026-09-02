@@ -85,13 +85,18 @@ export function ScheduleBatchModal({
     setWeekdays((prev) => (prev.includes(wd) ? prev.filter((x) => x !== wd) : [...prev, wd]));
   }
 
-  /** 当前筛选条件（老师 × 日期区间 × 星期规律）命中的已有排班 */
+  /** 当前筛选条件命中的已有排班。
+   *  注意：清理模式（clear）刻意【忽略】星期规律筛选，按「所选老师在日期范围内的全部排班」匹配，
+   *  避免"仅工作日 / 指定星期"把周末或其余星期的排班悄悄漏掉，导致"删不干净"。 */
   function matchedSchedules(): TeacherSchedule[] {
     const targets = canPickTeacher ? teacherIds : [defaultTeacherId];
     if (targets.length === 0) return [];
     if (!startDate || !endDate) return [];
     if (parseDate(startDate) > parseDate(endDate)) return [];
     const days = new Set(eachDayInRange(startDate, endDate));
+    if (mode === 'clear') {
+      return existing.filter((s) => targets.includes(s.teacher_id) && days.has(s.schedule_date));
+    }
     return existing.filter((s) => {
       if (!targets.includes(s.teacher_id)) return false;
       if (!days.has(s.schedule_date)) return false;
@@ -300,33 +305,49 @@ export function ScheduleBatchModal({
         </FormField>
       </div>
 
-      {/* 重复规律 */}
-      <FormField label="重复规律">
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <span onClick={() => setRepeat('daily')} style={chipStyle(repeat === 'daily')}>
-            每天
-          </span>
-          <span onClick={() => setRepeat('weekdays')} style={chipStyle(repeat === 'weekdays')}>
-            仅工作日
-          </span>
-          <span onClick={() => setRepeat('custom')} style={chipStyle(repeat === 'custom')}>
-            指定星期
-          </span>
-        </div>
-        {repeat === 'custom' && (
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
-            {WEEKDAYS.map((w, i) => (
-              <span
-                key={i}
-                onClick={() => toggleWeekday(i)}
-                style={chipStyle(weekdays.includes(i), i === 0 || i === 6 ? '#EB5757' : undefined)}
-              >
-                周{w}
-              </span>
-            ))}
+      {/* 重复规律（仅生成模式使用；清理模式按"日期范围内全部"删除，不受星期限制） */}
+      {mode === 'generate' && (
+        <FormField label="重复规律">
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <span onClick={() => setRepeat('daily')} style={chipStyle(repeat === 'daily')}>
+              每天
+            </span>
+            <span onClick={() => setRepeat('weekdays')} style={chipStyle(repeat === 'weekdays')}>
+              仅工作日
+            </span>
+            <span onClick={() => setRepeat('custom')} style={chipStyle(repeat === 'custom')}>
+              指定星期
+            </span>
           </div>
-        )}
-      </FormField>
+          {repeat === 'custom' && (
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+              {WEEKDAYS.map((w, i) => (
+                <span
+                  key={i}
+                  onClick={() => toggleWeekday(i)}
+                  style={chipStyle(weekdays.includes(i), i === 0 || i === 6 ? '#EB5757' : undefined)}
+                >
+                  周{w}
+                </span>
+              ))}
+            </div>
+          )}
+        </FormField>
+      )}
+      {mode === 'clear' && (
+        <div
+          style={{
+            padding: 10,
+            borderRadius: 8,
+            background: '#F8FAFC',
+            border: '1px solid #E2E8F0',
+            color: '#475569',
+            fontSize: 13,
+          }}
+        >
+          清理将删除所选老师在日期范围内的 <b>全部排班（不限星期）</b>，确保一次删干净。
+        </div>
+      )}
 
       {mode === 'generate' ? (
         <>
