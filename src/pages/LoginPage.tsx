@@ -252,7 +252,13 @@ export default function LoginPage() {
   };
 
   // Hero CTA → 平滑滚动到对应角色入口区 + 短暂高亮
-  const scrollToRole = (id: 'role-teacher' | 'role-student') => {
+  // Supabase 模式：先切到目标 entry-role（教师 / 学员），再滚到 #login-roles 容器，
+  // 让登录表单立即按目标角色渲染（运营/管理员依然隐藏 Tab，只能在下方 entry-card 选）。
+  const scrollToEntry = (target: 'teacher' | 'student') => {
+    if (isSupabaseEnabled) {
+      if (entryRole !== target) switchEntryRole(target);
+    }
+    const id = isSupabaseEnabled ? 'login-roles' : (target === 'teacher' ? 'role-teacher' : 'role-student');
     const el = document.getElementById(id);
     if (!el) return;
     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -289,25 +295,26 @@ export default function LoginPage() {
             课程、出勤、作业、能力评估与学员档案 — 一个工作台，跑通 AI 培训的全链路闭环。
             数据本地闭环，不依赖外网账号体系。
           </p>
-          {/* —— Hero CTA：仅 Demo 模式用作「滚到角色卡片区」的快捷入口；Supabase 模式下由下方 entry-roles Tab 担当角色入口，避免视觉重复 —— */}
-          {!isSupabaseEnabled && (
-            <div className="hero-ctas">
+          {/* —— Hero 入口按钮：所有模式都展示。
+              Demo 模式：滚到 5 教师卡片区直接点对应老师登录。
+              Supabase 模式：滚到下方 entry-card 区并把对应角色入口 Tab 选中（教师/学员）。
+              管理员入口不在这里——管理员账号由运营统一授予，只在下方 entry-card 中以隐藏 Tab 形式存在。 */}
+          <div className="hero-ctas">
+            <button
+              className="hero-cta hero-cta--primary"
+              onClick={() => scrollToEntry('teacher')}
+            >
+              教师入口 →
+            </button>
+            {studentPortalEnabled && (
               <button
-                className="hero-cta hero-cta--primary"
-                onClick={() => scrollToRole('role-teacher')}
+                className="hero-cta hero-cta--ghost"
+                onClick={() => scrollToEntry('student')}
               >
-                教师入口 →
+                学员入口
               </button>
-              {studentPortalEnabled && (
-                <button
-                  className="hero-cta hero-cta--ghost"
-                  onClick={() => scrollToRole('role-student')}
-                >
-                  学员入口
-                </button>
-              )}
-            </div>
-          )}
+            )}
+          </div>
           <div className="hero-stats">
             <div className="hero-stat">
               <div className="hero-stat-num">课程 · 出勤</div>
@@ -316,6 +323,14 @@ export default function LoginPage() {
             <div className="hero-stat">
               <div className="hero-stat-num">作业 · 评估</div>
               <div className="hero-stat-label">提交评审能力闭环</div>
+            </div>
+            <div className="hero-stat">
+              <div className="hero-stat-num">变现 · 入驻</div>
+              <div className="hero-stat-label">作品发布与平台呈现</div>
+            </div>
+            <div className="hero-stat">
+              <div className="hero-stat-num">能力 · 评估</div>
+              <div className="hero-stat-label">AI 等级与画像输出</div>
             </div>
           </div>
         </div>
