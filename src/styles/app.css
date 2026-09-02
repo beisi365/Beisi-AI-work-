@@ -2541,6 +2541,19 @@
   border-color: #ff7a1a;
 }
 
+/* 注册表单里的「必填」标记（邀请码这类门槛字段） */
+.auth-req {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 122, 26, 0.16);
+  color: #ff9a3d;
+  font-size: 10.5px;
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
 /* —— 入口角色：横向大卡片三选一（管理员 / 教师 / 学员） ——
    视觉沿用下方 demo 角色卡片（.hero-role-opt）的语言：头像 + 名称 + 一行说明，
    选中态用橙色描边 + 橙色底，避免和登录表单抢视觉重心。 */

@@ -9,11 +9,13 @@
 // - 角色只影响「入口文案 / 注册时的默认身份 / 注册是否可见」，**不影响实际权限**。
 //   真正的权限始终由服务端 profiles.role + RLS 决定，URL 参数改不了权限。
 // - 管理员入口不提供自助注册（与 supabaseAuth.signUp 的 admin 拦截一致，双重保险）。
-// - ⚠️ 安全决策（2026-09-02）：教师 / 学员入口也已关闭自助注册，三类角色一律
-//   allowSignUp: false。原因：站点发布为公网链接后，开放注册等于任何人拿到链接
-//   都能自建账号进入系统。账号改由运营在 Supabase 后台统一创建分发。
-//   如需重新开放（例如学员量大不想手动建号），把对应角色的 allowSignUp 改回 true，
-//   并建议同时加「站点口令」或「邀请码」做二次门槛。
+// - ⚠️ 安全决策（2026-09-02）：站点要发布到公网，注册不能完全敞开，也不能完全关死
+//   （花名册里没有学员邮箱，运营无法批量建号，学员记不住编造的邮箱）。
+//   最终方案 = **邀请码注册**：teacher / student 的 allowSignUp 保持 true，但注册时
+//   必须填写邀请码，由服务端 SECURITY DEFINER 函数 redeem_invite() 校验并消耗。
+//   ⚠️ 邀请码绝不写死在前端代码里——dist 是公开的，打开 devtools 就能看见，等于没防护。
+//   码全部存在数据库 invite_codes 表，且不给 anon 任何 select 权限，前端只能"试"不能"看"。
+//   admin 仍然 allowSignUp: false，账号由运营通过 promote-to-admin.sql 显式授予。
 // - 纯函数 computeEntryRole 便于单元测试覆盖全部分支，不依赖浏览器全局。
 
 import type { Role } from '../data/types';
@@ -64,15 +66,15 @@ export const ENTRY_ROLE_META: Record<
   teacher: {
     label: '教师',
     title: '教师入口',
-    hint: '查看所带班级的学员、出勤、作业与评估，并维护本人排班与资料。账号由运营统一创建。',
+    hint: '查看所带班级的学员、出勤、作业与评估，并维护本人排班与资料。注册需填写运营发放的邀请码。',
     short: '带班与教学管理',
-    allowSignUp: false,
+    allowSignUp: true,
   },
   student: {
     label: '学员',
     title: '学员入口',
-    hint: '查看本人的课表、作业、作品与能力评估，仅能看到自己的数据。账号由运营统一创建。',
+    hint: '查看本人的课表、作业、作品与能力评估，仅能看到自己的数据。注册需填写班主任发放的邀请码。',
     short: '仅看本人数据',
-    allowSignUp: false,
+    allowSignUp: true,
   },
 };

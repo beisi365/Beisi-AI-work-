@@ -53,6 +53,35 @@ export interface SignUpArgs {
   /** 认领已有 seed 记录：学员填 sXX，教师填 tX；留空则创建属于自己的新记录 */
   bindId?: string;
   displayName?: string;
+  /**
+   * 邀请码：公网发布后注册的唯一门槛。
+   * 由服务端 SECURITY DEFINER 函数 redeem_invite() 校验并一次性消耗，
+   * 前端拿不到码表内容（anon 对 invite_codes 无 select 权限），只能"试"。
+   * admin 角色不走注册，无需邀请码。
+   */
+  inviteCode?: string;
+}
+
+/**
+ * 校验并消耗一个邀请码。
+ * 返回 true 才允许继续注册。失败一律抛错，不告诉调用方"是码不存在还是已用完"，
+ * 避免被用来枚举有效邀请码。
+ */
+async function redeemInvite(code: string, role: Role): Promise<void> {
+  if (!isSupabaseEnabled) throw new Error('Supabase 未配置');
+  const client = getSupabase();
+  const { data, error } = await client.rpc('redeem_invite', {
+    p_code: code.trim(),
+    p_role: role,
+  });
+  // 函数未部署时 Supabase 会返回 42883（undefined function），单独给出可操作的提示
+  if (error) {
+    if (error.code === '42883' || /redeem_invite/i.test(error.message)) {
+      throw new Error('邀请码校验服务尚未开通，请联系运营执行 invite-codes.sql');
+    }
+    throw new Error(error.message);
+  }
+  if (data !== true) throw new Error('邀请码无效、已用完或不属于当前入口');
 }
 
 /** 注册：Supabase Auth 建账号 → 触发器自动建 profile →（若已自动登录）认领/创建身份记录 */
@@ -62,6 +91,8 @@ export async function signUp(args: SignUpArgs): Promise<Principal> {
   if (args.role === 'admin') {
     throw new Error('管理员账号仅由平台运营统一授予，不支持自助注册');
   }
+  // 邀请码门槛：先消耗码再建账号。放在 signUp 之前，避免"码无效但账号已建"的脏数据。
+  await redeemInvite(args.inviteCode ?? '', args.role);
   const client = getSupabase();
   const { data, error } = await client.auth.signUp({
     email: args.email,

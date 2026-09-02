@@ -53,6 +53,8 @@ export default function LoginPage() {
   const [authPassword, setAuthPassword] = useState('');
   const [authBindId, setAuthBindId] = useState('');
   const [authName, setAuthName] = useState('');
+  // 邀请码：公网发布后注册的唯一门槛，服务端校验，前端不做任何"码长什么样"的判断
+  const [authInvite, setAuthInvite] = useState('');
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authInfo, setAuthInfo] = useState<string | null>(null);
@@ -120,6 +122,11 @@ export default function LoginPage() {
       setAuthError('请输入邮箱和密码');
       return;
     }
+    // 邀请码是公网注册的唯一门槛，必须填写；具体有效性交给服务端判定
+    if (!authInvite.trim()) {
+      setAuthError('请输入邀请码（由班主任 / 运营发放）');
+      return;
+    }
     const chk = checkEmail(authEmail);
     if (!chk.valid) {
       setAuthError(chk.error ?? chk.warning ?? '邮箱格式不正确');
@@ -134,12 +141,14 @@ export default function LoginPage() {
         role: entryRole as Role,
         bindId: authBindId.trim() || undefined,
         displayName: authName.trim() || undefined,
+        inviteCode: authInvite.trim(),
       });
       // 注册后无 session（邮箱确认未过）：提示去查收邮件，不进入系统
       if (!p.studentId && !p.teacherId) {
         setAuthInfo('注册成功！请查收确认邮件完成验证，然后返回登录。');
         setAuthMode('signin');
         setAuthPassword('');
+        setAuthInvite(''); // 码已被服务端消耗，清掉避免重复提交
       } else {
         login(p);
         navigate(roleHome(p.role));
@@ -393,6 +402,22 @@ export default function LoginPage() {
                     运营 / 管理员账号由平台运营统一授予，不从这里自助注册。
                   </p>
                 </div>
+                <label className="auth-field">
+                  <span>
+                    邀请码<em className="auth-req">必填</em>
+                  </span>
+                  <input
+                    className="auth-input"
+                    type="text"
+                    value={authInvite}
+                    placeholder="向班主任 / 运营索取"
+                    autoComplete="off"
+                    onChange={(e) => setAuthInvite(e.target.value)}
+                  />
+                </label>
+                <p className="auth-hint">
+                  邀请码由运营发放、一次性使用，没有它无法注册。已注册过的同学直接登录即可。
+                </p>
                 <label className="auth-field">
                   <span>昵称（可选）</span>
                   <input
