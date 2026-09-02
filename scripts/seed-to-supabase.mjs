@@ -18,7 +18,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const SRC = resolve(__dirname, '../src/data');
 
 const BASE_URL = process.env.SUPABASE_URL?.replace(/[\s\r\n]+/g, '');
-const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/[\s\r\n]+/g, '');
+const KEY = (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '').replace(/[\s\r\n]+/g, '');
 if (!BASE_URL || !KEY) {
   console.error('缺少 SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY');
   process.exit(1);

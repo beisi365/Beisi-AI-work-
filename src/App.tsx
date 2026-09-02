@@ -8,6 +8,7 @@ import StudentHomePage from './pages/StudentHomePage';
 import StudentProfilePage from './pages/StudentProfilePage';
 import ClassesCoursesPage from './pages/ClassesCoursesPage';
 import StudentsListPage from './pages/StudentsListPage';
+import TeachersPage from './pages/TeachersPage';
 import SettingsPage from './pages/SettingsPage';
 import WorksPage from './pages/WorksPage';
 import TimelinePage from './pages/TimelinePage';
@@ -168,6 +169,7 @@ export default function App() {
             <Route path="classes" element={<ClassesCoursesPage />} />
             <Route path="students" element={<StudentsListPage />} />
             <Route path="students/:id" element={<StudentProfilePage />} />
+            <Route path="teachers" element={<TeachersPage />} />
             <Route path="works" element={<WorksPage />} />
             <Route path="timeline" element={<TimelinePage />} />
             <Route path="course-map" element={<CourseMapPage />} />

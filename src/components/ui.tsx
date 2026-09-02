@@ -10,8 +10,8 @@ export function PageHeader({
   desc,
   actions,
 }: {
-  title: string;
-  desc?: string;
+  title: ReactNode; // 允许传节点（如「学号徽标 + 姓名」），纯字符串照旧可用
+  desc?: ReactNode;
   actions?: ReactNode;
 }) {
   return (

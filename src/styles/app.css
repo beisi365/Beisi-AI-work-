@@ -312,6 +312,62 @@
   color: #b86b1f;
 }
 
+/* —— 学号徽标：列表与档案页统一前置显示，等宽数字便于纵向对齐 —— */
+.sno-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  padding: 2px 8px;
+  border-radius: var(--radius-tag);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
+  color: var(--color-text-secondary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* 标题行里的学号徽标：与 h1 基线对齐，不撑破行高 */
+.title-with-sno {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* —— 报名问卷 · 逐项档案 —— */
+.survey-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-3);
+}
+.survey-item {
+  padding: var(--sp-3);
+  border-radius: var(--radius-card, 10px);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.06));
+}
+.survey-item--wide {
+  grid-column: 1 / -1;
+}
+.survey-label {
+  font-size: var(--fs-secondary);
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.survey-value {
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.survey-value--empty {
+  color: var(--color-text-secondary);
+  opacity: 0.55;
+}
+
 /* —— 进度条 —— */
 .progress {
   display: flex;
@@ -2167,6 +2223,10 @@
   color: rgba(232, 230, 227, 0.5);
   margin: 4px 0 16px;
 }
+.auth-hint--warn {
+  color: #ffb86b;
+  margin: -8px 0 8px;
+}
 .auth-submit {
   width: 100%;
   height: 46px;
@@ -2190,6 +2250,350 @@
   font-size: 13px;
   line-height: 1.6;
 }
+
+/* —— 学员 AI 学习程度·整体分析面板 —— */
+.ai-level-panel {
+  margin-top: var(--sp-4, 16px);
+}
+.ai-level-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 10px;
+}
+.ai-level-caption {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--color-text-secondary, rgba(232, 230, 227, 0.55));
+}
+.ai-level-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+}
+@media (max-width: 880px) {
+  .ai-level-tiles {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+.ai-level-tile {
+  padding: 14px 16px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ai-level-tile--high {
+  border-color: rgba(46, 204, 138, 0.45);
+  background: rgba(46, 204, 138, 0.08);
+}
+.ai-level-tile--mid {
+  border-color: rgba(255, 122, 26, 0.45);
+  background: rgba(255, 122, 26, 0.08);
+}
+.ai-level-tile--low {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+.ai-level-tile--pending {
+  border-color: rgba(255, 184, 107, 0.45);
+  background: rgba(255, 184, 107, 0.06);
+}
+.ai-level-tile-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+}
+.ai-level-tile-pct {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  color: var(--color-text-secondary, rgba(232, 230, 227, 0.6));
+  font-variant-numeric: tabular-nums;
+}
+.ai-level-tile-num {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.ai-level-tile-hint {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--color-text-secondary, rgba(232, 230, 227, 0.55));
+}
+.ai-level-dists {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+}
+@media (max-width: 880px) {
+  .ai-level-dists {
+    grid-template-columns: 1fr;
+  }
+}
+.ai-level-dist {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.ai-level-dist-title {
+  font-size: 12.5px;
+  color: var(--color-text-secondary, rgba(232, 230, 227, 0.6));
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.ai-level-dist-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ai-level-dist-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 28px;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+}
+.ai-level-dist-key {
+  color: var(--color-text-secondary, rgba(232, 230, 227, 0.7));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ai-level-dist-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.ai-level-dist-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #ff7a1a, #ff9a3d);
+}
+.ai-level-dist-count {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary, rgba(232, 230, 227, 0.65));
+}
+.ai-level-dist-more,
+.ai-level-dist-empty {
+  font-size: 11.5px;
+  color: var(--color-text-secondary, rgba(232, 230, 227, 0.4));
+  padding-top: 2px;
+}
+.ai-level-rosters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ai-level-roster {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.ai-level-roster-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.ai-level-roster-title {
+  font-size: 13px;
+  color: var(--color-text-secondary, rgba(232, 230, 227, 0.7));
+  font-weight: 600;
+}
+.ai-level-roster-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+}
+.ai-level-roster-label--success {
+  background: rgba(46, 204, 138, 0.16);
+  color: #5dd39e;
+}
+.ai-level-roster-label--accent {
+  background: rgba(255, 122, 26, 0.18);
+  color: #ffb86b;
+}
+.ai-level-roster-label--neutral {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(232, 230, 227, 0.7);
+}
+.ai-level-roster-label--warn {
+  background: rgba(255, 184, 107, 0.18);
+  color: #ffd29a;
+}
+.ai-level-roster-toggle {
+  margin-left: auto;
+  padding: 4px 10px;
+  font-size: 12px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(232, 230, 227, 0.7);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.ai-level-roster-toggle:hover {
+  color: #fff;
+  border-color: rgba(255, 122, 26, 0.6);
+}
+.ai-level-roster-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ai-level-roster-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.ai-level-roster-pill:hover {
+  background: rgba(255, 122, 26, 0.10);
+  border-color: rgba(255, 122, 26, 0.55);
+}
+.ai-level-roster-name {
+  font-weight: 600;
+}
+.ai-level-roster-class {
+  font-size: 11.5px;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ai-level-roster-empty {
+  font-size: 12px;
+  color: var(--color-text-secondary, rgba(232, 230, 227, 0.4));
+}
+
+/* —— 登录页：去掉「登录/注册」Tab 后的底部切换链接 —— */
+.auth-switch {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 13px;
+  color: rgba(232, 230, 227, 0.7);
+}
+.auth-switch-btn {
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  color: rgba(232, 230, 227, 0.7);
+  cursor: pointer;
+  font: inherit;
+}
+.auth-switch-btn:hover {
+  color: #fff;
+}
+.auth-switch-btn strong {
+  color: #ff9a3d;
+  margin-left: 4px;
+  font-weight: 600;
+}
+.auth-switch-hint {
+  font-size: 12px;
+  color: rgba(232, 230, 227, 0.45);
+}
+.entry-roles {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.entry-role {
+  flex: 1;
+  padding: 11px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(232, 230, 227, 0.6);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.entry-role:hover {
+  color: #fff;
+  border-color: rgba(255, 122, 26, 0.6);
+}
+.entry-role--active {
+  color: #fff;
+  background: rgba(255, 122, 26, 0.18);
+  border-color: #ff7a1a;
+}
+.entry-title {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+.entry-hint {
+  margin: 0 0 16px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: rgba(232, 230, 227, 0.55);
+}
+/* 管理员入口：注册 tab 禁用态（纯展示，不可点） */
+.auth-tab--disabled {
+  flex: 1;
+  padding: 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(232, 230, 227, 0.35);
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  text-align: center;
+  cursor: not-allowed;
+}
+/* 注册身份只读提示里的灰色小注 */
+.auth-role--muted {
+  flex: 0 0 auto;
+  color: rgba(232, 230, 227, 0.4);
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  font-weight: 400;
+  cursor: default;
+}
+/* 复制入口链接按钮 */
+.entry-copy {
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(232, 230, 227, 0.75);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.entry-copy:hover {
+  color: #fff;
+  border-color: rgba(255, 122, 26, 0.6);
+}
+
 .hero-login-title {
   font-size: 16px;
   color: #fff;

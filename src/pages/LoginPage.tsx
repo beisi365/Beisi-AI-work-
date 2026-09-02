@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { db } from '../data/repository';
 import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/ui';
@@ -13,6 +13,14 @@ import { isDemoMode, getDemoPrincipal } from '../lib/demoMode';
 import { isSupabaseEnabled } from '../lib/supabaseClient';
 import { signIn, signUp } from '../auth/supabaseAuth';
 import { roleHome } from '../lib/routeHome';
+import {
+  buildEntryUrl,
+  computeEntryRole,
+  ENTRY_ROLES,
+  ENTRY_ROLE_META,
+  type EntryRole,
+} from '../lib/loginEntry';
+import { checkEmail } from '../lib/emailValidation';
 
 interface StuView extends Student {
   user?: User;
@@ -33,16 +41,53 @@ export default function LoginPage() {
   const studentPortalEnabled = isStudentPortalEnabled();
   const rolesRef = useRef<HTMLDivElement | null>(null);
 
+  // —— 入口角色：由 URL ?role= 决定，可复制带角色的链接分发给不同人群 ——
+  const location = useLocation();
+  const entryRole: EntryRole = useMemo(() => computeEntryRole(location.search), [location.search]);
+  const entryMeta = ENTRY_ROLE_META[entryRole];
+  const canSignUp = entryMeta.allowSignUp;
+
   // —— Supabase 真实账号登录/注册面板状态（仅 Supabase 启用时显示） ——
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
-  const [authRole, setAuthRole] = useState<Role>('teacher');
   const [authBindId, setAuthBindId] = useState('');
   const [authName, setAuthName] = useState('');
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authInfo, setAuthInfo] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  // 邮箱实时规范校验：输入即检测笔误（如 qq.coml），在提交前给出提示
+  const emailCheck = useMemo(
+    () => (authEmail ? checkEmail(authEmail) : null),
+    [authEmail],
+  );
+
+  // 管理员入口不开放自助注册：切到该入口时强制回到登录态
+  useEffect(() => {
+    if (!canSignUp) setAuthMode('signin');
+  }, [canSignUp]);
+
+  /** 切换入口角色：改写 URL 参数（replace 不污染历史），便于直接复制当前地址分发 */
+  const switchEntryRole = (r: EntryRole) => {
+    navigate(`/login?role=${r}`, { replace: true });
+    setAuthError(null);
+    setAuthInfo(null);
+    setCopied(false);
+  };
+
+  /** 复制当前入口链接，方便把「教师入口 / 学员入口」直接发到对应群里 */
+  const copyEntryLink = async () => {
+    const url = buildEntryUrl(window.location.origin, entryRole);
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setAuthInfo(`复制失败，请手动复制：${url}`);
+    }
+  };
 
   const handleSignIn = async () => {
     setAuthError(null);
@@ -51,9 +96,14 @@ export default function LoginPage() {
       setAuthError('请输入邮箱和密码');
       return;
     }
+    const chk = checkEmail(authEmail);
+    if (!chk.valid) {
+      setAuthError(chk.error ?? chk.warning ?? '邮箱格式不正确');
+      return;
+    }
     setAuthBusy(true);
     try {
-      const p = await signIn(authEmail, authPassword);
+      const p = await signIn(chk.value, authPassword);
       login(p);
       navigate(roleHome(p.role));
     } catch (e) {
@@ -70,12 +120,18 @@ export default function LoginPage() {
       setAuthError('请输入邮箱和密码');
       return;
     }
+    const chk = checkEmail(authEmail);
+    if (!chk.valid) {
+      setAuthError(chk.error ?? chk.warning ?? '邮箱格式不正确');
+      return;
+    }
     setAuthBusy(true);
     try {
       const p = await signUp({
-        email: authEmail,
+        email: chk.value,
         password: authPassword,
-        role: authRole,
+        // 注册身份跟随当前入口（管理员入口已隐藏注册，此处只可能是 teacher / student）
+        role: entryRole as Role,
         bindId: authBindId.trim() || undefined,
         displayName: authName.trim() || undefined,
       });
@@ -168,7 +224,7 @@ export default function LoginPage() {
   // 重置演示数据：清掉本地缓存的旧 seed 后刷新（仅 dev 演示模式）
   const resetDemoData = () => {
     if (!window.confirm('确认重置演示数据？\n\n这将清空本机的所有本地缓存（包括教师编辑、学员导入等），刷新后重新生成最新演示数据。')) return;
-    void db.reset().then(() => location.reload());
+    void db.reset().then(() => window.location.reload());
   };
 
   const enterAsStudent = (s: StuView) => {
@@ -261,22 +317,24 @@ export default function LoginPage() {
       {isSupabaseEnabled ? (
         <section className="hero-login-section" id="login-roles">
           <div className="auth-panel">
-            <div className="auth-tabs">
-              <button
-                type="button"
-                className={`auth-tab${authMode === 'signin' ? ' auth-tab--active' : ''}`}
-                onClick={() => { setAuthMode('signin'); setAuthError(null); setAuthInfo(null); }}
-              >
-                登录
-              </button>
-              <button
-                type="button"
-                className={`auth-tab${authMode === 'signup' ? ' auth-tab--active' : ''}`}
-                onClick={() => { setAuthMode('signup'); setAuthError(null); setAuthInfo(null); }}
-              >
-                注册
-              </button>
+            {/* —— 入口角色：管理员 / 教师 / 学员，URL ?role= 可直达，便于分人群发链接 —— */}
+            <div className="entry-roles" role="tablist" aria-label="选择登录入口">
+              {ENTRY_ROLES.map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  role="tab"
+                  aria-selected={entryRole === r}
+                  className={`entry-role${entryRole === r ? ' entry-role--active' : ''}`}
+                  onClick={() => switchEntryRole(r)}
+                >
+                  {ENTRY_ROLE_META[r].label}入口
+                </button>
+              ))}
             </div>
+
+            <h3 className="entry-title">{entryMeta.title}</h3>
+            <p className="entry-hint">{entryMeta.hint}</p>
 
             {authInfo && <div className="alert-info auth-info">{authInfo}</div>}
             {authError && <div className="alert-warn auth-error">{authError}</div>}
@@ -291,6 +349,15 @@ export default function LoginPage() {
                 onChange={(e) => setAuthEmail(e.target.value)}
               />
             </label>
+            {emailCheck && !emailCheck.valid && (
+              <p className="auth-hint auth-hint--warn">
+                {emailCheck.error ?? emailCheck.warning}
+                {emailCheck.suggestion ? `（应为 ${emailCheck.suggestion}）` : ''}
+              </p>
+            )}
+            <p className="auth-hint">
+              请使用真实常用邮箱，注意检查域名拼写（如 qq.com 不要写成 qq.coml），笔误会生成无法对应花名册的账号。
+            </p>
             <label className="auth-field">
               <span>密码</span>
               <input
@@ -305,22 +372,15 @@ export default function LoginPage() {
             {authMode === 'signup' && (
               <>
                 <div className="auth-field">
-                  <span>身份</span>
+                  <span>注册身份</span>
                   <div className="auth-role-row">
-                    <button
-                      type="button"
-                      className={`auth-role${authRole === 'teacher' ? ' auth-role--active' : ''}`}
-                      onClick={() => setAuthRole('teacher')}
+                    <span
+                      className="auth-role auth-role--active"
+                      title={entryRole === 'student' ? '学员' : '教师'}
                     >
-                      教师
-                    </button>
-                    <button
-                      type="button"
-                      className={`auth-role${authRole === 'student' ? ' auth-role--active' : ''}`}
-                      onClick={() => setAuthRole('student')}
-                    >
-                      学员
-                    </button>
+                      {entryRole === 'student' ? '学员' : '教师'}
+                    </span>
+                    <span className="auth-role auth-role--muted">（由上方入口决定）</span>
                   </div>
                   <p className="auth-hint">
                     运营 / 管理员账号由平台运营统一授予，不从这里自助注册。
@@ -342,7 +402,7 @@ export default function LoginPage() {
                     className="auth-input"
                     type="text"
                     value={authBindId}
-                    placeholder="学员填 s01，教师填 t1"
+                    placeholder={`${entryRole === 'student' ? '学员填 s01' : '教师填 t1'}`}
                     onChange={(e) => setAuthBindId(e.target.value)}
                   />
                 </label>
@@ -359,6 +419,41 @@ export default function LoginPage() {
               onClick={authMode === 'signin' ? handleSignIn : handleSignUp}
             >
               {authBusy ? '处理中…' : authMode === 'signin' ? '登录' : '注册并进入'}
+            </button>
+
+            {/* —— 表单底部切换：登录↔注册（上方入口 Tab 已选角色，不再叠一层切换 Tab） —— */}
+            <div className="auth-switch">
+              {authMode === 'signin' ? (
+                canSignUp ? (
+                  <button
+                    type="button"
+                    className="auth-switch-btn"
+                    onClick={() => { setAuthMode('signup'); setAuthError(null); setAuthInfo(null); }}
+                  >
+                    还没账号？<strong>立即注册</strong>
+                  </button>
+                ) : (
+                  <span className="auth-switch-hint">管理员账号由平台运营统一授予，不开放自助注册</span>
+                )
+              ) : (
+                <button
+                  type="button"
+                  className="auth-switch-btn"
+                  onClick={() => { setAuthMode('signin'); setAuthError(null); setAuthInfo(null); }}
+                >
+                  已有账号？<strong>返回登录</strong>
+                </button>
+              )}
+            </div>
+
+            {/* —— 运营分发：复制「带角色的入口链接」直接发到对应人群 —— */}
+            <button
+              type="button"
+              className="entry-copy"
+              onClick={copyEntryLink}
+              title="复制当前入口链接，方便分发给对应人群"
+            >
+              {copied ? '✓ 已复制入口链接' : `复制${entryMeta.label}入口链接`}
             </button>
           </div>
         </section>

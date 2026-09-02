@@ -12,6 +12,7 @@ type IconKey =
   | 'overview'
   | 'classes'
   | 'students'
+  | 'teachers'
   | 'works'
   | 'timeline'
   | 'course-map'
@@ -58,6 +59,14 @@ function Icon({ k }: { k: IconKey }) {
         <circle cx="9" cy="8" r="3.2" />
         <path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5" />
         <path d="M16 6.5a3 3 0 010 5.8" />
+      </>
+    ),
+    teachers: (
+      <>
+        <rect x="14" y="4" width="8" height="6" rx="1" />
+        <path d="M18 10v10" />
+        <circle cx="6.5" cy="8" r="3" />
+        <path d="M1.5 19c0-2.8 2.2-5 5-5s5 2.2 5 5" />
       </>
     ),
     works: (
@@ -140,6 +149,7 @@ interface NavItem {
 const TEACHER_NAV: NavItem[] = [
   { to: '/t/overview', label: '教学总览', icon: 'overview' },
   { to: '/t/students', label: '学员档案', icon: 'students' },
+  { to: '/t/teachers', label: '教师管理', icon: 'teachers' },
   { to: '/t/classes', label: '课程与出勤', icon: 'classes' },
   { to: '/t/works', label: '作业与作品', icon: 'works' },
   { to: '/t/assessments', label: '考核中心', icon: 'assessments' },
@@ -171,6 +181,7 @@ export const MOBILE_TEACHER_NAV: NavItem[] = [
 type MoreItem = NavItem & { flag?: Cp2Module };
 const MOBILE_TEACHER_MORE: MoreItem[] = [
   { to: '/t/classes', label: '课程与出勤', icon: 'classes' },
+  { to: '/t/teachers', label: '教师管理', icon: 'teachers' },
   { to: '/t/schedule', label: '教师排班', icon: 'schedule' },
   { to: '/t/alerts', label: '学习预警', icon: 'alerts', flag: 'alerts' },
   { to: '/t/todos', label: '教师待办', icon: 'todos', flag: 'todos' },
