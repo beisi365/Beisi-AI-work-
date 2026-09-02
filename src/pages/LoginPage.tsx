@@ -280,22 +280,25 @@ export default function LoginPage() {
             课程、出勤、作业、能力评估与学员档案 — 一个工作台，跑通 AI 培训的全链路闭环。
             数据本地闭环，不依赖外网账号体系。
           </p>
-          <div className="hero-ctas">
-            <button
-              className="hero-cta hero-cta--primary"
-              onClick={() => scrollToRole('role-teacher')}
-            >
-              教师入口 →
-            </button>
-            {studentPortalEnabled && (
+          {/* —— Hero CTA：仅 Demo 模式用作「滚到角色卡片区」的快捷入口；Supabase 模式下由下方 entry-roles Tab 担当角色入口，避免视觉重复 —— */}
+          {!isSupabaseEnabled && (
+            <div className="hero-ctas">
               <button
-                className="hero-cta hero-cta--ghost"
-                onClick={() => scrollToRole('role-student')}
+                className="hero-cta hero-cta--primary"
+                onClick={() => scrollToRole('role-teacher')}
               >
-                学员入口
+                教师入口 →
               </button>
-            )}
-          </div>
+              {studentPortalEnabled && (
+                <button
+                  className="hero-cta hero-cta--ghost"
+                  onClick={() => scrollToRole('role-student')}
+                >
+                  学员入口
+                </button>
+              )}
+            </div>
+          )}
           <div className="hero-stats">
             <div className="hero-stat">
               <div className="hero-stat-num">课程 · 出勤</div>
