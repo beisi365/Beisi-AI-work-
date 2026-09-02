@@ -45,3 +45,7 @@ docs/cp2-plan/accept_cp21.mjs
 /screenshots-*/
 /shot-*.mjs
 .vercel
+
+# 临时调试脚本（密钥/字符诊断等一次性工具，不入库）
+scripts/_debug-*.mjs
+scripts/_debug-*.js
