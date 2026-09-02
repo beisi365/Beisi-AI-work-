@@ -442,6 +442,12 @@ export interface TeacherOverview {
   longNoSubmission: { student: Student; classRow: ClassRow | undefined; pendingCount: number }[];
   /** 即将结业班级：演示“现在”起 30 天内结课且在进行中 */
   graduatingClasses: { classRow: ClassRow; studentCount: number; daysLeft: number }[];
+  /** 全量学员（结构化问卷字段已落库）：供派生统计面板用 */
+  students: Student[];
+  /** 班级-学员归属表（供按班级过滤/学员档案点名） */
+  enrollments: { student_id: string; class_id: string }[];
+  /** 全量班级（教师过滤自己班用） */
+  classesRaw: ClassRow[];
 }
 
 export async function getTeacherOverview(db: DataLayer): Promise<TeacherOverview> {
@@ -610,6 +616,10 @@ export async function getTeacherOverview(db: DataLayer): Promise<TeacherOverview
     consecutiveAbsent,
     longNoSubmission,
     graduatingClasses,
+    // —— 派生统计面板（学员 AI 学习程度）需要全量结构化数据 ——
+    students,
+    enrollments: enrollments.map((e) => ({ student_id: e.student_id, class_id: e.class_id })),
+    classesRaw: classes,
   };
 }
 

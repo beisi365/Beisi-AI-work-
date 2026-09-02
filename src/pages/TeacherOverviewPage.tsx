@@ -16,11 +16,13 @@ import {
   Toast,
 } from '../components/ui';
 import { RankBar } from '../components/charts';
+import StudentAiLevelPanel from '../components/StudentAiLevelPanel';
 import { getTeacherOverview, type TeacherOverview } from '../lib/queries';
 import { getTeacherAlertStats, syncAlerts } from '../lib/alerts';
 import { CATEGORY_LABEL, CATEGORY_TONE, formatDate, rateText, SESSION_LABEL } from '../lib/format';
 import { sessionAttendanceTarget } from '../lib/sessionNav';
 import { useDemoMode } from '../lib/demoMode';
+import { displayStudentNo } from '../lib/studentNormalize';
 import type { ClassSession } from '../data/types';
 import { StudentCreateModal, AttendanceRegisterModal, TeacherObservationModal } from '../components/StudentModals';
 
@@ -134,6 +136,43 @@ export default function TeacherOverviewPage() {
         <StatTile label="平均完成率" value={rateText(ov.avgCompletionRate)} />
       </div>
 
+      {/* 学员 AI 学习程度·整体分析：按角色/班级可见范围自动过滤 */}
+      {(() => {
+        const allClasses = ov.classes.map((s) => s.classRow);
+        const allEnrollments = ov.enrollments;
+        const allStudents = ov.students;
+        // 教师：仅看自己班学员；管理员/超管：看全部
+        const myClassIds = new Set(
+          principal?.role === 'teacher' && principal.teacherId
+            ? allClasses.filter((c) => c.teacher_id === principal.teacherId).map((c) => c.id)
+            : allClasses.map((c) => c.id),
+        );
+        const enrolledStudentIds = new Set(
+          allEnrollments.filter((e) => myClassIds.has(e.class_id)).map((e) => e.student_id),
+        );
+        const visibleStudents =
+          principal?.role === 'teacher' && principal.teacherId
+            ? allStudents.filter((s) => enrolledStudentIds.has(s.id))
+            : allStudents;
+        const classByStudent = new Map<string, string>();
+        for (const e of allEnrollments) {
+          const c = allClasses.find((x) => x.id === e.class_id);
+          if (c) classByStudent.set(e.student_id, c.name);
+        }
+        return (
+          <StudentAiLevelPanel
+            students={visibleStudents}
+            classByStudent={classByStudent}
+            onJump={(id) => navigate(`/t/students/${id}`)}
+            caption={
+              principal?.role === 'teacher' && principal.teacherId
+                ? '按报名问卷的 AI 使用经验 + 优先方向派生评级 · 已过滤为你所带的班级'
+                : '按报名问卷的 AI 使用经验 + 优先方向派生评级 · 全校在册学员'
+            }
+          />
+        );
+      })()}
+
       {/* 今日与待办：橙色用于重点行动 */}
       <SectionWrap title="今日与待办">
         <div className="todo-grid">
@@ -190,6 +229,7 @@ export default function TeacherOverviewPage() {
                 >
                   <div className="focus-main">
                     <div className="row" style={{ gap: 8 }}>
+                      <span className="sno-chip">{displayStudentNo(f.student) || '—'}</span>
                       <strong>{f.student.nickname}</strong>
                       <span className="focus-cat">
                         <Tag tone={CATEGORY_TONE[f.category]}>{CATEGORY_LABEL[f.category]}</Tag>
@@ -236,6 +276,7 @@ export default function TeacherOverviewPage() {
                 >
                   <div className="focus-main">
                     <div className="row" style={{ gap: 8 }}>
+                      <span className="sno-chip">{displayStudentNo(x.student) || '—'}</span>
                       <strong>{x.student.nickname}</strong>
                       {x.classRow && <span className="muted">{x.classRow.name}</span>}
                     </div>
@@ -264,6 +305,7 @@ export default function TeacherOverviewPage() {
                 >
                   <div className="focus-main">
                     <div className="row" style={{ gap: 8 }}>
+                      <span className="sno-chip">{displayStudentNo(x.student) || '—'}</span>
                       <strong>{x.student.nickname}</strong>
                       {x.classRow && <span className="muted">{x.classRow.name}</span>}
                     </div>
@@ -292,6 +334,7 @@ export default function TeacherOverviewPage() {
                 >
                   <div className="focus-main">
                     <div className="row" style={{ gap: 8 }}>
+                      <span className="sno-chip">{displayStudentNo(s) || '—'}</span>
                       <strong>{s.nickname}</strong>
                     </div>
                     <div className="muted">创建于 {formatDate(s.created_at ?? 0)}</div>
