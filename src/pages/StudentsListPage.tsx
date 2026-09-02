@@ -20,6 +20,7 @@ import {
 } from '../components/StudentModals';
 import { StudentImportModal } from '../components/StudentImportModal';
 import { useDemoMode } from '../lib/demoMode';
+import { displayStudentNo, studentNoSortKey } from '../lib/studentNormalize';
 
 const CATEGORY_OPTIONS: { value: StudentCategory; label: string }[] = [
   { value: 'normal', label: '正常' },
@@ -107,17 +108,27 @@ export default function StudentsListPage() {
         if (catFilter && d.category !== catFilter) return false;
         if (statusFilter === 'active' && d.student.archived_at) return false;
         if (statusFilter === 'archived' && !d.student.archived_at) return false;
-        if (kw && !d.student.nickname.toLowerCase().includes(kw)) return false;
+        // 姓名与学号都能搜到
+        if (kw) {
+          const hitName = d.student.nickname.toLowerCase().includes(kw);
+          const hitNo = displayStudentNo(d.student).toLowerCase().includes(kw);
+          if (!hitName && !hitNo) return false;
+        }
         return true;
       })
       .sort((a, b) => {
-        // 在读优先，已归档置后
+        // ① 在读优先，已归档置后
         const ax = a.student.archived_at ? 1 : 0;
         const bx = b.student.archived_at ? 1 : 0;
         if (ax !== bx) return ax - bx;
+        // ② 按学号升序（与 Excel 名单顺序一致，便于对照点名）
+        const na = studentNoSortKey(a.student);
+        const nb = studentNoSortKey(b.student);
+        if (na !== nb) return na - nb;
+        // ③ 学号缺失/相同时退回姓名
         return a.student.nickname.localeCompare(b.student.nickname, 'zh');
       });
-  }, [data, classFilter, catFilter, statusFilter, nameSearch]);
+  }, [data, activeClass, classFilter, catFilter, statusFilter, nameSearch]);
 
   if (loading || !data) return <LoadingState />;
 
@@ -178,7 +189,7 @@ export default function StudentsListPage() {
         <input
           className="input"
           style={{ flex: '1 1 160px', minWidth: 140 }}
-          placeholder="搜索学员姓名…"
+          placeholder="搜索学员姓名或学号…"
           value={nameSearch}
           onChange={(e) => setNameSearch(e.target.value)}
         />
@@ -191,6 +202,7 @@ export default function StudentsListPage() {
           <table className="stable">
             <thead>
               <tr>
+                <th>学号</th>
                 <th>学员</th>
                 <th>类别</th>
                 <th>班级</th>
@@ -203,6 +215,9 @@ export default function StudentsListPage() {
             <tbody>
               {filtered.map((d) => (
                 <tr key={d.student.id} className="clickable" onClick={() => navigate(`/t/students/${d.student.id}`)}>
+                  <td data-label="学号">
+                    <span className="sno-chip">{displayStudentNo(d.student) || '—'}</span>
+                  </td>
                   <td data-label="学员">
                     <div className="row" style={{ gap: 10 }}>
                       <Avatar name={d.student.nickname} />
@@ -213,6 +228,11 @@ export default function StudentsListPage() {
                             已归档
                           </Tag>
                         )}
+                        {d.student.occupation ? (
+                          <div className="muted" style={{ fontSize: 'var(--fs-secondary)' }}>
+                            {d.student.occupation}
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   </td>

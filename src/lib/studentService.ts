@@ -120,6 +120,12 @@ export async function createStudent(
       teacher_observation: null,
       learning_suggestion: null,
       archived_at: null,
+      // 报名问卷字段：新建时留空，由导入或后续编辑补
+      student_no: '',
+      ai_experience: '',
+      priority_direction: '',
+      open_answer: '',
+      remark: '',
       created_by: actor.actorId,
     } as never);
     const enrollment = await tx.enrollments.insert({

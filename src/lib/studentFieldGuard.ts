@@ -38,7 +38,18 @@ export const STUDENT_SELF_EDITABLE: readonly (keyof Student)[] = [
   'can_self_service',
   'uses_paid_ai',
   'contact',
+  // 报名问卷答案属于学员本人资料，允许本人维护（学号除外，见下）
+  'ai_experience',
+  'priority_direction',
+  'open_answer',
+  'remark',
 ];
+
+/**
+ * 仅教师/管理员可维护的字段：学号是外部 Excel 导入导出的对齐主键，
+ * 学员自行改动会导致下次导入匹配不上、产生重复档案，故不对学员开放。
+ */
+export const STUDENT_TEACHER_ONLY_FIELDS: readonly (keyof Student)[] = ['student_no'];
 
 /** 教师编辑也不可改的系统字段（主键/时间戳/归属/创建人） */
 export const STUDENT_SYSTEM_FIELDS: readonly (keyof Student)[] = [

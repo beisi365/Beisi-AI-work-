@@ -262,6 +262,12 @@ export function buildSeed(): DBShape {
       teacher_observation: null,
       learning_suggestion: null,
       archived_at: null,
+      // 报名问卷字段默认值（与 Excel 列一一对应）
+      student_no: (i + 1).toString().padStart(2, '0'),
+      ai_experience: '',
+      priority_direction: '',
+      open_answer: '',
+      remark: '',
       created_at: BASE,
       updated_at: BASE,
       created_by: 'u_t1',

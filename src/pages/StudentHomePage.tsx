@@ -5,6 +5,7 @@ import { Button, Card, EmptyState, LoadingState, PageHeader, StatTile, Tag } fro
 import { RankBar } from '../components/charts';
 import { getStudentDashboard, getUpcomingSessions } from '../lib/queries';
 import { formatDate, rateText, SUBMISSION_LABEL, SUBMISSION_TONE } from '../lib/format';
+import { displayStudentNo } from '../lib/studentNormalize';
 import type { ClassSession } from '../data/types';
 
 export default function StudentHomePage() {
@@ -32,7 +33,12 @@ export default function StudentHomePage() {
   return (
     <>
       <PageHeader
-        title={`${dash.student.nickname}的学习首页`}
+        title={
+          <span className="title-with-sno">
+            <span className="sno-chip">{displayStudentNo(dash.student) || '—'}</span>
+            {dash.student.nickname} 的学习首页
+          </span>
+        }
         desc={dash.classRow ? `${dash.classRow.name} · 今天也加油` : '我的学习中心'}
         actions={
           <>

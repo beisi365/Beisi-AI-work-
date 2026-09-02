@@ -41,10 +41,23 @@ const SELF_FIELDS: { key: keyof Student; label: string; kind: 'text' | 'textarea
   { key: 'devices', label: '设备', kind: 'text' },
   { key: 'os', label: '系统', kind: 'text' },
   { key: 'office_software', label: '办公软件', kind: 'text' },
-  { key: 'ai_tools_used', label: '常用 AI 工具', kind: 'text' },
+  { key: 'ai_tools_used', label: '常用 AI 工具（用过哪些 AI）', kind: 'text' },
   { key: 'can_self_service', label: '自助能力', kind: 'bool' },
   { key: 'uses_paid_ai', label: '是否使用付费 AI', kind: 'bool' },
   { key: 'contact', label: '联系方式', kind: 'text' },
+  // —— 报名问卷答案：与 Excel 列一一对应，外部表格改完回导会覆盖这里 ——
+  { key: 'ai_experience', label: 'AI 使用经验', kind: 'text' },
+  { key: 'priority_direction', label: '优先学习方向', kind: 'text' },
+  { key: 'open_answer', label: '补充开放题', kind: 'textarea' },
+  { key: 'remark', label: '备注', kind: 'text' },
+];
+
+/**
+ * 仅教师/管理员可维护：学号是外部 Excel 与平台对齐的主键，
+ * 学员自行改动会导致下次导入匹配不上、生成重复档案，故不开放给学员。
+ */
+const TEACHER_ONLY_FIELDS: { key: keyof Student; label: string; kind: 'text' }[] = [
+  { key: 'student_no', label: '学号（外部表格主键，改了会导致导入对不上人）', kind: 'text' },
 ];
 
 const INTERNAL_FIELDS: { key: keyof Student; label: string; kind: 'textarea' | 'tags' | 'text' }[] = [
@@ -269,7 +282,11 @@ export function StudentEditModal({
     if (open && student) {
       const init: Record<string, unknown> = {};
       const keys = isTeacher
-        ? [...SELF_FIELDS.map((f) => f.key), ...INTERNAL_FIELDS.map((f) => f.key)]
+        ? [
+            ...SELF_FIELDS.map((f) => f.key),
+            ...TEACHER_ONLY_FIELDS.map((f) => f.key),
+            ...INTERNAL_FIELDS.map((f) => f.key),
+          ]
         : SELF_FIELDS.map((f) => f.key);
       for (const k of keys) init[k] = (student as unknown as Record<string, unknown>)[k as string] ?? (k === 'teacher_tags' ? [] : '');
       setForm(init);
@@ -290,7 +307,11 @@ export function StudentEditModal({
       // 教师端：递交基本资料 + 内部档案（系统字段由 editStudentAsTeacher 过滤）
       const patch: Record<string, unknown> = {};
       const keys = isTeacher
-        ? [...SELF_FIELDS.map((f) => f.key), ...INTERNAL_FIELDS.map((f) => f.key)]
+        ? [
+            ...SELF_FIELDS.map((f) => f.key),
+            ...TEACHER_ONLY_FIELDS.map((f) => f.key),
+            ...INTERNAL_FIELDS.map((f) => f.key),
+          ]
         : SELF_FIELDS.map((f) => f.key);
       for (const k of keys) {
         let v = form[k];
@@ -344,6 +365,34 @@ export function StudentEditModal({
           </FormField>
         ))}
       </div>
+
+      {isTeacher && (
+        <div className="form-hint" style={{ marginTop: 8 }}>
+          以下为报名问卷逐项内容，与外部 Excel 一一对应；在表格里改完回导会覆盖此处。
+        </div>
+      )}
+
+      {isTeacher && (
+        <div className="internal-box">
+          <div className="internal-head">
+            <span className="internal-badge">教师维护</span>
+            <span className="muted" style={{ fontSize: 'var(--fs-secondary)' }}>
+              学员可见但不可自行修改
+            </span>
+          </div>
+          <div className="form-grid">
+            {TEACHER_ONLY_FIELDS.map((f) => (
+              <FormField key={f.key} label={f.label}>
+                <input
+                  className="input"
+                  value={String(form[f.key] ?? '')}
+                  onChange={(e) => set(f.key, e.target.value)}
+                />
+              </FormField>
+            ))}
+          </div>
+        </div>
+      )}
 
       {isTeacher && (
         <div className="internal-box">

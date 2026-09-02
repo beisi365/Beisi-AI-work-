@@ -36,6 +36,7 @@ import type {
   DifficultyRow,
 } from './DataLayer';
 import { assertSubmissionStatusChange, ForbiddenError, type ChangeActor } from '../../lib/submissionStatusGuards';
+import { withStudentDefaults } from '../../lib/studentNormalize';
 import {
   assertStudentSelfEdit,
   filterTeacherSystemFields,
@@ -70,15 +71,8 @@ function clone<T>(v: T): T {
  * 补全默认值，避免页面/服务读取 undefined 报错。
  */
 function normalizeStudent(s: any): Student {
-  return {
-    ...s,
-    self_intro: s.self_intro ?? '',
-    ai_baseline: s.ai_baseline ?? null,
-    teacher_tags: Array.isArray(s.teacher_tags) ? s.teacher_tags : [],
-    learning_suggestion: s.learning_suggestion ?? null,
-    teacher_observation: s.teacher_observation ?? null,
-    archived_at: s.archived_at ?? null,
-  };
+  // 与 SupabaseDataLayer 共用同一份默认值定义，避免两侧字段演进不同步
+  return withStudentDefaults(s);
 }
 
 export class LocalDataLayer implements DataLayer {

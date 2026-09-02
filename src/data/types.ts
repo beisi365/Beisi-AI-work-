@@ -81,6 +81,12 @@ export interface Student {
   teacher_observation: string | null; // 教师内部：长期观察记录
   learning_suggestion: string | null; // 教师给出的学习建议：学员可见只读
   archived_at: string | null; // 归档时间；null = 在读，有时间值 = 已归档（不另设 status/is_active）
+  // —— 报名问卷结构化字段（与 Excel 导入/导出一一对应，支持外部编辑回写） ——
+  student_no: string; // 学号：外部 Excel 主键，用于导入导出对齐
+  ai_experience: string; // 问卷：AI 使用经验
+  priority_direction: string; // 问卷：优先学习方向
+  open_answer: string; // 问卷：补充开放题
+  remark: string; // 问卷：备注
   created_at: number;
   updated_at: number;
   created_by: string;

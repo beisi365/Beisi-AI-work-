@@ -29,6 +29,7 @@ import {
   StudentTransferModal,
 } from '../components/StudentModals';
 import { useDemoMode } from '../lib/demoMode';
+import { displayStudentNo } from '../lib/studentNormalize';
 import {
   ABILITY_LABEL,
   ABILITY_ORDER,
@@ -50,6 +51,7 @@ import type {
   AttendanceStatus,
   ClassSession,
   Principal,
+  Student,
   WorkVersion,
   AbilityAssessment,
   AiAnalysis,
@@ -123,8 +125,17 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
   return (
     <>
       <PageHeader
-        title={dash.student.nickname}
-        desc={dash.classRow ? `${dash.classRow.name} · ${dash.classRow.schedule}` : '学员档案'}
+        title={
+          <span className="row" style={{ gap: 10 }}>
+            <span className="sno-chip">{displayStudentNo(dash.student) || '—'}</span>
+            <span>{dash.student.nickname}</span>
+          </span>
+        }
+        desc={
+          dash.classRow
+            ? `${dash.classRow.name} · ${dash.classRow.schedule}`
+            : '学员档案'
+        }
         actions={
           isTeacher ? (
             <>
@@ -177,18 +188,19 @@ export default function StudentProfilePage({ studentId: propId }: { studentId?: 
         <>
           {isTeacher && <TeacherFocusCard dash={dash} />}
           <LearningSummary dash={dash} />
+
+          {/* 报名问卷：Excel 里逐项采集的原始数据，外部改完回导即同步 */}
+          <SurveyCard student={dash.student} />
+
           <div className="two-col" style={{ marginTop: 'var(--sp-4)' }}>
-          <Card title="基本信息">
-            <Field label="昵称">{dash.student.nickname}</Field>
-            <Field label="年龄段">{dash.student.age_range}</Field>
-            <Field label="职业">{dash.student.occupation}</Field>
-            <Field label="学习目标">{dash.student.goal}</Field>
+          <Card title="基本信息" desc="平台内维护的学习档案（问卷内容见上方「报名问卷」）">
+            <Field label="年龄段">{dash.student.age_range || '—'}</Field>
             <Field label="每周时长">{dash.student.weekly_hours} 小时</Field>
-            <Field label="设备 / 系统">{dash.student.devices} / {dash.student.os}</Field>
-            <Field label="办公软件">{dash.student.office_software}</Field>
-            <Field label="使用 AI 工具">{dash.student.ai_tools_used}</Field>
+            <Field label="设备 / 系统">{dash.student.devices || '—'} / {dash.student.os || '—'}</Field>
+            <Field label="办公软件">{dash.student.office_software || '—'}</Field>
             <Field label="自助能力">{dash.student.can_self_service ? '可自助' : '需协助'}</Field>
             <Field label="付费 AI">{dash.student.uses_paid_ai ? '是' : '否'}</Field>
+            <Field label="联系方式">{dash.student.contact || '—'}</Field>
             {dash.student.self_intro ? (
               <Field label="自我介绍">{dash.student.self_intro}</Field>
             ) : null}
@@ -920,6 +932,58 @@ function TeacherFocusCard({ dash }: { dash: StudentDashboard }) {
             </ul>
           )}
         </Item>
+      </div>
+    </Card>
+  );
+}
+
+// ============================================================
+// 报名问卷 · 逐项档案
+// 展示 Excel/外部表格逐项采集的答案。每一项独立成块，不再拼接成一段文字；
+// 外部改完表格回导后，这里会同步更新。
+// ============================================================
+const SURVEY_ITEMS: { key: keyof Student; label: string; wide?: boolean }[] = [
+  { key: 'student_no', label: '学号' },
+  { key: 'occupation', label: '身份职业' },
+  { key: 'ai_experience', label: 'AI 使用经验' },
+  { key: 'ai_tools_used', label: '用过哪些 AI' },
+  { key: 'goal', label: '学习目的' },
+  { key: 'priority_direction', label: '优先学习方向' },
+  { key: 'open_answer', label: '补充开放题', wide: true },
+  { key: 'remark', label: '备注' },
+];
+
+function SurveyCard({ student }: { student: Student }) {
+  const filled = SURVEY_ITEMS.filter((it) => String(student[it.key] ?? '').trim()).length;
+  const unanswered = filled <= 1; // 只有学号也算未交问卷
+  return (
+    <Card
+      title="报名问卷"
+      desc="外部表格逐项采集的答案；在 Excel 里改完回导即同步到此处"
+      style={{ marginTop: 'var(--sp-4)' }}
+      actions={
+        unanswered ? (
+          <Tag tone="danger">问卷未交</Tag>
+        ) : (
+          <Tag tone="neutral">
+            已填 {filled}/{SURVEY_ITEMS.length} 项
+          </Tag>
+        )
+      }
+    >
+      <div className="survey-grid">
+        {SURVEY_ITEMS.map((it) => {
+          const raw = student[it.key];
+          const text = String(raw ?? '').trim();
+          return (
+            <div key={it.key} className={`survey-item${it.wide ? ' survey-item--wide' : ''}`}>
+              <div className="survey-label">{it.label}</div>
+              <div className={`survey-value${text ? '' : ' survey-value--empty'}`}>
+                {text || '未填'}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </Card>
   );
