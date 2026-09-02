@@ -352,6 +352,7 @@ export default function LoginPage() {
             <h3 className="entry-title">{entryMeta.title}</h3>
             <p className="entry-hint">{entryMeta.hint}</p>
 
+            <div className="auth-form">
             {authInfo && <div className="alert-info auth-info">{authInfo}</div>}
             {authError && <div className="alert-warn auth-error">{authError}</div>}
 
@@ -478,6 +479,7 @@ export default function LoginPage() {
                   已有账号？<strong>返回登录</strong>
                 </button>
               )}
+            </div>
             </div>
 
             {/* —— 运营分发：复制「带角色的入口链接」直接发到对应人群 —— */}
