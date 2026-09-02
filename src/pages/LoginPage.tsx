@@ -495,7 +495,6 @@ export default function LoginPage() {
                 </button>
               )}
             </div>
-            </div>
 
             {/* —— 运营分发：复制「带角色的入口链接」直接发到对应人群 —— */}
             <button
@@ -506,6 +505,7 @@ export default function LoginPage() {
             >
               {copied ? '✓ 已复制入口链接' : `复制${entryMeta.label}入口链接`}
             </button>
+            </div>
           </div>
         </section>
       ) : (
